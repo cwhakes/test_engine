@@ -4,7 +4,7 @@ use crate::engine::graphics::vertex_buffer::VertexBuffer;
 use std::ptr::NonNull;
 
 use winapi::um::d3d11::{ID3D11DeviceContext, D3D11_VIEWPORT};
-use winapi::um::d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+use winapi::um::d3dcommon;
 
 pub struct Context(NonNull<ID3D11DeviceContext>);
 
@@ -31,9 +31,16 @@ impl Context {
         }
     }
 
-    pub fn draw_triangle_list<V>(&self, vertices_len: usize, vertices_start: usize) {
+    pub fn _draw_triangle_list<V>(&self, vertices_len: usize, vertices_start: usize) {
         unsafe {
-            self.as_ref().IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            self.as_ref().IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            self.as_ref().Draw(vertices_len as u32, vertices_start as u32);
+        }
+    }
+
+    pub fn draw_triangle_strip<V>(&self, vertices_len: usize, vertices_start: usize) {
+        unsafe {
+            self.as_ref().IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             self.as_ref().Draw(vertices_len as u32, vertices_start as u32);
         }
     }

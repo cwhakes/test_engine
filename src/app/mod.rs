@@ -40,8 +40,9 @@ impl Window for AppWindow {
     fn on_create(&mut self) {
         let vertex_list = [
             Vertex([-0.5, -0.5, 0.0]),
-            Vertex([ 0.0,  0.5, 0.0]),
+            Vertex([-0.5,  0.5, 0.0]),
             Vertex([ 0.5, -0.5, 0.0]),
+            Vertex([ 0.5,  0.5, 0.0]),
         ];
 
         
@@ -63,7 +64,7 @@ impl Window for AppWindow {
             g.immediate_context().set_viewport_size(width as f32, height as f32);
             g.set_shaders();
             g.immediate_context().set_vertex_buffer(self.vertex_buffer.as_ref().unwrap());
-            g.immediate_context().draw_triangle_list::<Vertex>(self.vertex_buffer.as_ref().unwrap().len(), 0);
+            g.immediate_context().draw_triangle_strip::<Vertex>(self.vertex_buffer.as_ref().unwrap().len(), 0);
 
             g.swapchain().present(0);
         }
