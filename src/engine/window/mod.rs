@@ -2,8 +2,8 @@ mod hwnd;
 
 pub use hwnd::Hwnd;
 
-use std::ffi::OsStr;
-use std::os::windows::ffi::OsStrExt;
+use crate::util::os_vec;
+
 use std::sync::Mutex;
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
@@ -51,7 +51,7 @@ unsafe extern "system" fn window_loop(
         WM_DESTROY => {
             //Spawn a different thread to prevent recursive lock
             std::thread::spawn(|| {
-                if let Some(window) = WINDOW.lock().unwrap().as_ref() {
+                if let Some(window) = WINDOW.lock().unwrap().as_mut() {
                     window.on_destroy();
                     window.set_running(false);
                 };
@@ -72,9 +72,9 @@ pub trait Window: Send + Sync {
     fn set_running(&self, running: bool);
     fn running(&self) -> bool;
 
-    fn on_create(&self) {}
+    fn on_create(&mut self) {}
     fn on_update(&self) {}
-    fn on_destroy(&self) {}
+    fn on_destroy(&mut self) {}
 
     fn init()
     where
@@ -128,7 +128,7 @@ pub trait Window: Send + Sync {
 
     fn broadcast(&self) {
         unsafe {
-            
+
             self.on_update();
 
             let mut msg = Default::default();
@@ -141,9 +141,4 @@ pub trait Window: Send + Sync {
     }
 }
 
-fn os_vec(text: &str) -> Vec<u16> {
-    OsStr::new(text)
-        .encode_wide()
-        .chain(Some(0).into_iter())
-        .collect()
-}
+

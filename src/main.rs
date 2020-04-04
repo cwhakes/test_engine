@@ -3,6 +3,7 @@ extern crate lazy_static;
 
 mod app;
 mod engine;
+mod util;
 
 use engine::window::{Window, WINDOW};
 

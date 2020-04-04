@@ -1,11 +1,15 @@
 use crate::engine::graphics::{Graphics, GRAPHICS};
+use crate::engine::graphics::vertex_buffer::VertexBuffer;
 use crate::engine::window::{Hwnd, Window};
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
+struct Vertex ( [f32; 3] );
+
 pub struct AppWindow {
     m_hwnd: Option<Hwnd>,
     running: AtomicBool,
+    vertex_buffer: Option<VertexBuffer<Vertex>>,
 }
 
 impl Window for AppWindow {
@@ -13,6 +17,7 @@ impl Window for AppWindow {
         AppWindow {
             m_hwnd: None,
             running: AtomicBool::new(false),
+            vertex_buffer: None,
         }
     }
 
@@ -32,20 +37,40 @@ impl Window for AppWindow {
         self.running.load(Ordering::Relaxed)
     }
 
-    fn on_create(&self) {
+    fn on_create(&mut self) {
+        let vertex_list = [
+            Vertex([-0.5, -0.5, 0.0]),
+            Vertex([ 0.0,  0.5, 0.0]),
+            Vertex([ 0.5, -0.5, 0.0]),
+        ];
+
+        
         let mut g = GRAPHICS.lock().unwrap();
         *g = Some(Graphics::new(self.hwnd().unwrap()));
+        g.as_mut().unwrap().create_shaders();
+        let (byte_code, size) = g.as_ref().unwrap().get_shader_buffer_and_size();
+        drop(g);
+
+        let vb = VertexBuffer::new(&vertex_list, byte_code, size);
+        self.vertex_buffer = Some(vb);
     }
 
     fn on_update(&self) {
         if let Some(g) = GRAPHICS.lock().unwrap().as_ref() {
             g.immediate_context()
                 .clear_render_target_color(g.swapchain(), 1.0, 0.0, 0.0, 1.0);
+            let (width, height) = self.m_hwnd.as_ref().unwrap().rect();
+            g.immediate_context().set_viewport_size(width as f32, height as f32);
+            g.set_shaders();
+            g.immediate_context().set_vertex_buffer(self.vertex_buffer.as_ref().unwrap());
+            g.immediate_context().draw_triangle_list::<Vertex>(self.vertex_buffer.as_ref().unwrap().len(), 0);
+
             g.swapchain().present(0);
         }
     }
 
-    fn on_destroy(&self) {
+    fn on_destroy(&mut self) {
         GRAPHICS.lock().unwrap().take();
+        self.vertex_buffer.take();
     }
 }

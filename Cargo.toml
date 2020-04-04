@@ -11,6 +11,7 @@ lazy_static = "1.4.0"
 winapi = { version = "0.3.8", features = [
     "d3d11",
     "d3dcommon",
+    "d3dcompiler",
     "impl-default",
     "std",
     "winerror",
