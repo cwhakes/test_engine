@@ -53,6 +53,18 @@ impl SwapChain {
     pub fn back_buffer(&self) -> *mut ID3D11RenderTargetView {
         self.back_buffer
     }
+    /*
+    pub fn resize(&self, width: u32, height: u32) {
+        unsafe {
+            self.ptr.as_ref().unwrap().ResizeBuffers(
+                1,
+                width,
+                height,
+                DXGI_FORMAT_R8G8B8A8_UNORM,
+                0
+            );
+        }
+    }*/
 
     pub fn present(&self, vsync: u32) {
         unsafe {

@@ -1,3 +1,4 @@
+use crate::engine::graphics::shader::{PixelShader, VertexShader};
 use crate::engine::graphics::swapchain::SwapChain;
 use crate::engine::graphics::vertex_buffer::VertexBuffer;
 
@@ -28,6 +29,18 @@ impl Context {
         unsafe {
             self.as_ref().IASetVertexBuffers(0, 1, &vertex_buffer.buffer(), &(std::mem::size_of::<V>() as u32), &0);
             self.as_ref().IASetInputLayout(vertex_buffer.layout())
+        }
+    }
+
+    pub fn set_vertex_shader(&self, shader: &VertexShader) {
+        unsafe {
+            self.as_ref().VSSetShader(shader.vertex_shader, std::ptr::null(), 0);
+        }
+    }
+
+    pub fn set_pixel_shader(&self, shader: &PixelShader) {
+        unsafe {
+            self.as_ref().PSSetShader(shader.pixel_shader, std::ptr::null(), 0);
         }
     }
 

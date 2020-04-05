@@ -5,11 +5,12 @@ use crate::engine::window::{Hwnd, Window};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 struct Vertex ( [f32; 3] );
+struct VertexColor ( [f32; 3], [f32; 3]);
 
 pub struct AppWindow {
     m_hwnd: Option<Hwnd>,
     running: AtomicBool,
-    vertex_buffer: Option<VertexBuffer<Vertex>>,
+    vertex_buffer: Option<VertexBuffer<VertexColor>>,
 }
 
 impl Window for AppWindow {
@@ -39,17 +40,19 @@ impl Window for AppWindow {
 
     fn on_create(&mut self) {
         let vertex_list = [
-            Vertex([-0.5, -0.5, 0.0]),
-            Vertex([-0.5,  0.5, 0.0]),
-            Vertex([ 0.5, -0.5, 0.0]),
-            Vertex([ 0.5,  0.5, 0.0]),
+            VertexColor([-0.5, -0.5, 0.0],[1.0,0.0,0.0]),
+            VertexColor([-0.5,  0.5, 0.0],[0.0,1.0,0.0]),
+            VertexColor([ 0.5, -0.5, 0.0],[0.0,0.0,1.0]),
+            VertexColor([ 0.5,  0.5, 0.0],[1.0,1.0,0.0]),
         ];
 
         
         let mut g = GRAPHICS.lock().unwrap();
-        *g = Some(Graphics::new(self.hwnd().unwrap()));
-        g.as_mut().unwrap().create_shaders();
-        let (byte_code, size) = g.as_ref().unwrap().get_shader_buffer_and_size();
+        let mut graphics = Graphics::new(self.hwnd().unwrap());
+        graphics.create_vertex_shader("vertex_shader.hlsl");
+        graphics.create_pixel_shader("pixel_shader.hlsl");
+        let (byte_code, size) = graphics.get_shader_buffer_and_size();
+        *g = Some(graphics);
         drop(g);
 
         let vb = VertexBuffer::new(&vertex_list, byte_code, size);

@@ -27,67 +27,73 @@ impl<V> VertexBuffer<V> {
             let g = GRAPHICS.lock().unwrap();
             let g = g.as_ref().unwrap();
 
-            if let Some(device) = g.device.as_ref() {
+            let device = g.device.as_ref();
 
-                let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
-                buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
-                buff_desc.ByteWidth = (vertices.len() * std::mem::size_of::<V>()) as u32;
-                buff_desc.BindFlags = d3d11::D3D11_BIND_VERTEX_BUFFER;
-                buff_desc.CPUAccessFlags =0;
-                buff_desc.MiscFlags = 0;
-        
-                let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-                data.pSysMem = vertices.as_ptr() as *const c_void;
-        
-                let mut buffer = std::ptr::null_mut();
-        
-                let res = device.CreateBuffer(
-                    &buff_desc,
-                    &data,
-                    &mut buffer,
-                );
+            let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
+            buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
+            buff_desc.ByteWidth = (vertices.len() * std::mem::size_of::<V>()) as u32;
+            buff_desc.BindFlags = d3d11::D3D11_BIND_VERTEX_BUFFER;
+            buff_desc.CPUAccessFlags =0;
+            buff_desc.MiscFlags = 0;
+    
+            let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
+            data.pSysMem = vertices.as_ptr() as *const c_void;
+    
+            let mut buffer = std::ptr::null_mut();
+    
+            let res = device.CreateBuffer(
+                &buff_desc,
+                &data,
+                &mut buffer,
+            );
 
-                if FAILED(res) {
-                    panic!();
-                }
-
-                let semantic_name = std::ffi::CString::new("POSITION").unwrap();
-
-                let layout_desc = [
-                    d3d11::D3D11_INPUT_ELEMENT_DESC {
-                        SemanticName: semantic_name.as_ptr(),
-                        SemanticIndex: 0,
-                        Format: DXGI_FORMAT_R32G32B32_FLOAT,
-                        InputSlot: 0,
-                        AlignedByteOffset: 0,
-                        InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
-                        InstanceDataStepRate: 0,
-                    }
-                ];
-
-                let mut layout = std::ptr::null_mut();
-
-                let res = device.CreateInputLayout(
-                    layout_desc.as_ptr(),
-                    layout_desc.len() as u32,
-                    shader_byte_code,
-                    shader_len,
-                    &mut layout,
-                );
-
-                if FAILED(res) {
-                    panic!();
-                }
-
-                VertexBuffer {
-                    len: vertices.len(),
-                    buffer,
-                    layout,
-                    _phantom: Default::default(),
-                }
-
-            } else {
+            if FAILED(res) {
                 panic!();
+            }
+
+            let semantic_name_pos = std::ffi::CString::new("POSITION").unwrap();
+            let semantic_name_col = std::ffi::CString::new("COLOR").unwrap();
+
+            let layout_desc = [
+                d3d11::D3D11_INPUT_ELEMENT_DESC {
+                    SemanticName: semantic_name_pos.as_ptr(),
+                    SemanticIndex: 0,
+                    Format: DXGI_FORMAT_R32G32B32_FLOAT,
+                    InputSlot: 0,
+                    AlignedByteOffset: 0,
+                    InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
+                    InstanceDataStepRate: 0,
+                },
+                d3d11::D3D11_INPUT_ELEMENT_DESC {
+                    SemanticName: semantic_name_col.as_ptr(),
+                    SemanticIndex: 0,
+                    Format: DXGI_FORMAT_R32G32B32_FLOAT,
+                    InputSlot: 0,
+                    AlignedByteOffset: 12,
+                    InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
+                    InstanceDataStepRate: 0,
+                },
+            ];
+
+            let mut layout = std::ptr::null_mut();
+
+            let res = device.CreateInputLayout(
+                layout_desc.as_ptr(),
+                layout_desc.len() as u32,
+                shader_byte_code,
+                shader_len,
+                &mut layout,
+            );
+
+            if FAILED(res) {
+                panic!();
+            }
+
+            VertexBuffer {
+                len: vertices.len(),
+                buffer,
+                layout,
+                _phantom: Default::default(),
             }
         }
     }
