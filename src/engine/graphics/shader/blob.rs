@@ -7,17 +7,13 @@ pub struct Blob(NonNull<ID3DBlob>);
 
 impl convert::AsRef<ID3DBlob> for Blob {
     fn as_ref(&self) -> &ID3DBlob {
-        unsafe {
-            self.0.as_ref()
-        }        
+        unsafe { self.0.as_ref() }
     }
 }
 
 impl convert::AsMut<ID3DBlob> for Blob {
     fn as_mut(&mut self) -> &mut ID3DBlob {
-        unsafe {
-            self.0.as_mut()
-        }        
+        unsafe { self.0.as_mut() }
     }
 }
 impl convert::TryFrom<*mut ID3DBlob> for Blob {
@@ -26,24 +22,21 @@ impl convert::TryFrom<*mut ID3DBlob> for Blob {
     fn try_from(ptr: *mut ID3DBlob) -> Result<Self, Self::Error> {
         match NonNull::new(ptr) {
             Some(inner) => Ok(Blob(inner)),
-            None => Err(())
+            None => Err(()),
         }
     }
 }
 
 impl fmt::Debug for Blob {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-
         unsafe {
             let slice = std::slice::from_raw_parts(
                 self.as_ref().GetBufferPointer() as *mut u8,
-                self.as_ref().GetBufferSize()
+                self.as_ref().GetBufferSize(),
             );
             let string = String::from_utf8_lossy(slice);
-        
-            f.debug_struct("Blob")
-                .field("text", &string)
-                .finish()
+
+            f.debug_struct("Blob").field("text", &string).finish()
         }
     }
 }

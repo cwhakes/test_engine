@@ -10,7 +10,6 @@ use winapi::um::d3dcommon;
 pub struct Context(NonNull<ID3D11DeviceContext>);
 
 impl Context {
-
     pub fn clear_render_target_color(
         &self,
         swapchain: &SwapChain,
@@ -20,14 +19,22 @@ impl Context {
         alp: f32,
     ) {
         unsafe {
-            self.as_ref().ClearRenderTargetView(swapchain.back_buffer(), &[red, grn, blu, alp]);
-            self.as_ref().OMSetRenderTargets(1, &swapchain.back_buffer(), std::ptr::null_mut());
+            self.as_ref()
+                .ClearRenderTargetView(swapchain.back_buffer(), &[red, grn, blu, alp]);
+            self.as_ref()
+                .OMSetRenderTargets(1, &swapchain.back_buffer(), std::ptr::null_mut());
         }
     }
 
     pub fn set_vertex_buffer<V>(&self, vertex_buffer: &VertexBuffer<V>) {
         unsafe {
-            self.as_ref().IASetVertexBuffers(0, 1, &vertex_buffer.buffer(), &(std::mem::size_of::<V>() as u32), &0);
+            self.as_ref().IASetVertexBuffers(
+                0,
+                1,
+                &vertex_buffer.buffer(),
+                &(std::mem::size_of::<V>() as u32),
+                &0,
+            );
             self.as_ref().IASetInputLayout(vertex_buffer.layout())
         }
     }
@@ -38,15 +45,19 @@ impl Context {
 
     pub fn _draw_triangle_list<V>(&self, vertices_len: usize, vertices_start: usize) {
         unsafe {
-            self.as_ref().IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            self.as_ref().Draw(vertices_len as u32, vertices_start as u32);
+            self.as_ref()
+                .IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            self.as_ref()
+                .Draw(vertices_len as u32, vertices_start as u32);
         }
     }
 
     pub fn draw_triangle_strip<V>(&self, vertices_len: usize, vertices_start: usize) {
         unsafe {
-            self.as_ref().IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-            self.as_ref().Draw(vertices_len as u32, vertices_start as u32);
+            self.as_ref()
+                .IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            self.as_ref()
+                .Draw(vertices_len as u32, vertices_start as u32);
         }
     }
 
@@ -65,17 +76,13 @@ impl Context {
 
 impl AsRef<ID3D11DeviceContext> for Context {
     fn as_ref(&self) -> &ID3D11DeviceContext {
-        unsafe {
-            self.0.as_ref()
-        }        
+        unsafe { self.0.as_ref() }
     }
 }
 
 impl AsMut<ID3D11DeviceContext> for Context {
     fn as_mut(&mut self) -> &mut ID3D11DeviceContext {
-        unsafe {
-            self.0.as_mut()
-        }        
+        unsafe { self.0.as_mut() }
     }
 }
 
@@ -85,7 +92,7 @@ impl std::convert::TryFrom<*mut ID3D11DeviceContext> for Context {
     fn try_from(ptr: *mut ID3D11DeviceContext) -> Result<Self, Self::Error> {
         match NonNull::new(ptr) {
             Some(inner) => Ok(Context(inner)),
-            None => Err(())
+            None => Err(()),
         }
     }
 }

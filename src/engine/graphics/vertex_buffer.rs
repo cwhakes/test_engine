@@ -8,7 +8,7 @@ use winapi::um::d3d11;
 
 pub struct VertexBuffer<V>
 where
-    V: Sized
+    V: Sized,
 {
     len: usize,
     buffer: *mut d3d11::ID3D11Buffer,
@@ -21,8 +21,11 @@ unsafe impl<V> Send for VertexBuffer<V> where V: Send {}
 unsafe impl<V> Sync for VertexBuffer<V> where V: Sync {}
 
 impl<V> VertexBuffer<V> {
-    pub fn new( vertices: &[V], shader_byte_code: *const c_void, shader_len: usize, ) -> VertexBuffer<V> {
-
+    pub fn new(
+        vertices: &[V],
+        shader_byte_code: *const c_void,
+        shader_len: usize,
+    ) -> VertexBuffer<V> {
         unsafe {
             let g = GRAPHICS.lock().unwrap();
             let g = g.as_ref().unwrap();
@@ -33,19 +36,15 @@ impl<V> VertexBuffer<V> {
             buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
             buff_desc.ByteWidth = (vertices.len() * std::mem::size_of::<V>()) as u32;
             buff_desc.BindFlags = d3d11::D3D11_BIND_VERTEX_BUFFER;
-            buff_desc.CPUAccessFlags =0;
+            buff_desc.CPUAccessFlags = 0;
             buff_desc.MiscFlags = 0;
-    
+
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.pSysMem = vertices.as_ptr() as *const c_void;
-    
+
             let mut buffer = std::ptr::null_mut();
-    
-            let res = device.CreateBuffer(
-                &buff_desc,
-                &data,
-                &mut buffer,
-            );
+
+            let res = device.CreateBuffer(&buff_desc, &data, &mut buffer);
 
             if FAILED(res) {
                 panic!();

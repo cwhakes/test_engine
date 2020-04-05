@@ -128,7 +128,6 @@ pub trait Window: Send + Sync {
 
     fn broadcast(&self) {
         unsafe {
-
             self.on_update();
 
             let mut msg = Default::default();
@@ -140,5 +139,3 @@ pub trait Window: Send + Sync {
         }
     }
 }
-
-

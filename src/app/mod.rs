@@ -1,11 +1,11 @@
-use crate::engine::graphics::{Graphics, GRAPHICS};
 use crate::engine::graphics::vertex_buffer::VertexBuffer;
+use crate::engine::graphics::{Graphics, GRAPHICS};
 use crate::engine::window::{Hwnd, Window};
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
-struct Vertex ( [f32; 3] );
-struct VertexColor ( [f32; 3], [f32; 3]);
+struct Vertex([f32; 3]);
+struct VertexColor([f32; 3], [f32; 3]);
 
 pub struct AppWindow {
     m_hwnd: Option<Hwnd>,
@@ -64,10 +64,13 @@ impl Window for AppWindow {
             g.immediate_context()
                 .clear_render_target_color(g.swapchain(), 1.0, 0.0, 0.0, 1.0);
             let (width, height) = self.m_hwnd.as_ref().unwrap().rect();
-            g.immediate_context().set_viewport_size(width as f32, height as f32);
+            g.immediate_context()
+                .set_viewport_size(width as f32, height as f32);
             g.set_shaders();
-            g.immediate_context().set_vertex_buffer(self.vertex_buffer.as_ref().unwrap());
-            g.immediate_context().draw_triangle_strip::<Vertex>(self.vertex_buffer.as_ref().unwrap().len(), 0);
+            g.immediate_context()
+                .set_vertex_buffer(self.vertex_buffer.as_ref().unwrap());
+            g.immediate_context()
+                .draw_triangle_strip::<Vertex>(self.vertex_buffer.as_ref().unwrap().len(), 0);
 
             g.swapchain().present(0);
         }

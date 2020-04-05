@@ -106,7 +106,7 @@ impl Graphics {
     pub fn vertex_shader(&self) -> Option<&Shader<shader::Vertex>> {
         self.vertex_shader.as_ref()
     }
-    
+
     pub fn pixel_shader(&self) -> Option<&Shader<shader::Pixel>> {
         self.pixel_shader.as_ref()
     }
@@ -128,8 +128,21 @@ impl Graphics {
 
     pub fn get_shader_buffer_and_size(&self) -> (*const c_void, usize) {
         unsafe {
-            let bytecode = self.vertex_shader.as_ref().unwrap().blob.as_ref().GetBufferPointer();
-            let size = self.vertex_shader.as_ref().unwrap().blob.as_ref().GetBufferSize();
+            let bytecode = self
+                .vertex_shader
+                .as_ref()
+                .unwrap()
+                .blob
+                .as_ref()
+                .GetBufferPointer();
+            let size = self
+                .vertex_shader
+                .as_ref()
+                .unwrap()
+                .blob
+                .as_ref()
+                .GetBufferSize();
+
             (bytecode, size)
         }
     }

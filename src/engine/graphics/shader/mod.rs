@@ -18,15 +18,13 @@ use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d3dcommon;
 use winapi::um::d3dcompiler::D3DCompileFromFile;
 
-pub fn compile_shader(location: &str, entry_point: &str, target: &str) ->  
-    Result<Blob, Blob>
-{
+pub fn compile_shader(location: &str, entry_point: &str, target: &str) -> Result<Blob, Blob> {
     unsafe {
         let location = os_vec(location);
         let entry_point = CString::new(entry_point).unwrap();
         let target = CString::new(target).unwrap();
 
-        let mut blob:  *mut d3dcommon::ID3DBlob = null_mut();
+        let mut blob: *mut d3dcommon::ID3DBlob = null_mut();
         let mut err_blob: *mut d3dcommon::ID3DBlob = null_mut();
 
         let result = D3DCompileFromFile(

@@ -6,27 +6,20 @@ use std::ffi::c_void;
 use std::ops::Deref;
 use std::ptr::null_mut;
 
-use winapi::um::d3d11::ID3D11DeviceChild;
-
-use winapi::um::d3d11::ID3D11Device;
-use winapi::um::d3d11::ID3D11DeviceContext;
 use winapi::shared::basetsd::SIZE_T;
+use winapi::um::d3d11;
 
 pub trait ShaderType {
-
-    type ShaderInterface: Deref<Target = ID3D11DeviceChild>;
+    type ShaderInterface: Deref<Target = d3d11::ID3D11DeviceChild>;
 
     fn create_shader(
-        device: &ID3D11Device,
+        device: &d3d11::ID3D11Device,
         bytecode: *const c_void,
         bytecode_len: SIZE_T,
         shader: *mut *mut Self::ShaderInterface,
     );
 
-    fn set_shader(
-        context: &ID3D11DeviceContext,
-        shader: *mut Self::ShaderInterface,
-    );
+    fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: *mut Self::ShaderInterface);
 
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;
@@ -49,10 +42,7 @@ impl<T: ShaderType> Shader<T> {
 
             T::create_shader(device.as_ref(), bytecode, bytecode_len, &mut shader);
 
-            Shader {
-                shader,
-                blob,
-            }
+            Shader { shader, blob }
         }
     }
 }

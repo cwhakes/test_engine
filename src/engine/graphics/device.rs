@@ -6,17 +6,13 @@ pub struct Device(NonNull<ID3D11Device>);
 
 impl AsRef<ID3D11Device> for Device {
     fn as_ref(&self) -> &ID3D11Device {
-        unsafe {
-            self.0.as_ref()
-        }        
+        unsafe { self.0.as_ref() }
     }
 }
 
 impl AsMut<ID3D11Device> for Device {
     fn as_mut(&mut self) -> &mut ID3D11Device {
-        unsafe {
-            self.0.as_mut()
-        }        
+        unsafe { self.0.as_mut() }
     }
 }
 
@@ -26,7 +22,7 @@ impl std::convert::TryFrom<*mut ID3D11Device> for Device {
     fn try_from(ptr: *mut ID3D11Device) -> Result<Self, Self::Error> {
         match NonNull::new(ptr) {
             Some(inner) => Ok(Device(inner)),
-            None => Err(())
+            None => Err(()),
         }
     }
 }
