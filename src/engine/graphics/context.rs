@@ -1,4 +1,4 @@
-use crate::engine::graphics::shader::{PixelShader, VertexShader};
+use crate::engine::graphics::shader::{self, Shader};
 use crate::engine::graphics::swapchain::SwapChain;
 use crate::engine::graphics::vertex_buffer::VertexBuffer;
 
@@ -32,15 +32,15 @@ impl Context {
         }
     }
 
-    pub fn set_vertex_shader(&self, shader: &VertexShader) {
+    pub fn set_vertex_shader(&self, shader: &Shader<shader::Vertex>) {
         unsafe {
-            self.as_ref().VSSetShader(shader.vertex_shader, std::ptr::null(), 0);
+            self.as_ref().VSSetShader(shader.shader, std::ptr::null(), 0);
         }
     }
 
-    pub fn set_pixel_shader(&self, shader: &PixelShader) {
+    pub fn set_pixel_shader(&self, shader: &Shader<shader::Pixel>) {
         unsafe {
-            self.as_ref().PSSetShader(shader.pixel_shader, std::ptr::null(), 0);
+            self.as_ref().PSSetShader(shader.shader, std::ptr::null(), 0);
         }
     }
 

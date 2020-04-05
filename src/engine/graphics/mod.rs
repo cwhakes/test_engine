@@ -8,7 +8,7 @@ use crate::engine::window::Hwnd;
 
 use context::Context;
 use device::Device;
-use shader::{PixelShader, VertexShader};
+use shader::Shader;
 use swapchain::SwapChain;
 
 use std::convert::TryInto;
@@ -29,8 +29,8 @@ pub struct Graphics {
     _feature_level: d3dcommon::D3D_FEATURE_LEVEL,
     context: Context,
     swapchain: SwapChain,
-    vertex_shader: Option<VertexShader>,
-    pixel_shader: Option<PixelShader>,
+    vertex_shader: Option<Shader<shader::Vertex>>,
+    pixel_shader: Option<Shader<shader::Pixel>>,
 }
 
 //TODO FIXME verify we can do this
@@ -103,21 +103,21 @@ impl Graphics {
         &self.swapchain
     }
 
-    pub fn vertex_shader(&self) -> Option<&VertexShader> {
+    pub fn vertex_shader(&self) -> Option<&Shader<shader::Vertex>> {
         self.vertex_shader.as_ref()
     }
     
-    pub fn pixel_shader(&self) -> Option<&PixelShader> {
+    pub fn pixel_shader(&self) -> Option<&Shader<shader::Pixel>> {
         self.pixel_shader.as_ref()
     }
 
     pub fn create_vertex_shader(&mut self, location: &str) {
-        let vertex_shader = VertexShader::new(&self.device, location);
+        let vertex_shader = Shader::<shader::Vertex>::new(&self.device, location);
         self.vertex_shader = Some(vertex_shader);
     }
 
     pub fn create_pixel_shader(&mut self, location: &str) {
-        let pixel_shader = PixelShader::new(&self.device, location);
+        let pixel_shader = Shader::<shader::Pixel>::new(&self.device, location);
         self.pixel_shader = Some(pixel_shader);
     }
 

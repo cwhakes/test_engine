@@ -1,10 +1,12 @@
 pub mod blob;
-pub mod pixel_shader;
-pub mod vertex_shader;
+pub mod pixel;
+pub mod shader;
+pub mod vertex;
 
 use blob::Blob;
-pub use pixel_shader::PixelShader;
-pub use vertex_shader::VertexShader;
+pub use pixel::Pixel;
+pub use shader::Shader;
+pub use vertex::Vertex;
 
 use crate::util::os_vec;
 
