@@ -9,22 +9,24 @@ use std::ptr::null_mut;
 use winapi::um::d3d11::ID3D11DeviceChild;
 
 use winapi::um::d3d11::ID3D11Device;
+use winapi::um::d3d11::ID3D11DeviceContext;
 use winapi::shared::basetsd::SIZE_T;
-use winapi::um::d3d11::ID3D11ClassLinkage;
-use winapi::um::winnt::HRESULT;
 
 pub trait ShaderType {
 
     type ShaderInterface: Deref<Target = ID3D11DeviceChild>;
 
-    #[allow(non_snake_case)]
-    unsafe fn create_shader(
+    fn create_shader(
         device: &ID3D11Device,
-        pShaderBytecode: *const c_void,
-        BytecodeLength: SIZE_T,
-        pClassLinkage: *mut ID3D11ClassLinkage,
-        ppShader: *mut *mut Self::ShaderInterface,
-    ) -> HRESULT;
+        bytecode: *const c_void,
+        bytecode_len: SIZE_T,
+        shader: *mut *mut Self::ShaderInterface,
+    );
+
+    fn set_shader(
+        context: &ID3D11DeviceContext,
+        shader: *mut Self::ShaderInterface,
+    );
 
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;
@@ -45,7 +47,7 @@ impl<T: ShaderType> Shader<T> {
 
             let mut shader = null_mut();
 
-            T::create_shader(device.as_ref(), bytecode, bytecode_len, null_mut(), &mut shader);
+            T::create_shader(device.as_ref(), bytecode, bytecode_len, &mut shader);
 
             Shader {
                 shader,

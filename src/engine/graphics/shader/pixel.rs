@@ -1,35 +1,40 @@
 use super::shader::ShaderType;
 
 use std::ffi::c_void;
+use std::ptr;
 
-use winapi::um::d3d11::ID3D11Device;
+use winapi::um::d3d11;
 use winapi::shared::basetsd::SIZE_T;
-use winapi::um::d3d11::ID3D11ClassLinkage;
-use winapi::um::winnt::HRESULT;
-
-use winapi::um::d3d11::ID3D11PixelShader;
 
 pub enum Pixel {}
 
 impl ShaderType for Pixel {
 
-    type ShaderInterface = ID3D11PixelShader;
+    type ShaderInterface = d3d11::ID3D11PixelShader;
 
-    #[allow(non_snake_case)]
-    unsafe fn create_shader(
-        device: &ID3D11Device,
-        pShaderBytecode: *const c_void,
-        BytecodeLength: SIZE_T,
-        pClassLinkage: *mut ID3D11ClassLinkage,
-        ppShader: *mut *mut Self::ShaderInterface,
-    ) -> HRESULT {
-        winapi::um::d3d11::ID3D11Device::CreatePixelShader(
-            device,
-            pShaderBytecode,
-            BytecodeLength,
-            pClassLinkage,
-            ppShader,
-        )
+    fn create_shader(
+        device: &d3d11::ID3D11Device,
+        bytecode: *const c_void,
+        bytecode_len: SIZE_T,
+        shader: *mut *mut Self::ShaderInterface,
+    ) {
+        unsafe {
+            device.CreatePixelShader(
+                bytecode,
+                bytecode_len,
+                ptr::null_mut(),
+                shader,
+            );
+        }
+    }
+
+    fn set_shader(
+        context: &d3d11::ID3D11DeviceContext,
+        shader: *mut Self::ShaderInterface,
+    ) {
+        unsafe {
+            context.PSSetShader(shader, ptr::null(), 0)
+        }
     }
 
     const ENTRY_POINT: &'static str = "psmain";

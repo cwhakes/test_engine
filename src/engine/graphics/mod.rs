@@ -122,8 +122,8 @@ impl Graphics {
     }
 
     pub fn set_shaders(&self) {
-        self.context.set_vertex_shader(self.vertex_shader().unwrap());
-        self.context.set_pixel_shader(self.pixel_shader().unwrap());
+        self.context.set_shader(self.vertex_shader().unwrap());
+        self.context.set_shader(self.pixel_shader().unwrap());
     }
 
     pub fn get_shader_buffer_and_size(&self) -> (*const c_void, usize) {

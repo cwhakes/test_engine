@@ -5,7 +5,7 @@ pub mod vertex;
 
 use blob::Blob;
 pub use pixel::Pixel;
-pub use shader::Shader;
+pub use shader::{Shader, ShaderType};
 pub use vertex::Vertex;
 
 use crate::util::os_vec;

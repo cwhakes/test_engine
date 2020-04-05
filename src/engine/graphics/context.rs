@@ -1,4 +1,4 @@
-use crate::engine::graphics::shader::{self, Shader};
+use crate::engine::graphics::shader::{Shader, ShaderType};
 use crate::engine::graphics::swapchain::SwapChain;
 use crate::engine::graphics::vertex_buffer::VertexBuffer;
 
@@ -32,16 +32,8 @@ impl Context {
         }
     }
 
-    pub fn set_vertex_shader(&self, shader: &Shader<shader::Vertex>) {
-        unsafe {
-            self.as_ref().VSSetShader(shader.shader, std::ptr::null(), 0);
-        }
-    }
-
-    pub fn set_pixel_shader(&self, shader: &Shader<shader::Pixel>) {
-        unsafe {
-            self.as_ref().PSSetShader(shader.shader, std::ptr::null(), 0);
-        }
+    pub fn set_shader<T: ShaderType>(&self, shader: &Shader<T>) {
+        T::set_shader(self.as_ref(), shader.shader);
     }
 
     pub fn _draw_triangle_list<V>(&self, vertices_len: usize, vertices_start: usize) {
