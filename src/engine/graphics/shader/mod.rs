@@ -1,7 +1,7 @@
-pub mod blob;
-pub mod pixel;
-pub mod shader;
-pub mod vertex;
+mod blob;
+mod pixel;
+mod shader;
+mod vertex;
 
 use blob::Blob;
 pub use pixel::Pixel;

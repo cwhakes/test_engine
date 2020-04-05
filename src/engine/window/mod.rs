@@ -5,29 +5,20 @@ pub use hwnd::Hwnd;
 use crate::util::os_vec;
 
 use std::sync::Mutex;
+use std::{mem, ptr};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::windef::HWND;
 
+use winapi::um::winuser;
 use winapi::um::winuser::{CreateWindowExW, RegisterClassExW, WNDCLASSEXW};
 //use winapi::um::winuser::COLOR_WINDOW;
 //use winapi::shared::windef::HBRUSH;
-use winapi::um::winuser::DefWindowProcW;
-use winapi::um::winuser::LoadCursorW;
-use winapi::um::winuser::LoadIconW;
-use winapi::um::winuser::PeekMessageW;
-use winapi::um::winuser::PostQuitMessage;
-use winapi::um::winuser::CW_USEDEFAULT;
-use winapi::um::winuser::IDC_ARROW;
-use winapi::um::winuser::IDI_APPLICATION;
-use winapi::um::winuser::SW_SHOW;
+use winapi::um::winuser::{DispatchMessageW, PeekMessageW, TranslateMessage};
 use winapi::um::winuser::{ShowWindow, UpdateWindow};
+use winapi::um::winuser::{IDC_ARROW, IDI_APPLICATION};
 use winapi::um::winuser::{WM_CREATE, WM_DESTROY};
 use winapi::um::winuser::{WS_EX_OVERLAPPEDWINDOW, WS_OVERLAPPEDWINDOW};
-//use winapi::um::winuser::LPMSG;
-use winapi::um::winuser::MSG;
-use winapi::um::winuser::PM_REMOVE;
-use winapi::um::winuser::{DispatchMessageW, TranslateMessage};
 
 lazy_static! {
     pub static ref WINDOW: Mutex<Option<Box<dyn Window>>> = Mutex::new(None);
@@ -41,7 +32,7 @@ unsafe extern "system" fn window_loop(
 ) -> LRESULT {
     match msg {
         WM_CREATE => {
-            if let Some(window) = WINDOW.lock().unwrap().as_mut() {
+            if let Some(ref mut window) = *WINDOW.lock().unwrap() {
                 window.set_hwnd(hwnd.into());
                 window.on_create();
                 window.set_running(true);
@@ -51,15 +42,15 @@ unsafe extern "system" fn window_loop(
         WM_DESTROY => {
             //Spawn a different thread to prevent recursive lock
             std::thread::spawn(|| {
-                if let Some(window) = WINDOW.lock().unwrap().as_mut() {
+                if let Some(ref mut window) = *WINDOW.lock().unwrap() {
                     window.on_destroy();
                     window.set_running(false);
                 };
             });
-            PostQuitMessage(0);
+            winuser::PostQuitMessage(0);
             0
         }
-        _ => DefWindowProcW(hwnd, msg, wparam, lparam),
+        _ => winuser::DefWindowProcW(hwnd, msg, wparam, lparam),
     }
 }
 
@@ -90,13 +81,13 @@ pub trait Window: Send + Sync {
 
             let wc = WNDCLASSEXW {
                 cbClsExtra: 0,
-                cbSize: std::mem::size_of::<WNDCLASSEXW>() as u32,
+                cbSize: mem::size_of::<WNDCLASSEXW>() as u32,
                 cbWndExtra: 0,
-                hbrBackground: std::ptr::null_mut(), //&COLOR_WINDOW as HBRUSH,
-                hCursor: LoadCursorW(std::ptr::null_mut(), IDC_ARROW),
-                hIcon: LoadIconW(std::ptr::null_mut(), IDI_APPLICATION),
-                hIconSm: LoadIconW(std::ptr::null_mut(), IDI_APPLICATION),
-                hInstance: std::ptr::null_mut(),
+                hbrBackground: ptr::null_mut(), //&COLOR_WINDOW as HBRUSH,
+                hCursor: winuser::LoadCursorW(ptr::null_mut(), IDC_ARROW),
+                hIcon: winuser::LoadIconW(ptr::null_mut(), IDI_APPLICATION),
+                hIconSm: winuser::LoadIconW(ptr::null_mut(), IDI_APPLICATION),
+                hInstance: ptr::null_mut(),
                 lpszClassName: class_name.clone().as_ptr(),
                 lpszMenuName: menu_name.as_ptr(),
                 style: 0,
@@ -111,17 +102,17 @@ pub trait Window: Send + Sync {
                 class_name.as_ptr(),
                 window_name.as_ptr(),
                 WS_OVERLAPPEDWINDOW,
-                CW_USEDEFAULT,
-                CW_USEDEFAULT,
+                winuser::CW_USEDEFAULT,
+                winuser::CW_USEDEFAULT,
                 1024,
                 768,
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+                ptr::null_mut(),
             );
 
-            ShowWindow(m_hwnd, SW_SHOW);
+            ShowWindow(m_hwnd, winuser::SW_SHOW);
             UpdateWindow(m_hwnd);
         }
     }
@@ -131,9 +122,9 @@ pub trait Window: Send + Sync {
             self.on_update();
 
             let mut msg = Default::default();
-            while 0 < PeekMessageW(&mut msg, std::ptr::null_mut(), 0, 0, PM_REMOVE) {
-                TranslateMessage(&mut msg as *const MSG);
-                DispatchMessageW(&mut msg as *const MSG);
+            while 0 < PeekMessageW(&mut msg, ptr::null_mut(), 0, 0, winuser::PM_REMOVE) {
+                TranslateMessage(&mut msg as *const _);
+                DispatchMessageW(&mut msg as *const _);
             }
             std::thread::sleep(Default::default());
         }

@@ -1,7 +1,6 @@
-use crate::engine::graphics::vertex_buffer::VertexBuffer;
-use crate::engine::graphics::constant_buffer::ConstantBuffer;
-use crate::engine::graphics::{Graphics, GRAPHICS};
 use crate::engine::graphics::shader::{self, Shader};
+use crate::engine::graphics::{ConstantBuffer, VertexBuffer};
+use crate::engine::graphics::{Graphics, GRAPHICS};
 use crate::engine::window::{Hwnd, Window};
 
 use crate::util::get_tick_count;
@@ -57,15 +56,17 @@ impl Window for AppWindow {
 
     fn on_create(&mut self) {
         let vertex_list = [
-            VertexColor([-0.5, -0.5, 0.0],[-0.5, 0.5, 0.0],[1.0,0.0,0.0]),
-            VertexColor([-0.5,  0.5, 0.0],[-0.5, 0.5, 0.0],[0.0,1.0,0.0]),
-            VertexColor([ 0.5, -0.5, 0.0],[-0.5, 0.5, 0.0],[0.0,0.0,1.0]),
-            VertexColor([ 0.5,  0.5, 0.0],[-0.5, 0.5, 0.0],[1.0,1.0,0.0]),
+            VertexColor([-0.5, -0.5, 0.0], [-0.5, 0.5, 0.0], [1.0, 0.0, 0.0]),
+            VertexColor([-0.5, 0.5, 0.0], [-0.5, 0.5, 0.0], [0.0, 1.0, 0.0]),
+            VertexColor([0.5, -0.5, 0.0], [-0.5, 0.5, 0.0], [0.0, 0.0, 1.0]),
+            VertexColor([0.5, 0.5, 0.0], [-0.5, 0.5, 0.0], [1.0, 1.0, 0.0]),
         ];
 
         let graphics = Graphics::new(self.hwnd().unwrap());
-        let (vertex_shader, blob) = Shader::<shader::Vertex>::new(graphics.device(), "vertex_shader.hlsl");
-        let (pixel_shader, _) = Shader::<shader::Pixel>::new(graphics.device(), "pixel_shader.hlsl");
+        let (vertex_shader, blob) =
+            Shader::<shader::Vertex>::new(graphics.device(), "vertex_shader.hlsl");
+        let (pixel_shader, _) =
+            Shader::<shader::Pixel>::new(graphics.device(), "pixel_shader.hlsl");
         *GRAPHICS.lock().unwrap() = Some(graphics);
 
         self.vertex_shader = Some(vertex_shader);
@@ -73,7 +74,9 @@ impl Window for AppWindow {
 
         let vb = VertexBuffer::new(&vertex_list, &blob);
         self.vertex_buffer = Some(vb);
-        let cb = ConstantBuffer::new(&Constant{time: get_tick_count()});
+        let cb = ConstantBuffer::new(&Constant {
+            time: get_tick_count(),
+        });
         self.constant_buffer = Some(cb);
     }
 
@@ -85,14 +88,16 @@ impl Window for AppWindow {
             context.set_viewport_size(width as f32, height as f32);
 
             if let Some(cb) = self.constant_buffer.as_mut() {
-                let mut constant = Constant{time: get_tick_count()};
+                let mut constant = Constant {
+                    time: get_tick_count(),
+                };
                 cb.update(context, &mut constant as *mut _ as *mut _);
                 context.set_constant_buffer::<shader::Vertex, _>(cb);
                 context.set_constant_buffer::<shader::Pixel, _>(cb);
             }
 
-            context.set_shader(self.vertex_shader.as_ref().unwrap());
-            context.set_shader(self.pixel_shader.as_ref().unwrap());
+            context.set_shader(self.vertex_shader.as_mut().unwrap());
+            context.set_shader(self.pixel_shader.as_mut().unwrap());
             context.set_vertex_buffer(self.vertex_buffer.as_ref().unwrap());
             context.draw_triangle_strip::<Vertex>(self.vertex_buffer.as_ref().unwrap().len(), 0);
 

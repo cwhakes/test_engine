@@ -3,24 +3,23 @@ use super::{blob::Blob, compile_shader};
 use crate::engine::graphics::constant_buffer::ConstantBuffer;
 use crate::engine::graphics::device::Device;
 
-use std::ffi::c_void;
-use std::ops::Deref;
-use std::ptr::null_mut;
+use std::ptr::{self, NonNull};
+use std::{convert, ffi, ops};
 
 use winapi::shared::basetsd::SIZE_T;
 use winapi::um::d3d11;
 
 pub trait ShaderType {
-    type ShaderInterface: Deref<Target = d3d11::ID3D11DeviceChild>;
+    type ShaderInterface: ops::Deref<Target = d3d11::ID3D11DeviceChild>;
 
     fn create_shader(
         device: &d3d11::ID3D11Device,
-        bytecode: *const c_void,
+        bytecode: *const ffi::c_void,
         bytecode_len: SIZE_T,
         shader: *mut *mut Self::ShaderInterface,
     );
 
-    fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: *mut Self::ShaderInterface);
+    fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: &mut Self::ShaderInterface);
 
     fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &ConstantBuffer<C>);
 
@@ -29,8 +28,12 @@ pub trait ShaderType {
 }
 
 pub struct Shader<T: ShaderType> {
-    pub shader: *mut T::ShaderInterface,
+    pub shader: NonNull<T::ShaderInterface>,
 }
+
+//TODO FIXME Verify
+unsafe impl<T> Send for Shader<T> where T: ShaderType + Send {}
+unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 
 impl<T: ShaderType> Shader<T> {
     pub fn new(device: &Device, location: &str) -> (Shader<T>, Blob) {
@@ -40,25 +43,31 @@ impl<T: ShaderType> Shader<T> {
             let bytecode = blob.as_ref().GetBufferPointer();
             let bytecode_len = blob.as_ref().GetBufferSize();
 
-            let mut shader = null_mut();
-
+            let mut shader = ptr::null_mut();
             T::create_shader(device.as_ref(), bytecode, bytecode_len, &mut shader);
+            let shader = NonNull::new(shader).unwrap();
 
             (Shader { shader }, blob)
         }
     }
 }
 
-//TODO FIXME Verify
-unsafe impl<T> Send for Shader<T> where T: ShaderType + Send {}
-unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
+impl<T: ShaderType> convert::AsRef<T::ShaderInterface> for Shader<T> {
+    fn as_ref(&self) -> &T::ShaderInterface {
+        unsafe { self.shader.as_ref() }
+    }
+}
 
-impl<T: ShaderType> Drop for Shader<T> {
+impl<T: ShaderType> convert::AsMut<T::ShaderInterface> for Shader<T> {
+    fn as_mut(&mut self) -> &mut T::ShaderInterface {
+        unsafe { self.shader.as_mut() }
+    }
+}
+
+impl<T: ShaderType> ops::Drop for Shader<T> {
     fn drop(&mut self) {
         unsafe {
-            if let Some(shader) = self.shader.as_ref() {
-                shader.Release();
-            }
+            self.shader.as_ref().Release();
         }
     }
 }

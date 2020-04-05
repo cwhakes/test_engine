@@ -1,5 +1,5 @@
-use std::{convert, fmt, ops};
 use std::ptr::NonNull;
+use std::{convert, fmt, ops};
 use winapi::um::d3dcommon::ID3DBlob;
 
 pub struct Blob(NonNull<ID3DBlob>);

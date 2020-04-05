@@ -1,15 +1,17 @@
-pub mod constant_buffer;
-pub mod context;
-pub mod device;
+mod constant_buffer;
+mod context;
+mod device;
 pub mod shader;
-pub mod swapchain;
-pub mod vertex_buffer;
+mod swapchain;
+mod vertex_buffer;
 
-use crate::engine::window::Hwnd;
+pub use constant_buffer::ConstantBuffer;
+pub use context::Context;
+pub use device::Device;
+pub use swapchain::SwapChain;
+pub use vertex_buffer::VertexBuffer;
 
-use context::Context;
-use device::Device;
-use swapchain::SwapChain;
+use super::window;
 
 use std::convert::TryInto;
 use std::ptr::null_mut;
@@ -35,7 +37,7 @@ unsafe impl Send for Graphics {}
 unsafe impl Sync for Graphics {}
 
 impl Graphics {
-    pub fn new(hwnd: &Hwnd) -> Graphics {
+    pub fn new(hwnd: &window::Hwnd) -> Graphics {
         unsafe {
             let driver_types = [
                 d3dcommon::D3D_DRIVER_TYPE_HARDWARE,

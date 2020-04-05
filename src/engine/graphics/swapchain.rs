@@ -1,4 +1,7 @@
 use crate::engine::window::Hwnd;
+
+use std::ptr::{self, NonNull};
+
 use winapi::shared::dxgi::{IDXGISwapChain, DXGI_SWAP_CHAIN_DESC};
 use winapi::shared::dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM;
 use winapi::shared::dxgitype::DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -6,8 +9,8 @@ use winapi::um::d3d11::{ID3D11Device, ID3D11RenderTargetView, ID3D11Resource, ID
 use winapi::Interface;
 
 pub struct SwapChain {
-    ptr: *mut IDXGISwapChain,
-    back_buffer: *mut ID3D11RenderTargetView,
+    inner: NonNull<IDXGISwapChain>,
+    back_buffer: NonNull<ID3D11RenderTargetView>,
 }
 
 impl SwapChain {
@@ -30,45 +33,36 @@ impl SwapChain {
         desc
     }
 
-    pub fn new(ptr: *mut IDXGISwapChain, device: &ID3D11Device) -> SwapChain {
+    pub fn new(inner: *mut IDXGISwapChain, device: &ID3D11Device) -> SwapChain {
         unsafe {
-            let mut buffer = std::ptr::null_mut();
-            ptr.as_ref()
-                .unwrap()
+            let inner = NonNull::new(inner).unwrap();
+            let mut buffer = ptr::null_mut();
+            inner
+                .as_ref()
                 .GetBuffer(0, &ID3D11Texture2D::uuidof(), &mut buffer);
             let buffer = buffer as *mut ID3D11Resource;
 
-            let mut rtv = std::ptr::null_mut();
-            device.CreateRenderTargetView(buffer, std::ptr::null_mut(), &mut rtv);
+            let mut rtv = ptr::null_mut();
+            device.CreateRenderTargetView(buffer, ptr::null_mut(), &mut rtv);
+            let back_buffer = NonNull::new(rtv).unwrap();
 
             buffer.as_ref().unwrap().Release();
 
-            SwapChain {
-                ptr,
-                back_buffer: rtv,
-            }
+            SwapChain { inner, back_buffer }
         }
     }
 
-    pub fn back_buffer(&self) -> *mut ID3D11RenderTargetView {
-        self.back_buffer
+    pub fn inner(&self) -> &IDXGISwapChain {
+        unsafe { self.inner.as_ref() }
     }
-    /*
-    pub fn resize(&self, width: u32, height: u32) {
-        unsafe {
-            self.ptr.as_ref().unwrap().ResizeBuffers(
-                1,
-                width,
-                height,
-                DXGI_FORMAT_R8G8B8A8_UNORM,
-                0
-            );
-        }
-    }*/
+
+    pub fn back_buffer_ptr(&self) -> *mut ID3D11RenderTargetView {
+        self.back_buffer.as_ptr()
+    }
 
     pub fn present(&self, vsync: u32) {
         unsafe {
-            self.ptr.as_ref().unwrap().Present(vsync, 0);
+            self.inner().Present(vsync, 0);
         }
     }
 }
@@ -76,9 +70,7 @@ impl SwapChain {
 impl Drop for SwapChain {
     fn drop(&mut self) {
         unsafe {
-            if let Some(ptr) = self.ptr.as_ref() {
-                ptr.Release();
-            }
+            self.inner().Release();
         }
     }
 }

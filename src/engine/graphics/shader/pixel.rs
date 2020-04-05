@@ -24,12 +24,12 @@ impl ShaderType for Pixel {
         }
     }
 
-    fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: *mut Self::ShaderInterface) {
+    fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: &mut Self::ShaderInterface) {
         unsafe { context.PSSetShader(shader, ptr::null(), 0) }
     }
 
     fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &ConstantBuffer<C>) {
-        unsafe { context.PSSetConstantBuffers(0, 1, &buffer.buffer) }
+        unsafe { context.PSSetConstantBuffers(0, 1, &buffer.buffer_ptr()) }
     }
 
     const ENTRY_POINT: &'static str = "psmain";

@@ -24,12 +24,12 @@ impl ShaderType for Vertex {
         }
     }
 
-    fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: *mut Self::ShaderInterface) {
+    fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: &mut Self::ShaderInterface) {
         unsafe { context.VSSetShader(shader, ptr::null(), 0) }
     }
 
     fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &ConstantBuffer<C>) {
-        unsafe { context.VSSetConstantBuffers(0, 1, &buffer.buffer) }
+        unsafe { context.VSSetConstantBuffers(0, 1, &buffer.buffer_ptr()) }
     }
 
     const ENTRY_POINT: &'static str = "vsmain";

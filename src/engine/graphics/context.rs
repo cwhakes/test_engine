@@ -1,9 +1,7 @@
-use crate::engine::graphics::constant_buffer::ConstantBuffer;
-use crate::engine::graphics::shader::{Shader, ShaderType};
-use crate::engine::graphics::swapchain::SwapChain;
-use crate::engine::graphics::vertex_buffer::VertexBuffer;
+use super::shader::{Shader, ShaderType};
+use super::{ConstantBuffer, SwapChain, VertexBuffer};
 
-use std::ptr::NonNull;
+use std::ptr::{self, NonNull};
 
 use winapi::um::d3d11::{ID3D11DeviceContext, D3D11_VIEWPORT};
 use winapi::um::d3dcommon;
@@ -21,9 +19,9 @@ impl Context {
     ) {
         unsafe {
             self.as_ref()
-                .ClearRenderTargetView(swapchain.back_buffer(), &[red, grn, blu, alp]);
+                .ClearRenderTargetView(swapchain.back_buffer_ptr(), &[red, grn, blu, alp]);
             self.as_ref()
-                .OMSetRenderTargets(1, &swapchain.back_buffer(), std::ptr::null_mut());
+                .OMSetRenderTargets(1, &swapchain.back_buffer_ptr(), ptr::null_mut());
         }
     }
 
@@ -36,16 +34,16 @@ impl Context {
             self.as_ref().IASetVertexBuffers(
                 0,
                 1,
-                &vertex_buffer.buffer(),
+                &vertex_buffer.buffer_ptr(),
                 &(std::mem::size_of::<V>() as u32),
                 &0,
             );
-            self.as_ref().IASetInputLayout(vertex_buffer.layout())
+            self.as_ref().IASetInputLayout(vertex_buffer.layout_ptr())
         }
     }
 
-    pub fn set_shader<S: ShaderType>(&self, shader: &Shader<S>) {
-        S::set_shader(self.as_ref(), shader.shader);
+    pub fn set_shader<S: ShaderType>(&self, shader: &mut Shader<S>) {
+        S::set_shader(self.as_ref(), shader.as_mut());
     }
 
     pub fn _draw_triangle_list<V>(&self, vertices_len: usize, vertices_start: usize) {

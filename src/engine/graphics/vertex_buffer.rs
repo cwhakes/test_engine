@@ -1,6 +1,7 @@
 use crate::engine::graphics::GRAPHICS;
 
-use std::ffi::c_void;
+use std::ffi::CString;
+use std::ptr::{self, NonNull};
 
 use winapi::shared::dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT;
 use winapi::shared::winerror::FAILED;
@@ -11,8 +12,8 @@ where
     V: Sized,
 {
     len: usize,
-    buffer: *mut d3d11::ID3D11Buffer,
-    layout: *mut d3d11::ID3D11InputLayout,
+    buffer: NonNull<d3d11::ID3D11Buffer>,
+    layout: NonNull<d3d11::ID3D11InputLayout>,
     _phantom: std::marker::PhantomData<V>,
 }
 
@@ -21,10 +22,7 @@ unsafe impl<V> Send for VertexBuffer<V> where V: Send {}
 unsafe impl<V> Sync for VertexBuffer<V> where V: Sync {}
 
 impl<V> VertexBuffer<V> {
-    pub fn new(
-        vertices: &[V],
-        bytecode: &[u8],
-    ) -> VertexBuffer<V> {
+    pub fn new(vertices: &[V], bytecode: &[u8]) -> VertexBuffer<V> {
         unsafe {
             let g = GRAPHICS.lock().unwrap();
             let g = g.as_ref().unwrap();
@@ -39,9 +37,9 @@ impl<V> VertexBuffer<V> {
             buff_desc.MiscFlags = 0;
 
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-            data.pSysMem = vertices.as_ptr() as *const c_void;
+            data.pSysMem = vertices.as_ptr() as *const _;
 
-            let mut buffer = std::ptr::null_mut();
+            let mut buffer = ptr::null_mut();
 
             let res = device.CreateBuffer(&buff_desc, &data, &mut buffer);
 
@@ -49,8 +47,10 @@ impl<V> VertexBuffer<V> {
                 panic!();
             }
 
-            let semantic_name_pos = std::ffi::CString::new("POSITION").unwrap();
-            let semantic_name_col = std::ffi::CString::new("COLOR").unwrap();
+            let buffer = NonNull::new(buffer).unwrap();
+
+            let semantic_name_pos = CString::new("POSITION").unwrap();
+            let semantic_name_col = CString::new("COLOR").unwrap();
 
             let layout_desc = [
                 d3d11::D3D11_INPUT_ELEMENT_DESC {
@@ -96,6 +96,8 @@ impl<V> VertexBuffer<V> {
                 panic!();
             }
 
+            let layout = NonNull::new(layout).unwrap();
+
             VertexBuffer {
                 len: vertices.len(),
                 buffer,
@@ -105,12 +107,12 @@ impl<V> VertexBuffer<V> {
         }
     }
 
-    pub fn buffer(&self) -> *mut d3d11::ID3D11Buffer {
-        self.buffer
+    pub fn buffer_ptr(&self) -> *mut d3d11::ID3D11Buffer {
+        self.buffer.as_ptr()
     }
 
-    pub fn layout(&self) -> *mut d3d11::ID3D11InputLayout {
-        self.layout
+    pub fn layout_ptr(&self) -> *mut d3d11::ID3D11InputLayout {
+        self.layout.as_ptr()
     }
 
     pub fn len(&self) -> usize {
@@ -121,12 +123,8 @@ impl<V> VertexBuffer<V> {
 impl<V> Drop for VertexBuffer<V> {
     fn drop(&mut self) {
         unsafe {
-            if let Some(buffer) = self.buffer.as_ref() {
-                buffer.Release();
-            }
-            if let Some(layout) = self.layout.as_ref() {
-                layout.Release();
-            }
+            self.buffer.as_ref().Release();
+            self.layout.as_ref().Release();
         }
     }
 }

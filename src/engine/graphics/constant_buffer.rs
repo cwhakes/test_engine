@@ -1,7 +1,8 @@
-use crate::engine::graphics::GRAPHICS;
-use crate::engine::graphics::context::Context;
+use super::context::Context;
+use super::GRAPHICS;
 
 use std::ffi::c_void;
+use std::ptr::{self, NonNull};
 
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11;
@@ -10,7 +11,7 @@ pub struct ConstantBuffer<C>
 where
     C: Sized,
 {
-    pub buffer: *mut d3d11::ID3D11Buffer,
+    buffer: NonNull<d3d11::ID3D11Buffer>,
     _phantom: std::marker::PhantomData<C>,
 }
 
@@ -36,13 +37,15 @@ impl<C> ConstantBuffer<C> {
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.pSysMem = constant as *const _ as *const c_void;
 
-            let mut buffer = std::ptr::null_mut();
+            let mut buffer = ptr::null_mut();
 
             let res = device.CreateBuffer(&buff_desc, &data, &mut buffer);
 
             if FAILED(res) {
                 panic!();
             }
+
+            let buffer = NonNull::new(buffer).unwrap();
 
             ConstantBuffer {
                 buffer,
@@ -51,12 +54,16 @@ impl<C> ConstantBuffer<C> {
         }
     }
 
+    pub fn buffer_ptr(&self) -> *mut d3d11::ID3D11Buffer {
+        self.buffer.as_ptr()
+    }
+
     pub fn update(&mut self, context: &Context, buffer: *mut c_void) {
         unsafe {
             context.as_ref().UpdateSubresource(
-                &**self.buffer as *const _ as *mut _,
+                &**self.buffer.as_ref() as *const _ as *mut _,
                 0,
-                std::ptr::null_mut(),
+                ptr::null_mut(),
                 buffer,
                 0,
                 0,
@@ -68,9 +75,7 @@ impl<C> ConstantBuffer<C> {
 impl<C> Drop for ConstantBuffer<C> {
     fn drop(&mut self) {
         unsafe {
-            if let Some(buffer) = self.buffer.as_ref() {
-                buffer.Release();
-            }
+            self.buffer.as_ref().Release();
         }
     }
 }
