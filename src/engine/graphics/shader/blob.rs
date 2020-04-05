@@ -1,5 +1,4 @@
-use std::convert;
-use std::fmt;
+use std::{convert, fmt, ops};
 use std::ptr::NonNull;
 use winapi::um::d3dcommon::ID3DBlob;
 
@@ -29,19 +28,37 @@ impl convert::TryFrom<*mut ID3DBlob> for Blob {
 
 impl fmt::Debug for Blob {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        unsafe {
-            let slice = std::slice::from_raw_parts(
-                self.as_ref().GetBufferPointer() as *mut u8,
-                self.as_ref().GetBufferSize(),
-            );
-            let string = String::from_utf8_lossy(slice);
+        let string = String::from_utf8_lossy(&self);
 
-            f.debug_struct("Blob").field("text", &string).finish()
+        f.debug_struct("Blob").field("slice", &string).finish()
+    }
+}
+
+impl ops::Deref for Blob {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        unsafe {
+            std::slice::from_raw_parts(
+                self.as_ref().GetBufferPointer() as *const u8,
+                self.as_ref().GetBufferSize(),
+            )
         }
     }
 }
 
-impl Drop for Blob {
+impl ops::DerefMut for Blob {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe {
+            std::slice::from_raw_parts_mut(
+                self.as_ref().GetBufferPointer() as *mut u8,
+                self.as_ref().GetBufferSize(),
+            )
+        }
+    }
+}
+
+impl ops::Drop for Blob {
     fn drop(&mut self) {
         unsafe {
             self.as_ref().Release();

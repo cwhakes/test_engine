@@ -1,3 +1,4 @@
+use crate::engine::graphics::constant_buffer::ConstantBuffer;
 use crate::engine::graphics::shader::{Shader, ShaderType};
 use crate::engine::graphics::swapchain::SwapChain;
 use crate::engine::graphics::vertex_buffer::VertexBuffer;
@@ -26,6 +27,10 @@ impl Context {
         }
     }
 
+    pub fn set_constant_buffer<S: ShaderType, C>(&self, buffer: &ConstantBuffer<C>) {
+        S::set_constant_buffer(self.as_ref(), buffer)
+    }
+
     pub fn set_vertex_buffer<V>(&self, vertex_buffer: &VertexBuffer<V>) {
         unsafe {
             self.as_ref().IASetVertexBuffers(
@@ -39,8 +44,8 @@ impl Context {
         }
     }
 
-    pub fn set_shader<T: ShaderType>(&self, shader: &Shader<T>) {
-        T::set_shader(self.as_ref(), shader.shader);
+    pub fn set_shader<S: ShaderType>(&self, shader: &Shader<S>) {
+        S::set_shader(self.as_ref(), shader.shader);
     }
 
     pub fn _draw_triangle_list<V>(&self, vertices_len: usize, vertices_start: usize) {

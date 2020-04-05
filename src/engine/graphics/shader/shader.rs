@@ -1,5 +1,6 @@
 use super::{blob::Blob, compile_shader};
 
+use crate::engine::graphics::constant_buffer::ConstantBuffer;
 use crate::engine::graphics::device::Device;
 
 use std::ffi::c_void;
@@ -21,17 +22,18 @@ pub trait ShaderType {
 
     fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: *mut Self::ShaderInterface);
 
+    fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &ConstantBuffer<C>);
+
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;
 }
 
 pub struct Shader<T: ShaderType> {
     pub shader: *mut T::ShaderInterface,
-    pub blob: Blob,
 }
 
 impl<T: ShaderType> Shader<T> {
-    pub fn new(device: &Device, location: &str) -> Shader<T> {
+    pub fn new(device: &Device, location: &str) -> (Shader<T>, Blob) {
         unsafe {
             let blob = compile_shader(location, T::ENTRY_POINT, T::TARGET).unwrap();
 
@@ -42,10 +44,14 @@ impl<T: ShaderType> Shader<T> {
 
             T::create_shader(device.as_ref(), bytecode, bytecode_len, &mut shader);
 
-            Shader { shader, blob }
+            (Shader { shader }, blob)
         }
     }
 }
+
+//TODO FIXME Verify
+unsafe impl<T> Send for Shader<T> where T: ShaderType + Send {}
+unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 
 impl<T: ShaderType> Drop for Shader<T> {
     fn drop(&mut self) {

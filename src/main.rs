@@ -17,6 +17,6 @@ fn main() {
         .map(|w| w.running())
         .unwrap_or(false)
     {
-        WINDOW.lock().unwrap().as_ref().map(|w| w.broadcast());
+        WINDOW.lock().unwrap().as_mut().map(|w| w.broadcast());
     }
 }

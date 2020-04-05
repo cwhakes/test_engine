@@ -73,7 +73,7 @@ pub trait Window: Send + Sync {
     fn running(&self) -> bool;
 
     fn on_create(&mut self) {}
-    fn on_update(&self) {}
+    fn on_update(&mut self) {}
     fn on_destroy(&mut self) {}
 
     fn init()
@@ -126,7 +126,7 @@ pub trait Window: Send + Sync {
         }
     }
 
-    fn broadcast(&self) {
+    fn broadcast(&mut self) {
         unsafe {
             self.on_update();
 

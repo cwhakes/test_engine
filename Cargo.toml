@@ -14,6 +14,7 @@ winapi = { version = "0.3.8", features = [
     "d3dcompiler",
     "impl-default",
     "std",
+    "sysinfoapi",
     "winerror",
     "winuser"
 ] }

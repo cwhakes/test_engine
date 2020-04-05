@@ -23,8 +23,7 @@ unsafe impl<V> Sync for VertexBuffer<V> where V: Sync {}
 impl<V> VertexBuffer<V> {
     pub fn new(
         vertices: &[V],
-        shader_byte_code: *const c_void,
-        shader_len: usize,
+        bytecode: &[u8],
     ) -> VertexBuffer<V> {
         unsafe {
             let g = GRAPHICS.lock().unwrap();
@@ -64,11 +63,20 @@ impl<V> VertexBuffer<V> {
                     InstanceDataStepRate: 0,
                 },
                 d3d11::D3D11_INPUT_ELEMENT_DESC {
+                    SemanticName: semantic_name_pos.as_ptr(),
+                    SemanticIndex: 1,
+                    Format: DXGI_FORMAT_R32G32B32_FLOAT,
+                    InputSlot: 0,
+                    AlignedByteOffset: 12,
+                    InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
+                    InstanceDataStepRate: 0,
+                },
+                d3d11::D3D11_INPUT_ELEMENT_DESC {
                     SemanticName: semantic_name_col.as_ptr(),
                     SemanticIndex: 0,
                     Format: DXGI_FORMAT_R32G32B32_FLOAT,
                     InputSlot: 0,
-                    AlignedByteOffset: 12,
+                    AlignedByteOffset: 24,
                     InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
                     InstanceDataStepRate: 0,
                 },
@@ -79,8 +87,8 @@ impl<V> VertexBuffer<V> {
             let res = device.CreateInputLayout(
                 layout_desc.as_ptr(),
                 layout_desc.len() as u32,
-                shader_byte_code,
-                shader_len,
+                bytecode.as_ptr() as *const _,
+                bytecode.len(),
                 &mut layout,
             );
 
