@@ -1,13 +1,12 @@
 use crate::engine::graphics::GRAPHICS;
+use crate::engine::vertex::{Vertex, SemanticIndexFix};
 
-use std::ffi::CString;
 use std::ptr::{self, NonNull};
 
-use winapi::shared::dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT;
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11;
 
-pub struct VertexBuffer<V>
+pub struct VertexBuffer<V: Vertex>
 where
     V: Sized,
 {
@@ -18,10 +17,10 @@ where
 }
 
 //TODO FIXME Verify
-unsafe impl<V> Send for VertexBuffer<V> where V: Send {}
-unsafe impl<V> Sync for VertexBuffer<V> where V: Sync {}
+unsafe impl<V> Send for VertexBuffer<V> where V: Vertex + Send {}
+unsafe impl<V> Sync for VertexBuffer<V> where V: Vertex + Sync {}
 
-impl<V> VertexBuffer<V> {
+impl<V: Vertex> VertexBuffer<V> {
     pub fn new(vertices: &[V], bytecode: &[u8]) -> VertexBuffer<V> {
         unsafe {
             let g = GRAPHICS.lock().unwrap();
@@ -49,38 +48,15 @@ impl<V> VertexBuffer<V> {
 
             let buffer = NonNull::new(buffer).unwrap();
 
-            let semantic_name_pos = CString::new("POSITION").unwrap();
-            let semantic_name_col = CString::new("COLOR").unwrap();
-
-            let layout_desc = [
-                d3d11::D3D11_INPUT_ELEMENT_DESC {
-                    SemanticName: semantic_name_pos.as_ptr(),
-                    SemanticIndex: 0,
-                    Format: DXGI_FORMAT_R32G32B32_FLOAT,
-                    InputSlot: 0,
-                    AlignedByteOffset: 0,
-                    InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
-                    InstanceDataStepRate: 0,
-                },
-                d3d11::D3D11_INPUT_ELEMENT_DESC {
-                    SemanticName: semantic_name_pos.as_ptr(),
-                    SemanticIndex: 1,
-                    Format: DXGI_FORMAT_R32G32B32_FLOAT,
-                    InputSlot: 0,
-                    AlignedByteOffset: 12,
-                    InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
-                    InstanceDataStepRate: 0,
-                },
-                d3d11::D3D11_INPUT_ELEMENT_DESC {
-                    SemanticName: semantic_name_col.as_ptr(),
-                    SemanticIndex: 0,
-                    Format: DXGI_FORMAT_R32G32B32_FLOAT,
-                    InputSlot: 0,
-                    AlignedByteOffset: 24,
-                    InputSlotClass: d3d11::D3D11_INPUT_PER_VERTEX_DATA,
-                    InstanceDataStepRate: 0,
-                },
-            ];
+            /*
+            let layout_desc: Vec<d3d11::D3D11_INPUT_ELEMENT_DESC> = vertex::Position::desc(0, 0)
+                .chain(vertex::Position::desc(12, 1))
+                .chain(vertex::Color::desc(24, 0))
+                .collect();*/
+            
+            let layout_desc: Vec<_> = V::desc(0)
+                .semantic_index_fix()
+                .collect();
 
             let mut layout = std::ptr::null_mut();
 
@@ -120,7 +96,7 @@ impl<V> VertexBuffer<V> {
     }
 }
 
-impl<V> Drop for VertexBuffer<V> {
+impl<V: Vertex> Drop for VertexBuffer<V> {
     fn drop(&mut self) {
         unsafe {
             self.buffer.as_ref().Release();

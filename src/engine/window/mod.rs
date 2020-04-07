@@ -9,11 +9,11 @@ use std::{mem, ptr};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::windef::HWND;
+use winapi::shared::windef::HBRUSH;
 
 use winapi::um::winuser;
 use winapi::um::winuser::{CreateWindowExW, RegisterClassExW, WNDCLASSEXW};
-//use winapi::um::winuser::COLOR_WINDOW;
-//use winapi::shared::windef::HBRUSH;
+use winapi::um::winuser::COLOR_WINDOW;
 use winapi::um::winuser::{DispatchMessageW, PeekMessageW, TranslateMessage};
 use winapi::um::winuser::{ShowWindow, UpdateWindow};
 use winapi::um::winuser::{IDC_ARROW, IDI_APPLICATION};
@@ -83,7 +83,7 @@ pub trait Window: Send + Sync {
                 cbClsExtra: 0,
                 cbSize: mem::size_of::<WNDCLASSEXW>() as u32,
                 cbWndExtra: 0,
-                hbrBackground: ptr::null_mut(), //&COLOR_WINDOW as HBRUSH,
+                hbrBackground: COLOR_WINDOW as HBRUSH,
                 hCursor: winuser::LoadCursorW(ptr::null_mut(), IDC_ARROW),
                 hIcon: winuser::LoadIconW(ptr::null_mut(), IDI_APPLICATION),
                 hIconSm: winuser::LoadIconW(ptr::null_mut(), IDI_APPLICATION),

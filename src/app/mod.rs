@@ -1,6 +1,7 @@
 use crate::engine::graphics::shader::{self, Shader};
 use crate::engine::graphics::{ConstantBuffer, VertexBuffer};
 use crate::engine::graphics::{Graphics, GRAPHICS};
+use crate::engine::vertex;
 use crate::engine::window::{Hwnd, Window};
 
 use crate::util::get_tick_count;
@@ -8,9 +9,8 @@ use crate::util::get_tick_count;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 #[repr(C)]
-struct Vertex([f32; 3]);
-#[repr(C)]
-struct VertexColor([f32; 3], [f32; 3], [f32; 3]);
+#[derive(Vertex)]
+struct VertexColor(vertex::Position, vertex::Position, vertex::Color);
 
 #[repr(C, align(16))]
 struct Constant {
@@ -56,10 +56,10 @@ impl Window for AppWindow {
 
     fn on_create(&mut self) {
         let vertex_list = [
-            VertexColor([-0.5, -0.5, 0.0], [-0.5, 0.5, 0.0], [1.0, 0.0, 0.0]),
-            VertexColor([-0.5, 0.5, 0.0], [-0.5, 0.5, 0.0], [0.0, 1.0, 0.0]),
-            VertexColor([0.5, -0.5, 0.0], [-0.5, 0.5, 0.0], [0.0, 0.0, 1.0]),
-            VertexColor([0.5, 0.5, 0.0], [-0.5, 0.5, 0.0], [1.0, 1.0, 0.0]),
+            VertexColor([-0.5, -0.5, 0.0].into(), [-0.5, 0.5, 0.0].into(), [1.0, 0.0, 0.0].into()),
+            VertexColor([-0.5, 0.5, 0.0].into(), [-0.5, 0.5, 0.0].into(), [0.0, 1.0, 0.0].into()),
+            VertexColor([0.5, -0.5, 0.0].into(), [-0.5, 0.5, 0.0].into(), [0.0, 0.0, 1.0].into()),
+            VertexColor([0.5, 0.5, 0.0].into(), [-0.5, 0.5, 0.0].into(), [1.0, 1.0, 0.0].into()),
         ];
 
         let graphics = Graphics::new(self.hwnd().unwrap());
@@ -99,7 +99,7 @@ impl Window for AppWindow {
             context.set_shader(self.vertex_shader.as_mut().unwrap());
             context.set_shader(self.pixel_shader.as_mut().unwrap());
             context.set_vertex_buffer(self.vertex_buffer.as_ref().unwrap());
-            context.draw_triangle_strip::<Vertex>(self.vertex_buffer.as_ref().unwrap().len(), 0);
+            context.draw_triangle_strip::<VertexColor>(self.vertex_buffer.as_ref().unwrap().len(), 0);
 
             g.swapchain().present(0);
         }

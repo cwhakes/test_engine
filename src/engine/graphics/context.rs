@@ -1,5 +1,6 @@
 use super::shader::{Shader, ShaderType};
 use super::{ConstantBuffer, SwapChain, VertexBuffer};
+use super::super::vertex::Vertex;
 
 use std::ptr::{self, NonNull};
 
@@ -29,7 +30,7 @@ impl Context {
         S::set_constant_buffer(self.as_ref(), buffer)
     }
 
-    pub fn set_vertex_buffer<V>(&self, vertex_buffer: &VertexBuffer<V>) {
+    pub fn set_vertex_buffer<V: Vertex>(&self, vertex_buffer: &VertexBuffer<V>) {
         unsafe {
             self.as_ref().IASetVertexBuffers(
                 0,

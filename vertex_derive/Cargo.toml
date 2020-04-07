@@ -1,14 +1,16 @@
 [package]
-name = "test_engine"
+name = "vertex_derive"
 version = "0.1.0"
 authors = ["Will Hakes <info@cwilliamhakes.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+proc-macro = true
 
 [dependencies]
-lazy_static = "1.4.0"
-vertex_derive = { path = "./vertex_derive" }
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = "1.0"
 winapi = { version = "0.3.8", features = [
     "d3d11",
     "d3dcommon",
