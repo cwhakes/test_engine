@@ -1,4 +1,4 @@
-use crate::engine::window::Hwnd;
+use crate::window::Hwnd;
 
 use std::ptr::{self, NonNull};
 

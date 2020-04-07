@@ -1,9 +1,9 @@
-use crate::engine::graphics::shader::{self, Shader};
-use crate::engine::graphics::{ConstantBuffer, VertexBuffer};
-use crate::engine::graphics::{Graphics, GRAPHICS};
-use crate::engine::util::get_tick_count;
-use crate::engine::vertex;
-use crate::engine::window::{Window, WindowInner};
+use engine::graphics::shader::{self, Shader};
+use engine::graphics::{ConstantBuffer, VertexBuffer};
+use engine::graphics::{Graphics, GRAPHICS};
+use engine::util::get_tick_count;
+use engine::vertex;
+use engine::window::{Window, WindowInner};
 
 #[repr(C)]
 #[derive(Vertex)]

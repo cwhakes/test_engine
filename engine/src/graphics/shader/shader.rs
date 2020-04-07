@@ -1,7 +1,7 @@
 use super::{blob::Blob, compile_shader};
 
-use crate::engine::graphics::constant_buffer::ConstantBuffer;
-use crate::engine::graphics::device::Device;
+use crate::graphics::constant_buffer::ConstantBuffer;
+use crate::graphics::device::Device;
 
 use std::ptr::{self, NonNull};
 use std::{convert, ffi, ops};

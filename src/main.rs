@@ -1,10 +1,7 @@
 #[macro_use]
-extern crate lazy_static;
-#[macro_use]
 extern crate vertex_derive;
 
 mod app;
-mod engine;
 
 use engine::window::{Window, WINDOW};
 

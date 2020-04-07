@@ -2,7 +2,7 @@ mod hwnd;
 
 pub use hwnd::Hwnd;
 
-use crate::engine::util::os_vec;
+use crate::util::os_vec;
 
 use std::sync::Mutex;
 use std::{mem, ptr};

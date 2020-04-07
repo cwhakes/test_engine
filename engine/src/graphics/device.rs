@@ -1,6 +1,6 @@
-use crate::engine::vertex::Vertex;
-use crate::engine::graphics::shader::{Blob, Shader, ShaderType};
-use crate::engine::graphics::{ConstantBuffer, VertexBuffer};
+use crate::vertex::Vertex;
+use crate::graphics::shader::{Blob, Shader, ShaderType};
+use crate::graphics::{ConstantBuffer, VertexBuffer};
 
 use std::ptr::NonNull;
 

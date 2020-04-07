@@ -1,5 +1,5 @@
-use crate::engine::graphics::Device;
-use crate::engine::vertex::{Vertex, SemanticIndexFix};
+use crate::graphics::Device;
+use crate::vertex::{Vertex, SemanticIndexFix};
 
 use std::ptr::{self, NonNull};
 

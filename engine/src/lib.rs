@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+
 pub mod graphics;
 pub mod util;
 pub mod vertex;
