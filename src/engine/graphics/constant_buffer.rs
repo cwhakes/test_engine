@@ -1,5 +1,5 @@
 use super::context::Context;
-use super::GRAPHICS;
+use super::Device;
 
 use std::ffi::c_void;
 use std::ptr::{self, NonNull};
@@ -7,6 +7,8 @@ use std::ptr::{self, NonNull};
 use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11;
 
+/// Used to communicate a single value with shaders.
+/// Call `set_constant_buffer` on context to use.
 pub struct ConstantBuffer<C>
 where
     C: Sized,
@@ -20,13 +22,9 @@ unsafe impl<C> Send for ConstantBuffer<C> where C: Send {}
 unsafe impl<C> Sync for ConstantBuffer<C> where C: Sync {}
 
 impl<C> ConstantBuffer<C> {
-    pub fn new(constant: &C) -> ConstantBuffer<C> {
+    /// Constructs a new ConstantBuffer.
+    pub fn new(device: &Device, constant: &C) -> ConstantBuffer<C> {
         unsafe {
-            let g = GRAPHICS.lock().unwrap();
-            let g = g.as_ref().unwrap();
-
-            let device = g.device.as_ref();
-
             let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
             buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
             buff_desc.ByteWidth = (std::mem::size_of::<C>()) as u32;
@@ -39,7 +37,7 @@ impl<C> ConstantBuffer<C> {
 
             let mut buffer = ptr::null_mut();
 
-            let res = device.CreateBuffer(&buff_desc, &data, &mut buffer);
+            let res = device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer);
 
             if FAILED(res) {
                 panic!();

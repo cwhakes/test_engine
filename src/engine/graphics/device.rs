@@ -1,8 +1,26 @@
+use crate::engine::vertex::Vertex;
+use crate::engine::graphics::shader::{Blob, Shader, ShaderType};
+use crate::engine::graphics::{ConstantBuffer, VertexBuffer};
+
 use std::ptr::NonNull;
 
 use winapi::um::d3d11::ID3D11Device;
 
 pub struct Device(NonNull<ID3D11Device>);
+
+impl Device {
+    pub fn new_constant_buffer<C>(&self, constant: &C) -> ConstantBuffer<C> {
+        ConstantBuffer::new(self, constant)
+    }
+
+    pub fn new_shader<T: ShaderType>(&self, location: &str) -> (Shader<T>, Blob) {
+        Shader::<T>::new(self, location)
+    }
+
+    pub fn new_vertex_buffer<V: Vertex>(&self, vertices: &[V], bytecode: &[u8]) -> VertexBuffer<V> {
+        VertexBuffer::new(self, vertices, bytecode)
+    }
+}
 
 impl AsRef<ID3D11Device> for Device {
     fn as_ref(&self) -> &ID3D11Device {

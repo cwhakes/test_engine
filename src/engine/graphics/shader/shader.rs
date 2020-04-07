@@ -9,6 +9,9 @@ use std::{convert, ffi, ops};
 use winapi::shared::basetsd::SIZE_T;
 use winapi::um::d3d11;
 
+/// Trait used to define new shaders.
+/// It's a MadLibs trait, use to fill in some functions used throughout the render chain.
+/// It obstensibly reduces boilerplate.
 pub trait ShaderType {
     type ShaderInterface: ops::Deref<Target = d3d11::ID3D11DeviceChild>;
 

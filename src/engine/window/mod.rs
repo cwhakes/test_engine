@@ -2,8 +2,9 @@ mod hwnd;
 
 pub use hwnd::Hwnd;
 
-use crate::util::os_vec;
+use crate::engine::util::os_vec;
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::{mem, ptr};
 
@@ -24,6 +25,7 @@ lazy_static! {
     pub static ref WINDOW: Mutex<Option<Box<dyn Window>>> = Mutex::new(None);
 }
 
+/// Windows Window event Loop
 unsafe extern "system" fn window_loop(
     hwnd: HWND,
     msg: UINT,
@@ -33,9 +35,9 @@ unsafe extern "system" fn window_loop(
     match msg {
         WM_CREATE => {
             if let Some(ref mut window) = *WINDOW.lock().unwrap() {
-                window.set_hwnd(hwnd.into());
+                window.window_inner_mut().hwnd = Some(hwnd.into());
                 window.on_create();
-                window.set_running(true);
+                window.window_inner().running.store(true, Ordering::Relaxed);
             };
             0
         }
@@ -44,7 +46,7 @@ unsafe extern "system" fn window_loop(
             std::thread::spawn(|| {
                 if let Some(ref mut window) = *WINDOW.lock().unwrap() {
                     window.on_destroy();
-                    window.set_running(false);
+                    window.window_inner().running.store(false, Ordering::Relaxed);
                 };
             });
             winuser::PostQuitMessage(0);
@@ -58,10 +60,9 @@ pub trait Window: Send + Sync {
     fn create() -> Self
     where
         Self: Sized;
-    fn set_hwnd(&mut self, m_hwnd: Hwnd);
-    fn hwnd(&self) -> Option<&Hwnd>;
-    fn set_running(&self, running: bool);
-    fn running(&self) -> bool;
+
+    fn window_inner(&self) -> &WindowInner;
+    fn window_inner_mut(&mut self) -> &mut WindowInner;
 
     fn on_create(&mut self) {}
     fn on_update(&mut self) {}
@@ -117,6 +118,7 @@ pub trait Window: Send + Sync {
         }
     }
 
+    /// Engine event loop
     fn broadcast(&mut self) {
         unsafe {
             self.on_update();
@@ -127,6 +129,20 @@ pub trait Window: Send + Sync {
                 DispatchMessageW(&mut msg as *const _);
             }
             std::thread::sleep(Default::default());
+        }
+    }
+}
+
+pub struct WindowInner {
+    pub hwnd: Option<Hwnd>,
+    pub running: AtomicBool,
+}
+
+impl WindowInner {
+    pub fn new() -> WindowInner {
+        WindowInner {
+            hwnd: None,
+            running: AtomicBool::new(false),
         }
     }
 }
