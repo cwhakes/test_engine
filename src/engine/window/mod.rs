@@ -4,7 +4,6 @@ pub use hwnd::Hwnd;
 
 use crate::engine::util::os_vec;
 
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::{mem, ptr};
 
@@ -37,7 +36,7 @@ unsafe extern "system" fn window_loop(
             if let Some(ref mut window) = *WINDOW.lock().unwrap() {
                 window.window_inner_mut().hwnd = Some(hwnd.into());
                 window.on_create();
-                window.window_inner().running.store(true, Ordering::Relaxed);
+                window.window_inner_mut().running = true;
             };
             0
         }
@@ -45,8 +44,8 @@ unsafe extern "system" fn window_loop(
             //Spawn a different thread to prevent recursive lock
             std::thread::spawn(|| {
                 if let Some(ref mut window) = *WINDOW.lock().unwrap() {
+                    window.window_inner_mut().running = false;
                     window.on_destroy();
-                    window.window_inner().running.store(false, Ordering::Relaxed);
                 };
             });
             winuser::PostQuitMessage(0);
@@ -135,14 +134,14 @@ pub trait Window: Send + Sync {
 
 pub struct WindowInner {
     pub hwnd: Option<Hwnd>,
-    pub running: AtomicBool,
+    pub running: bool,
 }
 
 impl WindowInner {
     pub fn new() -> WindowInner {
         WindowInner {
             hwnd: None,
-            running: AtomicBool::new(false),
+            running: false,
         }
     }
 }
