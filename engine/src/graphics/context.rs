@@ -10,19 +10,12 @@ use winapi::um::d3dcommon;
 pub struct Context(NonNull<ID3D11DeviceContext>);
 
 impl Context {
-    pub fn clear_render_target_color(
-        &self,
-        swapchain: &SwapChain,
-        red: f32,
-        grn: f32,
-        blu: f32,
-        alp: f32,
-    ) {
+    pub fn clear_render_target_color(&self, swapchain: &SwapChain, r: f32, g: f32, b: f32, a: f32) {
         unsafe {
-            self.as_ref()
-                .ClearRenderTargetView(swapchain.back_buffer_ptr(), &[red, grn, blu, alp]);
-            self.as_ref()
-                .OMSetRenderTargets(1, &swapchain.back_buffer_ptr(), ptr::null_mut());
+            if let Some(back_buffer) = swapchain.back_buffer_ptr() {
+                self.as_ref().ClearRenderTargetView(back_buffer, &[r, g, b, a]);
+                self.as_ref().OMSetRenderTargets(1, &back_buffer, ptr::null_mut());
+            }
         }
     }
 

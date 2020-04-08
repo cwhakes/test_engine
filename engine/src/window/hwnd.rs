@@ -19,7 +19,6 @@ impl Hwnd {
         }
         let width = rect.right - rect.left;
         let height = rect.bottom - rect.top;
-
         (width as u32, height as u32)
     }
 }

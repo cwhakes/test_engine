@@ -56,13 +56,13 @@ impl<C> ConstantBuffer<C> {
         self.buffer.as_ptr()
     }
 
-    pub fn update(&mut self, context: &Context, buffer: *mut c_void) {
+    pub fn update(&mut self, context: &Context, buffer: &mut C) {
         unsafe {
             context.as_ref().UpdateSubresource(
                 &**self.buffer.as_ref() as *const _ as *mut _,
                 0,
                 ptr::null_mut(),
-                buffer,
+                buffer as *mut _ as *mut _,
                 0,
                 0,
             );

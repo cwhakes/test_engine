@@ -1,17 +1,14 @@
 use super::Vertex;
+use crate::math::Vector3d;
 
-use std::convert;
+use std::{convert, ops};
 use std::ffi::CStr;
 
 use winapi::shared::dxgiformat;
 use winapi::um::d3d11;
 
 #[repr(C)]
-pub struct Position {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
+pub struct Position(Vector3d);
 
 impl Vertex for Position {
     fn desc(offset: usize) -> Box<dyn Iterator<Item = d3d11::D3D11_INPUT_ELEMENT_DESC>> {
@@ -31,12 +28,22 @@ impl Vertex for Position {
     }
 }
 
-impl convert::From<[f32; 3]> for Position {
-    fn from(array: [f32; 3]) -> Self {
-        Position {
-            x: array[0],
-            y: array[1],
-            z: array[2],
-        }
+impl<T: Into<Vector3d>> convert::From<T> for Position {
+    fn from(vector: T) -> Self {
+        Position(vector.into())
+    }
+}
+
+impl ops::Deref for Position {
+    type Target = Vector3d;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ops::DerefMut for Position {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }

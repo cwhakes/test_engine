@@ -103,4 +103,8 @@ impl Graphics {
     pub fn swapchain(&self) -> &SwapChain {
         &self.swapchain
     }
+
+    pub fn resize(&mut self) {
+        self.swapchain.resize(self.device.as_ref());
+    }
 }

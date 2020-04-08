@@ -132,6 +132,7 @@ pub trait Window: Send + Sync {
     }
 }
 
+#[derive(Default)]
 pub struct WindowInner {
     pub hwnd: Option<Hwnd>,
     pub running: bool,

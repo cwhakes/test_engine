@@ -1,17 +1,14 @@
 use super::Vertex;
+use crate::math::Vector3d;
 
-use std::convert;
+use std::{convert, ops};
 use std::ffi::CStr;
 
 use winapi::shared::dxgiformat;
 use winapi::um::d3d11;
 
 #[repr(C)]
-pub struct Color {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-}
+pub struct Color(Vector3d);
 
 impl Vertex for Color {
     fn desc(offset: usize) -> Box<dyn Iterator<Item = d3d11::D3D11_INPUT_ELEMENT_DESC>> {
@@ -31,12 +28,22 @@ impl Vertex for Color {
     }
 }
 
-impl convert::From<[f32; 3]> for Color {
-    fn from(array: [f32; 3]) -> Self {
-        Color {
-            r: array[0],
-            g: array[1],
-            b: array[2],
-        }
+impl<T: Into<Vector3d>> convert::From<T> for Color {
+    fn from(vector: T) -> Self {
+        Color(vector.into())
+    }
+}
+
+impl ops::Deref for Color {
+    type Target = Vector3d;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ops::DerefMut for Color {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
