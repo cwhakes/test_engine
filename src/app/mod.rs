@@ -2,7 +2,7 @@ use engine::graphics::shader::{self, Shader};
 use engine::graphics::{ConstantBuffer, Context, VertexBuffer};
 use engine::graphics::{Graphics, GRAPHICS};
 use engine::math::{Matrix4x4, Vector3d};
-use engine::util::get_tick_count;
+use engine::time::DeltaT;
 use engine::vertex;
 use engine::window::{Window, WindowInner};
 
@@ -16,7 +16,6 @@ struct Constant {
     world: Matrix4x4,
     view: Matrix4x4,
     proj: Matrix4x4,
-    time: u32,
 }
 
 #[derive(Default)]
@@ -26,9 +25,7 @@ pub struct AppWindow {
     vertex_shader: Option<Shader<shader::Vertex>>,
     pixel_shader: Option<Shader<shader::Pixel>>,
     constant_buffer: Option<ConstantBuffer<Constant>>,
-    prev_time: u32,
-    curr_time: u32,
-    delta_t: f32,
+    delta_t: DeltaT,
     delta_pos: f32,
     delta_scale: f32,
 }
@@ -41,8 +38,6 @@ impl Window for AppWindow {
             vertex_shader: None,
             pixel_shader: None,
             constant_buffer: None,
-            prev_time: get_tick_count(),
-            curr_time: get_tick_count(),
             ..Default::default()
         }
     }
@@ -69,7 +64,6 @@ impl Window for AppWindow {
         let vb = graphics.device().new_vertex_buffer(&vertex_list, &blob);
         let cb = graphics.device().new_constant_buffer(
             &Constant {
-                time: get_tick_count(),
                 ..Default::default()
             },
         );
@@ -99,9 +93,7 @@ impl Window for AppWindow {
             g.resize();
             g.swapchain().present(0);
 
-            self.prev_time = self.curr_time;
-            self.curr_time = get_tick_count();
-            self.delta_t = (self.curr_time - self.prev_time) as f32 /1000.0;
+            self.delta_t.update();
         }
     }
 
@@ -115,11 +107,11 @@ impl AppWindow {
     fn update_quad_position(&mut self, context: &Context) {
         let (width, height) = self.window_inner().hwnd.as_ref().unwrap().rect();
         if let Some(cb) = self.constant_buffer.as_mut() {
-            self.delta_pos += self.delta_t / 10.0;
+            self.delta_pos += self.delta_t.get() / 10.0;
             if self.delta_pos > 1.0 {
                 self.delta_pos -= 1.0;
             }
-            self.delta_scale += self.delta_t / 0.15;
+            self.delta_scale += self.delta_t.get() / 0.15;
             let mut world = Matrix4x4::scaling(
                 Vector3d::new(0.5, 0.5, 0.0).lerp([1.0, 1.0, 0.0], (self.delta_scale.sin() +1.0)/2.0)
             );
@@ -138,7 +130,6 @@ impl AppWindow {
                 world,
                 view,
                 proj,
-                time: get_tick_count(),
             };
             cb.update(context, &mut constant);
             context.set_constant_buffer::<shader::Vertex, _>(cb);
