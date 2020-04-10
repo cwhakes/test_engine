@@ -4,7 +4,7 @@ pub use hwnd::Hwnd;
 
 use crate::util::os_vec;
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::{mem, ptr};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
@@ -21,7 +21,7 @@ use winapi::um::winuser::{WM_CREATE, WM_DESTROY};
 use winapi::um::winuser::{WS_EX_OVERLAPPEDWINDOW, WS_OVERLAPPEDWINDOW};
 
 lazy_static! {
-    pub static ref WINDOW: Mutex<Option<Box<dyn Window>>> = Mutex::new(None);
+    pub static ref WINDOW: Mutex<Option<Arc<Mutex<dyn Window>>>> = Mutex::new(None);
 }
 
 /// Windows Window event Loop
@@ -34,6 +34,7 @@ unsafe extern "system" fn window_loop(
     match msg {
         WM_CREATE => {
             if let Some(ref mut window) = *WINDOW.lock().unwrap() {
+                let mut window = window.lock().unwrap();
                 window.window_inner_mut().hwnd = Some(hwnd.into());
                 window.on_create();
                 window.window_inner_mut().running = true;
@@ -44,6 +45,7 @@ unsafe extern "system" fn window_loop(
             //Spawn a different thread to prevent recursive lock
             std::thread::spawn(|| {
                 if let Some(ref mut window) = *WINDOW.lock().unwrap() {
+                    let mut window = window.lock().unwrap();
                     window.window_inner_mut().running = false;
                     window.on_destroy();
                 };
@@ -56,7 +58,7 @@ unsafe extern "system" fn window_loop(
 }
 
 pub trait Window: Send + Sync {
-    fn create() -> Self
+    fn create() -> Arc<Mutex<Self>>
     where
         Self: Sized;
 
@@ -77,7 +79,7 @@ pub trait Window: Send + Sync {
             let window_name = os_vec("DirectX Application");
 
             let window = Self::create();
-            *WINDOW.lock().unwrap() = Some(Box::new(window));
+            *WINDOW.lock().unwrap() = Some(window);
 
             let wc = WNDCLASSEXW {
                 cbClsExtra: 0,

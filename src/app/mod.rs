@@ -1,10 +1,13 @@
 use engine::graphics::shader::{self, Shader};
 use engine::graphics::{ConstantBuffer, Context, IndexBuffer, VertexBuffer};
 use engine::graphics::{Graphics, GRAPHICS};
+use engine::input::{INPUT, Listener};
 use engine::math::Matrix4x4;
 use engine::time::{DeltaT, get_tick_count};
 use engine::vertex;
 use engine::window::{Window, WindowInner};
+
+use std::sync::{Arc, Mutex};
 
 #[repr(C)]
 #[derive(Vertex)]
@@ -30,11 +33,13 @@ pub struct AppWindow {
     delta_t: DeltaT,
     delta_pos: f32,
     delta_scale: f32,
+    rot_x: f32,
+    rot_y: f32,
 }
 
 impl Window for AppWindow {
-    fn create() -> Self {
-        AppWindow {
+    fn create() -> Arc<Mutex<Self>> {
+        let window = AppWindow {
             window_inner: WindowInner::new(),
             vertex_buffer: None,
             vertex_shader: None,
@@ -42,7 +47,10 @@ impl Window for AppWindow {
             constant_buffer: None,
             index_buffer: None,
             ..Default::default()
-        }
+        };
+        let window = Arc::new(Mutex::new(window));
+        INPUT.lock().unwrap().add_listener(window.clone());
+        window
     }
 
     fn window_inner(&self) -> &WindowInner {
@@ -135,6 +143,24 @@ impl Window for AppWindow {
     }
 }
 
+impl Listener for AppWindow {
+    fn name(&self) -> &'static str {
+        "AppWindow"
+    }
+
+    fn on_key_down(&mut self, key: usize) {
+        let key = key as u8;
+        match key {
+            b'W' => self.rot_x += 3.14 * self.delta_t.get(),
+            b'S' => self.rot_x -= 3.14 * self.delta_t.get(),
+            b'A' => self.rot_y += 3.14 * self.delta_t.get(),
+            b'D' => self.rot_y -= 3.14 * self.delta_t.get(),
+            _ => {},
+        }
+    }
+    fn on_key_up(&mut self, _key: usize) {}
+}
+
 impl AppWindow {
     fn update_quad_position(&mut self, context: &Context) {
         let (width, height) = self.window_inner().hwnd.as_ref().unwrap().rect();
@@ -151,9 +177,9 @@ impl AppWindow {
                 Vector3d::new(-1.5, -1.5, 0.0).lerp([1.5, 1.5, 0.0], self.delta_pos)
             );*/
             let mut world = Matrix4x4::scaling([1.0, 1.0, 1.0]);
-            world *= Matrix4x4::rotation_z(self.delta_scale);
-            world *= Matrix4x4::rotation_y(self.delta_scale);
-            world *= Matrix4x4::rotation_x(self.delta_scale);
+            world *= Matrix4x4::rotation_z(0.0);
+            world *= Matrix4x4::rotation_y(self.rot_y);
+            world *= Matrix4x4::rotation_x(self.rot_x);
 
             let view = Matrix4x4::identity();
             let proj = Matrix4x4::orthoganal(

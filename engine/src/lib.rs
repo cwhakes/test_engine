@@ -2,6 +2,7 @@
 extern crate lazy_static;
 
 pub mod graphics;
+pub mod input;
 pub mod math;
 pub mod time;
 pub mod util;
