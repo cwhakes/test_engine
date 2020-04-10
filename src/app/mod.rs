@@ -2,12 +2,16 @@ use engine::graphics::shader::{self, Shader};
 use engine::graphics::{ConstantBuffer, Context, IndexBuffer, VertexBuffer};
 use engine::graphics::{Graphics, GRAPHICS};
 use engine::input::{Listener, INPUT};
-use engine::math::Matrix4x4;
+use engine::math::{Matrix4x4, Point};
 use engine::time::{get_tick_count, DeltaT};
 use engine::vertex;
 use engine::window::{Hwnd, Window, WindowInner};
 
 use std::sync::{Arc, Mutex};
+
+lazy_static! {
+    pub static ref WINDOW: Arc<Mutex<Option<AppWindow>>> = Arc::new(Mutex::new(None));
+}
 
 #[repr(C)]
 #[derive(Vertex)]
@@ -34,9 +38,14 @@ pub struct AppWindow {
     delta_scale: f32,
     rot_x: f32,
     rot_y: f32,
+    scale_cube: f32,
 }
 
 impl Window for AppWindow {
+    fn me() -> Arc<Mutex<Option<AppWindow>>> {
+        WINDOW.clone()
+    }
+
     fn window_inner(&self) -> &WindowInner {
         &self.window_inner
     }
@@ -45,7 +54,7 @@ impl Window for AppWindow {
         &mut self.window_inner
     }
 
-    fn on_create(hwnd: Hwnd) -> Arc<Mutex<AppWindow>> {
+    fn on_create(hwnd: Hwnd)  {
         let vertex_list = [
             VertexColor(
                 [-0.5, -0.5, -0.5].into(),
@@ -126,13 +135,13 @@ impl Window for AppWindow {
             delta_scale: 0.0,
             rot_x: 0.0,
             rot_y: 0.0,
+            scale_cube: 1.0,
         };
 
         *GRAPHICS.lock().unwrap() = Some(graphics);
 
-        let window = Arc::new(Mutex::new(app_window));
-        INPUT.lock().unwrap().add_listener(window.clone());
-        window
+        *WINDOW.lock().unwrap() = Some(app_window);
+        INPUT.lock().unwrap().add_listener(WINDOW.clone());
     }
 
     fn on_update(&mut self) {
@@ -160,6 +169,14 @@ impl Window for AppWindow {
     fn on_destroy(&mut self) {
         GRAPHICS.lock().unwrap().take();
     }
+
+    fn on_focus(window: Arc<Mutex<Option<AppWindow>>>) {
+        INPUT.lock().unwrap().add_listener(window)
+    }
+
+    fn on_kill_focus(window: Arc<Mutex<Option<AppWindow>>>) {
+        INPUT.lock().unwrap().remove_listener(window)
+    }
 }
 
 impl Listener for AppWindow {
@@ -178,6 +195,14 @@ impl Listener for AppWindow {
         }
     }
     fn on_key_up(&mut self, _key: usize) {}
+    fn on_mouse_move(&mut self, point: Point) {
+        self.rot_x -= point.y as f32 / 200.0;
+        self.rot_y -= point.x as f32 / 200.0;
+    }
+    fn on_left_mouse_down(&mut self) { self.scale_cube = 0.5 }
+    fn on_right_mouse_down(&mut self) { self.scale_cube = 1.5 }
+    fn on_left_mouse_up(&mut self) { self.scale_cube = 1.0 }
+    fn on_right_mouse_up(&mut self) { self.scale_cube = 1.0 }
 }
 
 impl AppWindow {
@@ -194,7 +219,7 @@ impl AppWindow {
         world *= Matrix4x4::translation(
             Vector3d::new(-1.5, -1.5, 0.0).lerp([1.5, 1.5, 0.0], self.delta_pos)
         );*/
-        let mut world = Matrix4x4::scaling([1.0, 1.0, 1.0]);
+        let mut world = Matrix4x4::scaling([self.scale_cube, self.scale_cube, self.scale_cube]);
         world *= Matrix4x4::rotation_z(0.0);
         world *= Matrix4x4::rotation_y(self.rot_y);
         world *= Matrix4x4::rotation_x(self.rot_x);

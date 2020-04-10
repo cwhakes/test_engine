@@ -17,20 +17,18 @@ use winapi::um::winuser::COLOR_WINDOW;
 use winapi::um::winuser::{DispatchMessageW, PeekMessageW, TranslateMessage};
 use winapi::um::winuser::{ShowWindow, UpdateWindow};
 use winapi::um::winuser::{IDC_ARROW, IDI_APPLICATION};
-use winapi::um::winuser::{WM_CREATE, WM_DESTROY};
 use winapi::um::winuser::{WS_EX_OVERLAPPEDWINDOW, WS_OVERLAPPEDWINDOW};
 
-lazy_static! {
-    pub static ref WINDOW: Mutex<Option<Arc<Mutex<dyn Window>>>> = Mutex::new(None);
-}
-
 pub trait Window: Send + Sync {
+    fn me() -> Arc<Mutex<Option<Self>>> where Self: Sized;
     fn window_inner(&self) -> &WindowInner;
     fn window_inner_mut(&mut self) -> &mut WindowInner;
 
-    fn on_create(hwnd: Hwnd) -> Arc<Mutex<Self>> where Self: Sized;
+    fn on_create(_hwnd: Hwnd) where Self: Sized {}
     fn on_update(&mut self) {}
     fn on_destroy(&mut self) {}
+    fn on_focus(_window: Arc<Mutex<Option<Self>>>) where Self: Sized {}
+    fn on_kill_focus(_window: Arc<Mutex<Option<Self>>>) where Self: Sized {}
 
     fn init()
     where
@@ -103,19 +101,30 @@ pub trait Window: Send + Sync {
         where Self: Sized + 'static
     {
         match msg {
-            WM_CREATE => {
+            winuser::WM_CREATE => {
                 let hwnd = hwnd.into();
-                let window = Self::on_create(hwnd);
-                window.lock().unwrap().window_inner_mut().running = true;
-
-                *WINDOW.lock().unwrap() = Some(window);
+                Self::on_create(hwnd);
+                if let Some(window) = &mut *Self::me().lock().unwrap() {
+                    window.window_inner_mut().running = true;
+                }
                 0
             }
-            WM_DESTROY => {
+            winuser::WM_SETFOCUS => {
+                std::thread::spawn(|| {
+                    Self::on_focus(Self::me());
+                });
+                0
+            }
+            winuser::WM_KILLFOCUS => {
+                std::thread::spawn(|| {
+                    Self::on_kill_focus(Self::me());
+                });
+                0
+            }
+            winuser::WM_DESTROY => {
                 //Spawn a different thread to prevent recursive lock
                 std::thread::spawn(|| {
-                    if let Some(ref mut window) = *WINDOW.lock().unwrap() {
-                        let mut window = window.lock().unwrap();
+                    if let Some(window) = &mut *Self::me().lock().unwrap() {
                         window.window_inner_mut().running = false;
                         window.on_destroy();
                     };
