@@ -17,6 +17,10 @@ fn main() {
         .unwrap_or(false)
     {
         INPUT.lock().unwrap().update();
-        WINDOW.lock().unwrap().as_mut().map(|w| w.lock().unwrap().broadcast());
+        WINDOW
+            .lock()
+            .unwrap()
+            .as_ref()
+            .map(|w| w.lock().unwrap().broadcast());
     }
 }

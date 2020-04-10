@@ -89,7 +89,7 @@ impl BackBuffer {
             if let Some(buffer) = buffer.as_ref() {
                 buffer.Release();
             }
-            NonNull::new(rtv).map(|inner| BackBuffer(inner))
+            NonNull::new(rtv).map(BackBuffer)
         }
     }
 }

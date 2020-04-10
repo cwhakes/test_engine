@@ -15,7 +15,7 @@ use winapi::um::d3d11;
 pub trait ShaderType {
     type ShaderInterface: ops::Deref<Target = d3d11::ID3D11DeviceChild>;
 
-    fn create_shader(
+    unsafe fn create_shader(
         device: &d3d11::ID3D11Device,
         bytecode: *const ffi::c_void,
         bytecode_len: SIZE_T,

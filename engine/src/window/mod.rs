@@ -24,48 +24,11 @@ lazy_static! {
     pub static ref WINDOW: Mutex<Option<Arc<Mutex<dyn Window>>>> = Mutex::new(None);
 }
 
-/// Windows Window event Loop
-unsafe extern "system" fn window_loop(
-    hwnd: HWND,
-    msg: UINT,
-    wparam: WPARAM,
-    lparam: LPARAM,
-) -> LRESULT {
-    match msg {
-        WM_CREATE => {
-            if let Some(ref mut window) = *WINDOW.lock().unwrap() {
-                let mut window = window.lock().unwrap();
-                window.window_inner_mut().hwnd = Some(hwnd.into());
-                window.on_create();
-                window.window_inner_mut().running = true;
-            };
-            0
-        }
-        WM_DESTROY => {
-            //Spawn a different thread to prevent recursive lock
-            std::thread::spawn(|| {
-                if let Some(ref mut window) = *WINDOW.lock().unwrap() {
-                    let mut window = window.lock().unwrap();
-                    window.window_inner_mut().running = false;
-                    window.on_destroy();
-                };
-            });
-            winuser::PostQuitMessage(0);
-            0
-        }
-        _ => winuser::DefWindowProcW(hwnd, msg, wparam, lparam),
-    }
-}
-
 pub trait Window: Send + Sync {
-    fn create() -> Arc<Mutex<Self>>
-    where
-        Self: Sized;
-
     fn window_inner(&self) -> &WindowInner;
     fn window_inner_mut(&mut self) -> &mut WindowInner;
 
-    fn on_create(&mut self) {}
+    fn on_create(hwnd: Hwnd) -> Arc<Mutex<Self>> where Self: Sized;
     fn on_update(&mut self) {}
     fn on_destroy(&mut self) {}
 
@@ -77,9 +40,6 @@ pub trait Window: Send + Sync {
             let class_name = os_vec("MyWindowClass");
             let menu_name = os_vec("");
             let window_name = os_vec("DirectX Application");
-
-            let window = Self::create();
-            *WINDOW.lock().unwrap() = Some(window);
 
             let wc = WNDCLASSEXW {
                 cbClsExtra: 0,
@@ -93,7 +53,7 @@ pub trait Window: Send + Sync {
                 lpszClassName: class_name.clone().as_ptr(),
                 lpszMenuName: menu_name.as_ptr(),
                 style: 0,
-                lpfnWndProc: Some(window_loop),
+                lpfnWndProc: Some(Self::window_loop),
             };
             if 0 == RegisterClassExW(&wc) {
                 panic!()
@@ -130,6 +90,40 @@ pub trait Window: Send + Sync {
                 DispatchMessageW(&msg);
             }
             std::thread::sleep(Default::default());
+        }
+    }
+
+    /// Windows Window event Loop
+    unsafe extern "system" fn window_loop(
+        hwnd: HWND,
+        msg: UINT,
+        wparam: WPARAM,
+        lparam: LPARAM,
+    ) -> LRESULT
+        where Self: Sized + 'static
+    {
+        match msg {
+            WM_CREATE => {
+                let hwnd = hwnd.into();
+                let window = Self::on_create(hwnd);
+                window.lock().unwrap().window_inner_mut().running = true;
+
+                *WINDOW.lock().unwrap() = Some(window);
+                0
+            }
+            WM_DESTROY => {
+                //Spawn a different thread to prevent recursive lock
+                std::thread::spawn(|| {
+                    if let Some(ref mut window) = *WINDOW.lock().unwrap() {
+                        let mut window = window.lock().unwrap();
+                        window.window_inner_mut().running = false;
+                        window.on_destroy();
+                    };
+                });
+                winuser::PostQuitMessage(0);
+                0
+            }
+            _ => winuser::DefWindowProcW(hwnd, msg, wparam, lparam),
         }
     }
 }
