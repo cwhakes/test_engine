@@ -1,14 +1,14 @@
 use engine::graphics::shader::{self, Shader};
-use engine::graphics::{ConstantBuffer, Context, VertexBuffer};
+use engine::graphics::{ConstantBuffer, Context, IndexBuffer, VertexBuffer};
 use engine::graphics::{Graphics, GRAPHICS};
-use engine::math::{Matrix4x4, Vector3d};
-use engine::time::DeltaT;
+use engine::math::Matrix4x4;
+use engine::time::{DeltaT, get_tick_count};
 use engine::vertex;
 use engine::window::{Window, WindowInner};
 
 #[repr(C)]
 #[derive(Vertex)]
-struct VertexColor(vertex::Position, vertex::Position, vertex::Color);
+struct VertexColor(vertex::Position, vertex::Color, vertex::Color);
 
 #[repr(C, align(16))]
 #[derive(Default, Debug)]
@@ -16,6 +16,7 @@ struct Constant {
     world: Matrix4x4,
     view: Matrix4x4,
     proj: Matrix4x4,
+    time: u32,
 }
 
 #[derive(Default)]
@@ -25,6 +26,7 @@ pub struct AppWindow {
     vertex_shader: Option<Shader<shader::Vertex>>,
     pixel_shader: Option<Shader<shader::Pixel>>,
     constant_buffer: Option<ConstantBuffer<Constant>>,
+    index_buffer: Option<IndexBuffer>,
     delta_t: DeltaT,
     delta_pos: f32,
     delta_scale: f32,
@@ -38,6 +40,7 @@ impl Window for AppWindow {
             vertex_shader: None,
             pixel_shader: None,
             constant_buffer: None,
+            index_buffer: None,
             ..Default::default()
         }
     }
@@ -52,16 +55,43 @@ impl Window for AppWindow {
 
     fn on_create(&mut self) {
         let vertex_list = [
-            VertexColor([-0.5, -0.5, 0.0].into(), [-0.5, 0.5, 0.0].into(), [1.0, 0.0, 0.0].into()),
-            VertexColor([-0.5, 0.5, 0.0].into(), [-0.5, 0.5, 0.0].into(), [0.0, 1.0, 0.0].into()),
-            VertexColor([0.5, -0.5, 0.0].into(), [-0.5, 0.5, 0.0].into(), [0.0, 0.0, 1.0].into()),
-            VertexColor([0.5, 0.5, 0.0].into(), [-0.5, 0.5, 0.0].into(), [1.0, 1.0, 0.0].into()),
+            VertexColor([-0.5, -0.5, -0.5].into(), [0.0, 0.0, 0.0].into(), [0.2, 0.2, 0.2].into()),
+            VertexColor([-0.5, 0.5, -0.5].into(), [0.0, 1.0, 0.0].into(), [0.2, 0.2, 0.2].into()),
+            VertexColor([0.5, 0.5, -0.5].into(), [1.0, 1.0, 0.0].into(), [0.2, 0.2, 0.2].into()),
+            VertexColor([0.5, -0.5, -0.5].into(), [1.0, 0.0, 0.0].into(), [0.2, 0.2, 0.2].into()),
+            
+            VertexColor([0.5, -0.5, 0.5].into(), [1.0, 0.0, 1.0].into(), [0.2, 0.2, 0.2].into()),
+            VertexColor([0.5, 0.5, 0.5].into(), [1.0, 1.0, 1.0].into(), [0.2, 0.2, 0.2].into()),
+            VertexColor([-0.5, 0.5, 0.5].into(), [0.0, 1.0, 1.0].into(), [0.2, 0.2, 0.2].into()),
+            VertexColor([-0.5, -0.5, 0.5].into(), [0.0, 0.0, 1.0].into(), [0.2, 0.2, 0.2].into()),
+        ];
+
+        let index_list = [
+            //front
+            0, 1, 2,
+            2, 3, 0,
+            //back
+            4, 5, 6,
+            6, 7, 4,
+            //top
+            1, 6, 5,
+            5, 2, 1,
+            //bottom
+            7, 0, 3,
+            3, 4, 7,
+            //right
+            3, 2, 5,
+            5, 4, 3,
+            //left
+            7, 6, 1,
+            1, 0, 7,
         ];
 
         let graphics = Graphics::new(self.window_inner.hwnd.as_ref().unwrap());
         let (vertex_shader, blob) = graphics.device().new_shader::<shader::Vertex>("vertex_shader.hlsl");
         let (pixel_shader, _) = graphics.device().new_shader::<shader::Pixel>("pixel_shader.hlsl");
         let vb = graphics.device().new_vertex_buffer(&vertex_list, &blob);
+        let ib = graphics.device().new_index_buffer(&index_list);
         let cb = graphics.device().new_constant_buffer(
             &Constant {
                 ..Default::default()
@@ -72,6 +102,7 @@ impl Window for AppWindow {
         self.pixel_shader = Some(pixel_shader);
         self.vertex_buffer = Some(vb);
         self.constant_buffer = Some(cb);
+        self.index_buffer = Some(ib);
 
         *GRAPHICS.lock().unwrap() = Some(graphics);
     }
@@ -88,7 +119,8 @@ impl Window for AppWindow {
             context.set_shader(self.vertex_shader.as_mut().unwrap());
             context.set_shader(self.pixel_shader.as_mut().unwrap());
             context.set_vertex_buffer(self.vertex_buffer.as_ref().unwrap());
-            context.draw_triangle_strip::<VertexColor>(self.vertex_buffer.as_ref().unwrap().len(), 0);
+            context.set_index_buffer(self.index_buffer.as_ref().unwrap());
+            context.draw_indexed_triangle_list(self.index_buffer.as_ref().unwrap().len(), 0, 0,);
 
             g.resize();
             g.swapchain().present(0);
@@ -111,17 +143,22 @@ impl AppWindow {
             if self.delta_pos > 1.0 {
                 self.delta_pos -= 1.0;
             }
-            self.delta_scale += self.delta_t.get() / 0.15;
-            let mut world = Matrix4x4::scaling(
+            self.delta_scale += self.delta_t.get() / 1.0;
+            /*let mut world = Matrix4x4::scaling(
                 Vector3d::new(0.5, 0.5, 0.0).lerp([1.0, 1.0, 0.0], (self.delta_scale.sin() +1.0)/2.0)
             );
             world *= Matrix4x4::translation(
                 Vector3d::new(-1.5, -1.5, 0.0).lerp([1.5, 1.5, 0.0], self.delta_pos)
-            );
+            );*/
+            let mut world = Matrix4x4::scaling([1.0, 1.0, 1.0]);
+            world *= Matrix4x4::rotation_z(self.delta_scale);
+            world *= Matrix4x4::rotation_y(self.delta_scale);
+            world *= Matrix4x4::rotation_x(self.delta_scale);
+
             let view = Matrix4x4::identity();
             let proj = Matrix4x4::orthoganal(
-                width as f32 / 400.0,
-                height as f32 / 400.0,
+                width as f32 / 300.0,
+                height as f32 / 300.0,
                 -4.0,
                 4.0,
             );
@@ -130,6 +167,7 @@ impl AppWindow {
                 world,
                 view,
                 proj,
+                time: get_tick_count(),
             };
             cb.update(context, &mut constant);
             context.set_constant_buffer::<shader::Vertex, _>(cb);

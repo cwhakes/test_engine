@@ -1,6 +1,6 @@
 use crate::vertex::Vertex;
 use crate::graphics::shader::{Blob, Shader, ShaderType};
-use crate::graphics::{ConstantBuffer, VertexBuffer};
+use crate::graphics::{ConstantBuffer, IndexBuffer, VertexBuffer};
 
 use std::ptr::NonNull;
 
@@ -11,6 +11,10 @@ pub struct Device(NonNull<ID3D11Device>);
 impl Device {
     pub fn new_constant_buffer<C>(&self, constant: &C) -> ConstantBuffer<C> {
         ConstantBuffer::new(self, constant)
+    }
+
+    pub fn new_index_buffer(&self, indices: &[u32]) -> IndexBuffer {
+        IndexBuffer::new(self, indices)
     }
 
     pub fn new_shader<T: ShaderType>(&self, location: &str) -> (Shader<T>, Blob) {

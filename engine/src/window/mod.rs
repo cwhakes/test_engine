@@ -124,8 +124,8 @@ pub trait Window: Send + Sync {
 
             let mut msg = Default::default();
             while 0 < PeekMessageW(&mut msg, ptr::null_mut(), 0, 0, winuser::PM_REMOVE) {
-                TranslateMessage(&mut msg as *const _);
-                DispatchMessageW(&mut msg as *const _);
+                TranslateMessage(&msg);
+                DispatchMessageW(&msg);
             }
             std::thread::sleep(Default::default());
         }

@@ -1,14 +1,15 @@
 struct VS_INPUT
 {
     float4 pos: POSITION;
-    float4 pos1: POSITION1;
     float3 color: COLOR;
+    float3 color1: COLOR1;
 };
 
 struct VS_OUTPUT
 {
     float4 pos: SV_POSITION;
     float3 color: COLOR;
+    float3 color1: COLOR1;
 };
 
 cbuffer constant: register(b0)
@@ -32,6 +33,7 @@ VS_OUTPUT vsmain( VS_INPUT input )
     output.pos = mul(output.pos, m_proj);
 
     output.color = input.color;
+    output.color1 = input.color1;
 
     //if (output.pos.y > 0 && output.pos.y < 1)
     //{

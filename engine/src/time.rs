@@ -1,5 +1,13 @@
 use std::time::Instant;
 
+lazy_static!{
+    static ref START_TIME: Instant = Instant::now();
+}
+
+pub fn get_tick_count() -> u32 {
+    START_TIME.elapsed().as_millis() as u32
+}
+
 pub struct DeltaT {
     prev_time: Instant,
     curr_time: Instant,

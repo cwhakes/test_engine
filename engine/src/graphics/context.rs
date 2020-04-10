@@ -1,9 +1,10 @@
 use super::shader::{Shader, ShaderType};
-use super::{ConstantBuffer, SwapChain, VertexBuffer};
+use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use super::super::vertex::Vertex;
 
 use std::ptr::{self, NonNull};
 
+use winapi::shared::dxgiformat;
 use winapi::um::d3d11::{ID3D11DeviceContext, D3D11_VIEWPORT};
 use winapi::um::d3dcommon;
 
@@ -23,6 +24,16 @@ impl Context {
         S::set_constant_buffer(self.as_ref(), buffer)
     }
 
+    pub fn set_index_buffer(&self, index_buffer: &IndexBuffer) {
+        unsafe {
+            self.as_ref().IASetIndexBuffer(
+                index_buffer.buffer_ptr(),
+                dxgiformat::DXGI_FORMAT_R32_UINT,
+                0,
+            );
+        }
+    }
+
     pub fn set_vertex_buffer<V: Vertex>(&self, vertex_buffer: &VertexBuffer<V>) {
         unsafe {
             self.as_ref().IASetVertexBuffers(
@@ -40,7 +51,7 @@ impl Context {
         S::set_shader(self.as_ref(), shader.as_mut());
     }
 
-    pub fn _draw_triangle_list<V>(&self, vertices_len: usize, vertices_start: usize) {
+    pub fn draw_triangle_list(&self, vertices_len: usize, vertices_start: usize) {
         unsafe {
             self.as_ref()
                 .IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -49,12 +60,21 @@ impl Context {
         }
     }
 
-    pub fn draw_triangle_strip<V>(&self, vertices_len: usize, vertices_start: usize) {
+    pub fn draw_triangle_strip(&self, vertices_len: usize, vertices_start: usize) {
         unsafe {
             self.as_ref()
                 .IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             self.as_ref()
                 .Draw(vertices_len as u32, vertices_start as u32);
+        }
+    }
+
+    pub fn draw_indexed_triangle_list(&self, indices_len: usize, indices_start: usize, vertices_offset: isize) {
+        unsafe {
+            self.as_ref()
+                .IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            self.as_ref()
+                .DrawIndexed(indices_len as u32, indices_start as u32, vertices_offset as i32);
         }
     }
 

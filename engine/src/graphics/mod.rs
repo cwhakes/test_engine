@@ -1,6 +1,7 @@
 mod constant_buffer;
 mod context;
 mod device;
+mod index_buffer;
 pub mod shader;
 mod swapchain;
 mod vertex_buffer;
@@ -8,6 +9,7 @@ mod vertex_buffer;
 pub use constant_buffer::ConstantBuffer;
 pub use context::Context;
 pub use device::Device;
+pub use index_buffer::IndexBuffer;
 pub use swapchain::SwapChain;
 pub use vertex_buffer::VertexBuffer;
 

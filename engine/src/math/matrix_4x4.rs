@@ -43,6 +43,33 @@ impl Matrix4x4 {
         matrix.0[3][2] = -(near_plane / (far_plane - near_plane));
         matrix
     }
+
+    pub fn rotation_x(angle: f32) -> Matrix4x4 {
+        let mut matrix = Matrix4x4::identity();
+        matrix.0[1][1] = angle.cos();
+        matrix.0[1][2] = angle.sin();
+        matrix.0[2][1] = -angle.sin();
+        matrix.0[2][2] = angle.cos();
+        matrix
+    }
+
+    pub fn rotation_y(angle: f32) -> Matrix4x4 {
+        let mut matrix = Matrix4x4::identity();
+        matrix.0[0][0] = angle.cos();
+        matrix.0[0][2] = -angle.sin();
+        matrix.0[2][0] = angle.sin();
+        matrix.0[2][2] = angle.cos();
+        matrix
+    }
+
+    pub fn rotation_z(angle: f32) -> Matrix4x4 {
+        let mut matrix = Matrix4x4::identity();
+        matrix.0[0][0] = angle.cos();
+        matrix.0[0][1] = angle.sin();
+        matrix.0[1][0] = -angle.sin();
+        matrix.0[1][1] = angle.cos();
+        matrix
+    }
 }
 
 impl convert::From<[[f32; 4]; 4]> for Matrix4x4 {
