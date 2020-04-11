@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-use crate::graphics::Device;
+use crate::graphics::render::Device;
 use crate::error;
 use crate::vertex::{Vertex, SemanticIndexFix};
 

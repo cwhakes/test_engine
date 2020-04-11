@@ -1,7 +1,7 @@
 use crate::error;
 use crate::vertex::Vertex;
-use crate::graphics::shaders::{Blob, Shader, ShaderType};
-use crate::graphics::{ConstantBuffer, IndexBuffer, VertexBuffer};
+use crate::graphics::render::shaders::{Blob, Shader, ShaderType};
+use crate::graphics::render::{ConstantBuffer, IndexBuffer, VertexBuffer};
 
 use std::ptr::NonNull;
 

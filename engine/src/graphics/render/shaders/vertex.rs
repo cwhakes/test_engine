@@ -1,6 +1,6 @@
 use super::shader::ShaderType;
 
-use crate::graphics::constant_buffer::ConstantBuffer;
+use crate::graphics::render::constant_buffer::ConstantBuffer;
 
 use std::ffi::c_void;
 use std::ptr;

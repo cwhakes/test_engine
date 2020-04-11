@@ -17,6 +17,15 @@ impl convert::From<windef::POINT> for Point {
     }
 }
 
+impl convert::From<(i32, i32)> for Point {
+    fn from(point: (i32, i32)) -> Self {
+        Point {
+            x: point.0,
+            y: point.1,
+        }
+    }
+}
+
 impl ops::Sub<Point> for Point {
     type Output = Point;
 

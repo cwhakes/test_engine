@@ -15,7 +15,7 @@ pub trait Listener {
     fn on_key_down(&mut self, _key: usize) {}
     fn on_key_up(&mut self, _key: usize) {}
 
-    fn on_mouse_move(&mut self, _delta: Point) {}
+    fn on_mouse_move(&mut self, _pos: Point) {}
     fn on_left_mouse_down(&mut self) {}
     fn on_right_mouse_down(&mut self) {}
     fn on_left_mouse_up(&mut self) {}
@@ -40,9 +40,9 @@ impl<T: Listener> Listener for Option<T> {
             lis.on_key_up(key)
         }
     }
-    fn on_mouse_move(&mut self, delta: Point) {
+    fn on_mouse_move(&mut self, pos: Point) {
         if let Some(lis) = self {
-            lis.on_mouse_move(delta)
+            lis.on_mouse_move(pos)
         }
     }
     fn on_left_mouse_down(&mut self) {
@@ -121,7 +121,7 @@ impl Input {
             let new_mouse_pos = get_mouse_pos();
             if new_mouse_pos != self.old_mouse_pos {
                 self.hashmap.values().for_each(|lis| {
-                    lis.lock().unwrap().on_mouse_move(new_mouse_pos - self.old_mouse_pos)
+                    lis.lock().unwrap().on_mouse_move(new_mouse_pos)
                 });
             }
             self.old_mouse_pos = new_mouse_pos;
@@ -144,4 +144,18 @@ fn get_mouse_pos() -> Point {
     let mut point = windef::POINT::default();
     unsafe { winuser::GetCursorPos(&mut point); }
     point.into()
+}
+
+pub fn set_cursor_position(pos: impl Into<Point>) {
+    unsafe {
+        let pos = pos.into();
+        winuser::SetCursorPos(pos.x, pos.y)
+    };
+}
+
+pub fn show_cursor(show: bool) {
+    unsafe {
+        let b_show = if show {1} else {0};
+        winuser::ShowCursor(b_show);
+    }
 }

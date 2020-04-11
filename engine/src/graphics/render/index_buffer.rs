@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 use crate::error;
-use crate::graphics::Device;
+use crate::graphics::render::Device;
 
 use std::ptr::{self, NonNull};
 

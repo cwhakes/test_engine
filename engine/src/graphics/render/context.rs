@@ -1,8 +1,8 @@
 use super::shaders::{Shader, ShaderType};
 use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
-use super::super::vertex::Vertex;
 
 use crate::error;
+use crate::vertex::Vertex;
 
 use std::ptr::{self, NonNull};
 
