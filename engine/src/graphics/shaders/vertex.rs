@@ -26,7 +26,7 @@ impl ShaderType for Vertex {
         unsafe { context.VSSetShader(shader, ptr::null(), 0) }
     }
 
-    fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &ConstantBuffer<C>) {
+    fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &mut ConstantBuffer<C>) {
         unsafe { context.VSSetConstantBuffers(0, 1, &buffer.buffer_ptr()) }
     }
 

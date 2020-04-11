@@ -8,17 +8,17 @@ pub use pixel::Pixel;
 pub use shader::{Shader, ShaderType};
 pub use vertex::Vertex;
 
+use crate::prelude::*;
+use crate::error;
 use crate::util::os_vec;
 
-use std::convert::TryInto;
 use std::ffi::CString;
 use std::ptr::{null, null_mut};
 
-use winapi::shared::winerror::SUCCEEDED;
 use winapi::um::d3dcommon;
 use winapi::um::d3dcompiler::D3DCompileFromFile;
 
-pub fn compile_shader(location: &str, entry_point: &str, target: &str) -> Result<Blob, Blob> {
+pub fn compile_shader(location: &str, entry_point: &str, target: &str) -> error::Result<Blob> {
     unsafe {
         let location = os_vec(location);
         let entry_point = CString::new(entry_point).unwrap();
@@ -37,12 +37,11 @@ pub fn compile_shader(location: &str, entry_point: &str, target: &str) -> Result
             0,
             &mut blob,
             &mut err_blob,
-        );
+        ).result();
 
-        if SUCCEEDED(result) {
-            Ok(blob.try_into().unwrap())
-        } else {
-            Err(err_blob.try_into().unwrap())
-        }
+        result
+            .and(Blob::new(blob))
+            // use `.or_else()` to lazily evaluate
+            .or_else(|_| Err(Blob::new(err_blob)?.into()))
     }
 }

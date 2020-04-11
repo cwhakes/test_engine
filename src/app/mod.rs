@@ -1,4 +1,4 @@
-use engine::graphics::shader::{self, Shader};
+use engine::graphics::shaders::{self, Shader};
 use engine::graphics::{ConstantBuffer, Context, IndexBuffer, VertexBuffer};
 use engine::graphics::{Graphics, GRAPHICS};
 use engine::input::{Listener, INPUT};
@@ -7,10 +7,10 @@ use engine::time::{get_tick_count, DeltaT};
 use engine::vertex;
 use engine::window::{Hwnd, Window, WindowInner};
 
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 lazy_static! {
-    pub static ref WINDOW: Arc<Mutex<Option<AppWindow>>> = Arc::new(Mutex::new(None));
+    pub static ref WINDOW: Mutex<Option<AppWindow>> = Mutex::new(None);
 }
 
 #[repr(C)]
@@ -29,8 +29,8 @@ struct Constant {
 pub struct AppWindow {
     window_inner: WindowInner,
     vertex_buffer: VertexBuffer<VertexColor>,
-    vertex_shader: Shader<shader::Vertex>,
-    pixel_shader: Shader<shader::Pixel>,
+    vertex_shader: Shader<shaders::Vertex>,
+    pixel_shader: Shader<shaders::Pixel>,
     constant_buffer: ConstantBuffer<Constant>,
     index_buffer: IndexBuffer,
     delta_t: DeltaT,
@@ -42,8 +42,8 @@ pub struct AppWindow {
 }
 
 impl Window for AppWindow {
-    fn me() -> Arc<Mutex<Option<AppWindow>>> {
-        WINDOW.clone()
+    fn me() -> &'static Mutex<Option<AppWindow>> {
+        &WINDOW
     }
 
     fn window_inner(&self) -> &WindowInner {
@@ -54,7 +54,7 @@ impl Window for AppWindow {
         &mut self.window_inner
     }
 
-    fn on_create(hwnd: Hwnd)  {
+    fn on_create(hwnd: Hwnd) {
         let vertex_list = [
             VertexColor(
                 [-0.5, -0.5, -0.5].into(),
@@ -110,18 +110,26 @@ impl Window for AppWindow {
         let mut window_inner = WindowInner::default();
         window_inner.hwnd = Some(hwnd);
 
-        let graphics = Graphics::new(window_inner.hwnd.as_ref().unwrap());
+        let graphics = Graphics::new(window_inner.hwnd.as_ref().unwrap()).unwrap();
         let (vertex_shader, blob) = graphics
             .device()
-            .new_shader::<shader::Vertex>("vertex_shader.hlsl");
+            .new_shader::<shaders::Vertex>("vertex_shader.hlsl")
+            .unwrap();
         let (pixel_shader, _) = graphics
             .device()
-            .new_shader::<shader::Pixel>("pixel_shader.hlsl");
-        let vertex_buffer = graphics.device().new_vertex_buffer(&vertex_list, &blob);
-        let index_buffer = graphics.device().new_index_buffer(&index_list);
-        let constant_buffer = graphics.device().new_constant_buffer(&Constant {
-            ..Default::default()
-        });
+            .new_shader::<shaders::Pixel>("pixel_shader.hlsl")
+            .unwrap();
+        let vertex_buffer = graphics
+            .device()
+            .new_vertex_buffer(&vertex_list, &blob)
+            .unwrap();
+        let index_buffer = graphics.device().new_index_buffer(&index_list).unwrap();
+        let constant_buffer = graphics
+            .device()
+            .new_constant_buffer(&Constant {
+                ..Default::default()
+            })
+            .unwrap();
 
         let app_window = AppWindow {
             window_inner,
@@ -141,7 +149,7 @@ impl Window for AppWindow {
         *GRAPHICS.lock().unwrap() = Some(graphics);
 
         *WINDOW.lock().unwrap() = Some(app_window);
-        INPUT.lock().unwrap().add_listener(WINDOW.clone());
+        INPUT.lock().unwrap().add_listener(&*WINDOW);
     }
 
     fn on_update(&mut self) {
@@ -155,11 +163,11 @@ impl Window for AppWindow {
 
             context.set_shader(&mut self.vertex_shader);
             context.set_shader(&mut self.pixel_shader);
-            context.set_vertex_buffer(&self.vertex_buffer);
-            context.set_index_buffer(&self.index_buffer);
+            context.set_vertex_buffer(&mut self.vertex_buffer);
+            context.set_index_buffer(&mut self.index_buffer);
             context.draw_indexed_triangle_list(self.index_buffer.len(), 0, 0);
 
-            g.resize();
+            g.resize().unwrap();
             g.swapchain().present(0);
 
             self.delta_t.update();
@@ -170,11 +178,11 @@ impl Window for AppWindow {
         GRAPHICS.lock().unwrap().take();
     }
 
-    fn on_focus(window: Arc<Mutex<Option<AppWindow>>>) {
+    fn on_focus(window: &'static Mutex<Option<AppWindow>>) {
         INPUT.lock().unwrap().add_listener(window)
     }
 
-    fn on_kill_focus(window: Arc<Mutex<Option<AppWindow>>>) {
+    fn on_kill_focus(window: &'static Mutex<Option<AppWindow>>) {
         INPUT.lock().unwrap().remove_listener(window)
     }
 }
@@ -199,10 +207,18 @@ impl Listener for AppWindow {
         self.rot_x -= point.y as f32 / 200.0;
         self.rot_y -= point.x as f32 / 200.0;
     }
-    fn on_left_mouse_down(&mut self) { self.scale_cube = 0.5 }
-    fn on_right_mouse_down(&mut self) { self.scale_cube = 1.5 }
-    fn on_left_mouse_up(&mut self) { self.scale_cube = 1.0 }
-    fn on_right_mouse_up(&mut self) { self.scale_cube = 1.0 }
+    fn on_left_mouse_down(&mut self) {
+        self.scale_cube = 0.5
+    }
+    fn on_right_mouse_down(&mut self) {
+        self.scale_cube = 1.5
+    }
+    fn on_left_mouse_up(&mut self) {
+        self.scale_cube = 1.0
+    }
+    fn on_right_mouse_up(&mut self) {
+        self.scale_cube = 1.0
+    }
 }
 
 impl AppWindow {
@@ -234,7 +250,7 @@ impl AppWindow {
             time: get_tick_count(),
         };
         self.constant_buffer.update(context, &mut constant);
-        context.set_constant_buffer::<shader::Vertex, _>(&self.constant_buffer);
-        context.set_constant_buffer::<shader::Pixel, _>(&self.constant_buffer);
+        context.set_constant_buffer::<shaders::Vertex, _>(&mut self.constant_buffer);
+        context.set_constant_buffer::<shaders::Pixel, _>(&mut self.constant_buffer);
     }
 }

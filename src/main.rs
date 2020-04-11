@@ -19,10 +19,6 @@ fn main() {
         .unwrap_or(false)
     {
         INPUT.lock().unwrap().update();
-        app::WINDOW
-            .lock()
-            .unwrap()
-            .as_mut()
-            .map(|w| w.broadcast());
+        app::WINDOW.lock().unwrap().as_mut().map(|w| w.broadcast());
     }
 }

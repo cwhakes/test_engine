@@ -1,9 +1,11 @@
+use crate::prelude::*;
+
 use crate::graphics::Device;
+use crate::error;
 use crate::vertex::{Vertex, SemanticIndexFix};
 
 use std::ptr::{self, NonNull};
 
-use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11;
 
 pub struct VertexBuffer<V: Vertex>
@@ -21,7 +23,7 @@ unsafe impl<V> Send for VertexBuffer<V> where V: Vertex + Send {}
 unsafe impl<V> Sync for VertexBuffer<V> where V: Vertex + Sync {}
 
 impl<V: Vertex> VertexBuffer<V> {
-    pub fn new(device: &Device, vertices: &[V], bytecode: &[u8]) -> VertexBuffer<V> {
+    pub fn new(device: &Device, vertices: &[V], bytecode: &[u8]) -> error::Result<VertexBuffer<V>> {
         unsafe {
             let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
             buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
@@ -35,13 +37,9 @@ impl<V: Vertex> VertexBuffer<V> {
 
             let mut buffer = ptr::null_mut();
 
-            let res = device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer);
+            device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
 
-            if FAILED(res) {
-                panic!();
-            }
-
-            let buffer = NonNull::new(buffer).unwrap();
+            let buffer = NonNull::new(buffer).ok_or(error::NullPointer)?;
             
             let layout_desc: Vec<_> = V::desc(0)
                 .semantic_index_fix()
@@ -49,39 +47,60 @@ impl<V: Vertex> VertexBuffer<V> {
 
             let mut layout = std::ptr::null_mut();
 
-            let res = device.as_ref().CreateInputLayout(
+            device.as_ref().CreateInputLayout(
                 layout_desc.as_ptr(),
                 layout_desc.len() as u32,
                 bytecode.as_ptr() as *const _,
                 bytecode.len(),
                 &mut layout,
-            );
+            ).result()?;
 
-            if FAILED(res) {
-                panic!();
-            }
 
-            let layout = NonNull::new(layout).unwrap();
+            let layout = NonNull::new(layout).ok_or(error::NullPointer)?;
 
-            VertexBuffer {
+            Ok(VertexBuffer {
                 len: vertices.len(),
                 buffer,
                 layout,
                 _phantom: Default::default(),
-            }
+            })
         }
     }
 
-    pub fn buffer_ptr(&self) -> *mut d3d11::ID3D11Buffer {
+    pub fn buffer_ptr(&mut self) -> *mut d3d11::ID3D11Buffer {
         self.buffer.as_ptr()
     }
 
-    pub fn layout_ptr(&self) -> *mut d3d11::ID3D11InputLayout {
+    pub fn layout_ptr(&mut self) -> *mut d3d11::ID3D11InputLayout {
         self.layout.as_ptr()
     }
 
     pub fn len(&self) -> usize {
         self.len
+    }
+}
+
+impl<V: Vertex> AsRef<d3d11::ID3D11Buffer> for VertexBuffer<V> {
+    fn as_ref(&self) -> &d3d11::ID3D11Buffer {
+        unsafe { self.buffer.as_ref() }
+    }
+}
+
+impl<V: Vertex> AsMut<d3d11::ID3D11Buffer> for VertexBuffer<V> {
+    fn as_mut(&mut self) -> &mut d3d11::ID3D11Buffer {
+        unsafe { self.buffer.as_mut() }
+    }
+}
+
+impl<V: Vertex> AsRef<d3d11::ID3D11InputLayout> for VertexBuffer<V> {
+    fn as_ref(&self) -> &d3d11::ID3D11InputLayout {
+        unsafe { self.layout.as_ref() }
+    }
+}
+
+impl<V: Vertex> AsMut<d3d11::ID3D11InputLayout> for VertexBuffer<V> {
+    fn as_mut(&mut self) -> &mut d3d11::ID3D11InputLayout {
+        unsafe { self.layout.as_mut() }
     }
 }
 

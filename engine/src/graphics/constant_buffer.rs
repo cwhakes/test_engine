@@ -1,10 +1,12 @@
 use super::context::Context;
 use super::Device;
 
+use crate::prelude::*;
+use crate::error;
+
 use std::ffi::c_void;
 use std::ptr::{self, NonNull};
 
-use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11;
 
 /// Used to communicate a single value with shaders.
@@ -23,7 +25,7 @@ unsafe impl<C> Sync for ConstantBuffer<C> where C: Sync {}
 
 impl<C> ConstantBuffer<C> {
     /// Constructs a new ConstantBuffer.
-    pub fn new(device: &Device, constant: &C) -> ConstantBuffer<C> {
+    pub fn new(device: &Device, constant: &C) -> error::Result<ConstantBuffer<C>> {
         unsafe {
             let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
             buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
@@ -37,22 +39,18 @@ impl<C> ConstantBuffer<C> {
 
             let mut buffer = ptr::null_mut();
 
-            let res = device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer);
+            device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
 
-            if FAILED(res) {
-                panic!();
-            }
+            let buffer = NonNull::new(buffer).ok_or(error::NullPointer)?;
 
-            let buffer = NonNull::new(buffer).unwrap();
-
-            ConstantBuffer {
+            Ok(ConstantBuffer {
                 buffer,
                 _phantom: Default::default(),
-            }
+            })
         }
     }
 
-    pub fn buffer_ptr(&self) -> *mut d3d11::ID3D11Buffer {
+    pub fn buffer_ptr(&mut self) -> *mut d3d11::ID3D11Buffer {
         self.buffer.as_ptr()
     }
 
@@ -67,6 +65,18 @@ impl<C> ConstantBuffer<C> {
                 0,
             );
         }
+    }
+}
+
+impl<C> AsRef<d3d11::ID3D11Buffer> for ConstantBuffer<C> {
+    fn as_ref(&self) -> &d3d11::ID3D11Buffer {
+        unsafe { self.buffer.as_ref() }
+    }
+}
+
+impl<C> AsMut<d3d11::ID3D11Buffer> for ConstantBuffer<C> {
+    fn as_mut(&mut self) -> &mut d3d11::ID3D11Buffer {
+        unsafe { self.buffer.as_mut() }
     }
 }
 

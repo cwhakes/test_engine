@@ -1,3 +1,7 @@
+use crate::prelude::*;
+
+use super::Device;
+use crate::error;
 use crate::window::Hwnd;
 
 use std::ptr::{self, NonNull};
@@ -5,7 +9,7 @@ use std::ptr::{self, NonNull};
 use winapi::shared::dxgi::{IDXGISwapChain, DXGI_SWAP_CHAIN_DESC};
 use winapi::shared::dxgiformat::{DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_FORMAT_UNKNOWN};
 use winapi::shared::dxgitype::DXGI_USAGE_RENDER_TARGET_OUTPUT;
-use winapi::um::d3d11::{ID3D11Device, ID3D11RenderTargetView, ID3D11Resource, ID3D11Texture2D};
+use winapi::um::d3d11::{ID3D11RenderTargetView, ID3D11Resource, ID3D11Texture2D};
 use winapi::Interface;
 
 pub struct SwapChain {
@@ -32,14 +36,17 @@ impl SwapChain {
 
         desc
     }
-
-    pub fn new(inner: *mut IDXGISwapChain, device: &ID3D11Device) -> SwapChain {
-        let inner = NonNull::new(inner).unwrap();
+    
+    /// # Safety
+    /// 
+    /// `swapchain` must point to a valid IDXGISwapChain
+    pub unsafe fn new(swapchain: *mut IDXGISwapChain, device: &Device) -> error::Result<SwapChain> {
+        let inner = NonNull::new(swapchain).ok_or(error::NullPointer)?;
 
         let mut swapchain = SwapChain { inner, back_buffer: None };
-        let back_buffer = BackBuffer::new(&swapchain, device);
-        swapchain.back_buffer = back_buffer;
-        swapchain
+        let back_buffer = BackBuffer::new(&swapchain, device)?;
+        swapchain.back_buffer = Some(back_buffer);
+        Ok(swapchain)
     }
 
     pub fn inner(&self) -> &IDXGISwapChain {
@@ -50,13 +57,12 @@ impl SwapChain {
         self.back_buffer.as_ref().map(|bb| bb.0.as_ptr())
     }
 
-    pub fn resize(&mut self, device: &ID3D11Device) {
+    pub fn resize(&mut self, device: &Device) -> error::Result<()> {
         unsafe {
             self.back_buffer.take();
-
-            self.inner().ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-
-            self.back_buffer = BackBuffer::new(self, device);
+            self.inner().ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0).result()?;
+            self.back_buffer = Some(BackBuffer::new(self, device)?);
+            Ok(())
         }
     }
 
@@ -78,18 +84,18 @@ impl Drop for SwapChain {
 struct BackBuffer(NonNull<ID3D11RenderTargetView>);
 
 impl BackBuffer {
-    fn new(swapchain: &SwapChain, device: &ID3D11Device) -> Option<BackBuffer> {
+    fn new(swapchain: &SwapChain, device: &Device) -> error::Result<BackBuffer> {
         unsafe {
             let mut buffer = ptr::null_mut();
-            swapchain.inner().GetBuffer(0, &ID3D11Texture2D::uuidof(), &mut buffer);
+            swapchain.inner().GetBuffer(0, &ID3D11Texture2D::uuidof(), &mut buffer).result()?;
             let buffer = buffer as *mut ID3D11Resource;
 
             let mut rtv = ptr::null_mut();
-            device.CreateRenderTargetView(buffer, ptr::null_mut(), &mut rtv);
+            device.as_ref().CreateRenderTargetView(buffer, ptr::null_mut(), &mut rtv).result()?;
             if let Some(buffer) = buffer.as_ref() {
                 buffer.Release();
             }
-            NonNull::new(rtv).map(BackBuffer)
+            NonNull::new(rtv).map(BackBuffer).ok_or(error::NullPointer)
         }
     }
 }

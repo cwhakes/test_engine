@@ -1,8 +1,22 @@
+use crate::error;
+
 use std::ptr::NonNull;
 use std::{convert, fmt, ops};
 use winapi::um::d3dcommon::ID3DBlob;
 
 pub struct Blob(NonNull<ID3DBlob>);
+
+impl Blob {
+    /// # Safety
+    /// 
+    /// `blob` must point to a valid ID3DBlob
+    pub unsafe fn new(blob: *mut ID3DBlob) -> error::Result<Blob> {
+        match NonNull::new(blob) {
+            Some(inner) => Ok(Blob(inner)),
+            None => Err(error::NullPointer),
+        }
+    }
+}
 
 impl convert::AsRef<ID3DBlob> for Blob {
     fn as_ref(&self) -> &ID3DBlob {
@@ -15,22 +29,20 @@ impl convert::AsMut<ID3DBlob> for Blob {
         unsafe { self.0.as_mut() }
     }
 }
-impl convert::TryFrom<*mut ID3DBlob> for Blob {
-    type Error = ();
-
-    fn try_from(ptr: *mut ID3DBlob) -> Result<Self, Self::Error> {
-        match NonNull::new(ptr) {
-            Some(inner) => Ok(Blob(inner)),
-            None => Err(()),
-        }
-    }
-}
 
 impl fmt::Debug for Blob {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let string = String::from_utf8_lossy(&self);
 
         f.debug_struct("Blob").field("slice", &string).finish()
+    }
+}
+
+impl fmt::Display for Blob {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let string = String::from_utf8_lossy(&self);
+
+        write!{f, "{}", string}
     }
 }
 

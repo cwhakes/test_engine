@@ -2,7 +2,7 @@ mod constant_buffer;
 mod context;
 mod device;
 mod index_buffer;
-pub mod shader;
+pub mod shaders;
 mod swapchain;
 mod vertex_buffer;
 
@@ -13,13 +13,14 @@ pub use index_buffer::IndexBuffer;
 pub use swapchain::SwapChain;
 pub use vertex_buffer::VertexBuffer;
 
+use crate::prelude::*;
+
 use super::window;
 
-use std::convert::TryInto;
+use crate::error;
+
 use std::ptr::null_mut;
 use std::sync::Mutex;
-//use winapi::shared::dxgi::{DXGI_SWAP_CHAIN_DESC, IDXGISwapChain};
-use winapi::shared::winerror::{FAILED, SUCCEEDED};
 use winapi::um::d3d11;
 use winapi::um::d3dcommon;
 
@@ -39,7 +40,7 @@ unsafe impl Send for Graphics {}
 unsafe impl Sync for Graphics {}
 
 impl Graphics {
-    pub fn new(hwnd: &window::Hwnd) -> Graphics {
+    pub fn new(hwnd: &window::Hwnd) -> error::Result<Graphics> {
         unsafe {
             let driver_types = [
                 d3dcommon::D3D_DRIVER_TYPE_HARDWARE,
@@ -56,7 +57,7 @@ impl Graphics {
             let mut context = null_mut();
             let mut swapchain = null_mut();
 
-            let mut result = -1; //Default to error
+            let mut result = Err(error::HResult(-1)); //Default to error
 
             for &driver_type in driver_types.iter() {
                 result = d3d11::D3D11CreateDeviceAndSwapChain(
@@ -72,25 +73,24 @@ impl Graphics {
                     &mut device,
                     &mut feature_level,
                     &mut context,
-                );
+                ).result();
 
-                if SUCCEEDED(result) {
+                if result.is_ok() {
                     break;
                 }
             }
+            result?;
 
-            if FAILED(result) {
-                panic!();
-            }
+            let device = Device::new(device)?;
+            let swapchain = SwapChain::new(swapchain, &device)?;
+            let context = Context::new(context)?;
 
-            let swapchain = SwapChain::new(swapchain, &*device);
-
-            Graphics {
-                device: device.try_into().unwrap(),
+            Ok(Graphics {
+                device,
                 _feature_level: feature_level,
-                context: context.try_into().unwrap(),
+                context,
                 swapchain,
-            }
+            })
         }
     }
 
@@ -106,7 +106,7 @@ impl Graphics {
         &self.swapchain
     }
 
-    pub fn resize(&mut self) {
-        self.swapchain.resize(self.device.as_ref());
+    pub fn resize(&mut self) -> error::Result<()> {
+        self.swapchain.resize(&self.device)
     }
 }

@@ -4,7 +4,7 @@ pub use hwnd::Hwnd;
 
 use crate::util::os_vec;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use std::{mem, ptr};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
@@ -20,15 +20,15 @@ use winapi::um::winuser::{IDC_ARROW, IDI_APPLICATION};
 use winapi::um::winuser::{WS_EX_OVERLAPPEDWINDOW, WS_OVERLAPPEDWINDOW};
 
 pub trait Window: Send + Sync {
-    fn me() -> Arc<Mutex<Option<Self>>> where Self: Sized;
+    fn me() -> &'static Mutex<Option<Self>> where Self: Sized;
     fn window_inner(&self) -> &WindowInner;
     fn window_inner_mut(&mut self) -> &mut WindowInner;
 
     fn on_create(_hwnd: Hwnd) where Self: Sized {}
     fn on_update(&mut self) {}
     fn on_destroy(&mut self) {}
-    fn on_focus(_window: Arc<Mutex<Option<Self>>>) where Self: Sized {}
-    fn on_kill_focus(_window: Arc<Mutex<Option<Self>>>) where Self: Sized {}
+    fn on_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
+    fn on_kill_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
 
     fn init()
     where
@@ -92,6 +92,10 @@ pub trait Window: Send + Sync {
     }
 
     /// Windows Window event Loop
+    /// 
+    /// # Safety
+    /// 
+    /// Should only ever be called by Windows
     unsafe extern "system" fn window_loop(
         hwnd: HWND,
         msg: UINT,
@@ -102,7 +106,7 @@ pub trait Window: Send + Sync {
     {
         match msg {
             winuser::WM_CREATE => {
-                let hwnd = hwnd.into();
+                let hwnd = Hwnd::new(hwnd);
                 Self::on_create(hwnd);
                 if let Some(window) = &mut *Self::me().lock().unwrap() {
                     window.window_inner_mut().running = true;

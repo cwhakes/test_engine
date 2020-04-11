@@ -1,8 +1,10 @@
+use crate::prelude::*;
+
+use crate::error;
 use crate::graphics::Device;
 
 use std::ptr::{self, NonNull};
 
-use winapi::shared::winerror::FAILED;
 use winapi::um::d3d11;
 
 pub struct IndexBuffer {
@@ -15,7 +17,7 @@ unsafe impl Send for IndexBuffer {}
 unsafe impl Sync for IndexBuffer {}
 
 impl IndexBuffer {
-    pub fn new(device: &Device, indices: &[u32]) -> IndexBuffer {
+    pub fn new(device: &Device, indices: &[u32]) -> error::Result<IndexBuffer> {
         unsafe {
             let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
             buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
@@ -29,27 +31,31 @@ impl IndexBuffer {
 
             let mut buffer = ptr::null_mut();
 
-            let res = device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer);
-
-            if FAILED(res) {
-                panic!();
-            }
+            device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
 
             let buffer = NonNull::new(buffer).unwrap();
 
-            IndexBuffer {
+            Ok(IndexBuffer {
                 len: indices.len(),
                 buffer,
-            }
+            })
         }
-    }
-
-    pub fn buffer_ptr(&self) -> *mut d3d11::ID3D11Buffer {
-        self.buffer.as_ptr()
     }
 
     pub fn len(&self) -> usize {
         self.len
+    }
+}
+
+impl AsRef<d3d11::ID3D11Buffer> for IndexBuffer {
+    fn as_ref(&self) -> &d3d11::ID3D11Buffer {
+        unsafe { self.buffer.as_ref() }
+    }
+}
+
+impl AsMut<d3d11::ID3D11Buffer> for IndexBuffer {
+    fn as_mut(&mut self) -> &mut d3d11::ID3D11Buffer {
+        unsafe { self.buffer.as_mut() }
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::math::Point;
 
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 use winapi::shared::windef;
 use winapi::um::winuser;
@@ -68,19 +68,19 @@ impl<T: Listener> Listener for Option<T> {
 }
 
 pub struct Input {
-    hashmap: HashMap<String, Arc<Mutex<dyn Listener + Send + Sync>>>,
+    hashmap: HashMap<String, &'static Mutex<dyn Listener + Send + Sync>>,
     keys_state: [u8; 256],
     old_keys_state: [u8; 256],
     old_mouse_pos: Point,
 }
 
 impl Input {
-    pub fn add_listener(&mut self, listener: Arc<Mutex<dyn Listener + Send + Sync>>) {
+    pub fn add_listener(&mut self, listener: &'static Mutex<dyn Listener + Send + Sync>) {
         let name = listener.lock().unwrap().name().to_string();
         self.hashmap.insert(name, listener);
     }
 
-    pub fn remove_listener(&mut self, listener: Arc<Mutex<dyn Listener + Send + Sync>>) {
+    pub fn remove_listener(&mut self, listener: &'static Mutex<dyn Listener + Send + Sync>) {
         self.hashmap.remove(listener.lock().unwrap().name());
     }
 

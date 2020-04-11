@@ -1,6 +1,8 @@
-use super::shader::{Shader, ShaderType};
+use super::shaders::{Shader, ShaderType};
 use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use super::super::vertex::Vertex;
+
+use crate::error;
 
 use std::ptr::{self, NonNull};
 
@@ -11,6 +13,16 @@ use winapi::um::d3dcommon;
 pub struct Context(NonNull<ID3D11DeviceContext>);
 
 impl Context {
+    /// # Safety
+    /// 
+    /// `context` must point to a valid ID3D11DeviceContext
+    pub unsafe fn new(context: *mut ID3D11DeviceContext) -> error::Result<Context> {
+        match NonNull::new(context) {
+            Some(inner) => Ok(Context(inner)),
+            None => Err(error::NullPointer),
+        }
+    }
+
     pub fn clear_render_target_color(&self, swapchain: &SwapChain, r: f32, g: f32, b: f32, a: f32) {
         unsafe {
             if let Some(back_buffer) = swapchain.back_buffer_ptr() {
@@ -20,21 +32,21 @@ impl Context {
         }
     }
 
-    pub fn set_constant_buffer<S: ShaderType, C>(&self, buffer: &ConstantBuffer<C>) {
+    pub fn set_constant_buffer<S: ShaderType, C>(&self, buffer: &mut ConstantBuffer<C>) {
         S::set_constant_buffer(self.as_ref(), buffer)
     }
 
-    pub fn set_index_buffer(&self, index_buffer: &IndexBuffer) {
+    pub fn set_index_buffer(&self, index_buffer: &mut IndexBuffer) {
         unsafe {
             self.as_ref().IASetIndexBuffer(
-                index_buffer.buffer_ptr(),
+                index_buffer.as_mut(),
                 dxgiformat::DXGI_FORMAT_R32_UINT,
                 0,
             );
         }
     }
 
-    pub fn set_vertex_buffer<V: Vertex>(&self, vertex_buffer: &VertexBuffer<V>) {
+    pub fn set_vertex_buffer<V: Vertex>(&self, vertex_buffer: &mut VertexBuffer<V>) {
         unsafe {
             self.as_ref().IASetVertexBuffers(
                 0,
@@ -43,7 +55,7 @@ impl Context {
                 &(std::mem::size_of::<V>() as u32),
                 &0,
             );
-            self.as_ref().IASetInputLayout(vertex_buffer.layout_ptr())
+            self.as_ref().IASetInputLayout(vertex_buffer.as_mut())
         }
     }
 
@@ -100,17 +112,6 @@ impl AsRef<ID3D11DeviceContext> for Context {
 impl AsMut<ID3D11DeviceContext> for Context {
     fn as_mut(&mut self) -> &mut ID3D11DeviceContext {
         unsafe { self.0.as_mut() }
-    }
-}
-
-impl std::convert::TryFrom<*mut ID3D11DeviceContext> for Context {
-    type Error = ();
-
-    fn try_from(ptr: *mut ID3D11DeviceContext) -> Result<Self, Self::Error> {
-        match NonNull::new(ptr) {
-            Some(inner) => Ok(Context(inner)),
-            None => Err(()),
-        }
     }
 }
 

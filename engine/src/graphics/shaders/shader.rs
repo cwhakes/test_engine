@@ -1,5 +1,6 @@
 use super::{blob::Blob, compile_shader};
 
+use crate::error;
 use crate::graphics::constant_buffer::ConstantBuffer;
 use crate::graphics::device::Device;
 
@@ -15,6 +16,9 @@ use winapi::um::d3d11;
 pub trait ShaderType {
     type ShaderInterface: ops::Deref<Target = d3d11::ID3D11DeviceChild>;
 
+    /// # Safety
+    /// 
+    /// Inherits safety of concrete function
     unsafe fn create_shader(
         device: &d3d11::ID3D11Device,
         bytecode: *const ffi::c_void,
@@ -24,7 +28,7 @@ pub trait ShaderType {
 
     fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: &mut Self::ShaderInterface);
 
-    fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &ConstantBuffer<C>);
+    fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &mut ConstantBuffer<C>);
 
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;
@@ -39,7 +43,7 @@ unsafe impl<T> Send for Shader<T> where T: ShaderType + Send {}
 unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 
 impl<T: ShaderType> Shader<T> {
-    pub fn new(device: &Device, location: &str) -> (Shader<T>, Blob) {
+    pub fn new(device: &Device, location: &str) -> error::Result<(Shader<T>, Blob)> {
         unsafe {
             let blob = compile_shader(location, T::ENTRY_POINT, T::TARGET).unwrap();
 
@@ -48,9 +52,9 @@ impl<T: ShaderType> Shader<T> {
 
             let mut shader = ptr::null_mut();
             T::create_shader(device.as_ref(), bytecode, bytecode_len, &mut shader);
-            let shader = NonNull::new(shader).unwrap();
+            let shader = NonNull::new(shader).ok_or(error::NullPointer)?;
 
-            (Shader { shader }, blob)
+            Ok((Shader { shader }, blob))
         }
     }
 }

@@ -8,6 +8,13 @@ unsafe impl Send for Hwnd {}
 unsafe impl Sync for Hwnd {}
 
 impl Hwnd {
+    /// # Safety
+    /// 
+    /// `hwnd` must be a valid HWND
+    pub unsafe fn new(hwnd: HWND) -> Hwnd {
+        Hwnd(hwnd)
+    }
+
     pub fn inner(&self) -> &HWND {
         &self.0
     }
@@ -20,12 +27,6 @@ impl Hwnd {
         let width = rect.right - rect.left;
         let height = rect.bottom - rect.top;
         (width as u32, height as u32)
-    }
-}
-
-impl From<HWND> for Hwnd {
-    fn from(hwnd: HWND) -> Self {
-        Hwnd(hwnd)
     }
 }
 
