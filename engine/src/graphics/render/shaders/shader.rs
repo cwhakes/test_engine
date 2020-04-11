@@ -51,7 +51,7 @@ impl<T: ShaderType> Shader<T> {
 
             let mut shader = ptr::null_mut();
             T::create_shader(device.as_ref(), bytecode, bytecode_len, &mut shader);
-            let shader = NonNull::new(shader).ok_or(error::NullPointer)?;
+            let shader = NonNull::new(shader).ok_or(null_ptr_err!())?;
 
             Ok((Shader { shader }, blob))
         }

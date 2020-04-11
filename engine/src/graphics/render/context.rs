@@ -19,7 +19,7 @@ impl Context {
     pub unsafe fn new(context: *mut ID3D11DeviceContext) -> error::Result<Context> {
         match NonNull::new(context) {
             Some(inner) => Ok(Context(inner)),
-            None => Err(error::NullPointer),
+            None => Err(null_ptr_err!()),
         }
     }
 

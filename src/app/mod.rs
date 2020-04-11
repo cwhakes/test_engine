@@ -1,6 +1,6 @@
 use engine::graphics::render::shaders::{self, Shader};
-use engine::graphics::render::{ConstantBuffer, Context, IndexBuffer, VertexBuffer};
-use engine::graphics::{Graphics, GRAPHICS};
+use engine::graphics::render::{ConstantBuffer, Context, IndexBuffer, SwapChain, VertexBuffer};
+use engine::graphics::GRAPHICS;
 use engine::input::{self, Listener, INPUT};
 use engine::math::{Matrix4x4, Point};
 use engine::time::{get_tick_count, DeltaT};
@@ -41,6 +41,7 @@ struct AppWindowVariables {
 
 pub struct AppWindow {
     window_inner: WindowInner,
+    swapchain: SwapChain,
     vertex_buffer: VertexBuffer<VertexColor>,
     vertex_shader: Shader<shaders::Vertex>,
     pixel_shader: Shader<shaders::Pixel>,
@@ -118,8 +119,9 @@ impl Window for AppWindow {
         let mut window_inner = WindowInner::default();
         window_inner.hwnd = Some(hwnd);
 
-        let graphics = Graphics::new(window_inner.hwnd.as_ref().unwrap()).unwrap();
-        let render = &graphics.render;
+        let mut graphics = GRAPHICS.lock().unwrap();
+        let render = &mut graphics.render;
+        let swapchain = render.device_mut().new_swapchain(window_inner.hwnd.as_ref().unwrap()).unwrap();
         let (vertex_shader, blob) = render
             .device()
             .new_shader::<shaders::Vertex>("vertex_shader.hlsl")
@@ -141,6 +143,7 @@ impl Window for AppWindow {
             .unwrap();
 
         let app_window = AppWindow {
+            swapchain,
             window_inner,
             vertex_buffer,
             vertex_shader,
@@ -150,37 +153,33 @@ impl Window for AppWindow {
             variables: AppWindowVariables::new(),
         };
 
-        *GRAPHICS.lock().unwrap() = Some(graphics);
-
         *WINDOW.lock().unwrap() = Some(app_window);
         INPUT.lock().unwrap().add_listener(&*WINDOW);
         input::show_cursor(false);
     }
 
     fn on_update(&mut self) {
-        if let Some(g) = GRAPHICS.lock().unwrap().as_mut() {
-            let context = g.render.immediate_context();
-            context.clear_render_target_color(g.render.swapchain(), 1.0, 0.0, 0.0, 1.0);
-            let (width, height) = self.window_inner.hwnd.as_ref().unwrap().rect();
-            context.set_viewport_size(width as f32, height as f32);
+        let g = GRAPHICS.lock().unwrap();
+        let context = g.render.immediate_context();
+        context.clear_render_target_color(&self.swapchain, 1.0, 0.0, 0.0, 1.0);
+        let (width, height) = self.window_inner.hwnd.as_ref().unwrap().rect();
+        context.set_viewport_size(width as f32, height as f32);
 
-            self.variables.update(&mut self.constant_buffer, context, (width, height));
+        self.variables.update(&mut self.constant_buffer, context, (width, height));
 
-            context.set_shader(&mut self.vertex_shader);
-            context.set_shader(&mut self.pixel_shader);
-            context.set_vertex_buffer(&mut self.vertex_buffer);
-            context.set_index_buffer(&mut self.index_buffer);
-            context.draw_indexed_triangle_list(self.index_buffer.len(), 0, 0);
+        context.set_shader(&mut self.vertex_shader);
+        context.set_shader(&mut self.pixel_shader);
+        context.set_vertex_buffer(&mut self.vertex_buffer);
+        context.set_index_buffer(&mut self.index_buffer);
+        context.draw_indexed_triangle_list(self.index_buffer.len(), 0, 0);
 
-            g.render.resize().unwrap();
-            g.render.swapchain().present(0);
+        self.swapchain.present(0);
 
-            self.variables.delta_t.update();
-        }
+        self.variables.delta_t.update();
     }
 
     fn on_destroy(&mut self) {
-        GRAPHICS.lock().unwrap().take();
+        //GRAPHICS.lock().unwrap().destroy();
     }
 
     fn on_focus(window: &'static Mutex<Option<AppWindow>>) {
@@ -198,6 +197,11 @@ impl Window for AppWindow {
     fn on_kill_focus(window: &'static Mutex<Option<AppWindow>>) {
         input::show_cursor(true);
         INPUT.lock().unwrap().remove_listener(window)
+    }
+
+    fn on_resize(&mut self) {
+        let graphics = GRAPHICS.lock().unwrap();
+        self.swapchain.resize(graphics.render.device()).unwrap();
     }
 }
 

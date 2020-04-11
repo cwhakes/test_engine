@@ -29,6 +29,7 @@ pub trait Window: Send + Sync {
     fn on_destroy(&mut self) {}
     fn on_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
     fn on_kill_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
+    fn on_resize(&mut self) {}
 
     fn init()
     where
@@ -122,6 +123,14 @@ pub trait Window: Send + Sync {
             winuser::WM_KILLFOCUS => {
                 std::thread::spawn(|| {
                     Self::on_kill_focus(Self::me());
+                });
+                0
+            }
+            winuser::WM_SIZE => {
+                std::thread::spawn(|| {
+                    if let Some(window) = &mut *Self::me().lock().unwrap() {
+                        window.on_resize();
+                    }
                 });
                 0
             }

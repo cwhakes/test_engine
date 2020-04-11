@@ -14,7 +14,6 @@ pub use swapchain::SwapChain;
 pub use vertex_buffer::VertexBuffer;
 
 use crate::prelude::*;
-use crate::window;
 
 use crate::error;
 
@@ -26,7 +25,6 @@ pub struct Render {
     device: Device,
     _feature_level: d3dcommon::D3D_FEATURE_LEVEL,
     context: Context,
-    swapchain: SwapChain,
 }
 
 //TODO FIXME verify we can do this
@@ -34,7 +32,7 @@ unsafe impl Send for Render {}
 unsafe impl Sync for Render {}
 
 impl Render {
-    pub fn new(hwnd: &window::Hwnd) -> error::Result<Render> {
+    pub fn new() -> error::Result<Render> {
         unsafe {
             let driver_types = [
                 d3dcommon::D3D_DRIVER_TYPE_HARDWARE,
@@ -44,17 +42,13 @@ impl Render {
 
             let feature_levels = [d3dcommon::D3D_FEATURE_LEVEL_11_0];
 
-            let swapchain_desc = SwapChain::get_desc(hwnd);
-
             let mut device = null_mut();
             let mut feature_level = Default::default();
             let mut context = null_mut();
-            let mut swapchain = null_mut();
-
             let mut result = Err(error::HResult(-1)); //Default to error
 
             for &driver_type in driver_types.iter() {
-                result = d3d11::D3D11CreateDeviceAndSwapChain(
+                result = d3d11::D3D11CreateDevice(
                     null_mut(),
                     driver_type,
                     null_mut(),
@@ -62,8 +56,6 @@ impl Render {
                     feature_levels.as_ptr(),
                     feature_levels.len() as u32,
                     d3d11::D3D11_SDK_VERSION,
-                    &swapchain_desc,
-                    &mut swapchain,
                     &mut device,
                     &mut feature_level,
                     &mut context,
@@ -76,14 +68,12 @@ impl Render {
             result?;
 
             let device = Device::new(device)?;
-            let swapchain = SwapChain::new(swapchain, &device)?;
             let context = Context::new(context)?;
 
             Ok(Render {
                 device,
                 _feature_level: feature_level,
                 context,
-                swapchain,
             })
         }
     }
@@ -92,15 +82,11 @@ impl Render {
         &self.device
     }
 
+    pub fn device_mut(&mut self) -> &mut Device {
+        &mut self.device
+    }
+
     pub fn immediate_context(&self) -> &Context {
         &self.context
-    }
-
-    pub fn swapchain(&self) -> &SwapChain {
-        &self.swapchain
-    }
-
-    pub fn resize(&mut self) -> error::Result<()> {
-        self.swapchain.resize(&self.device)
     }
 }

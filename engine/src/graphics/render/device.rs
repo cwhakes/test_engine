@@ -1,11 +1,16 @@
+use crate::prelude::*;
+
 use crate::error;
 use crate::vertex::Vertex;
 use crate::graphics::render::shaders::{Blob, Shader, ShaderType};
-use crate::graphics::render::{ConstantBuffer, IndexBuffer, VertexBuffer};
+use crate::graphics::render::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
+use crate::window::Hwnd;
 
-use std::ptr::NonNull;
+use std::ptr::{self, NonNull};
 
-use winapi::um::d3d11::ID3D11Device;
+use winapi::shared::dxgi;
+use winapi::um::d3d11::{ID3D11Device};
+use winapi::Interface;
 
 pub struct Device(NonNull<ID3D11Device>);
 
@@ -16,7 +21,30 @@ impl Device {
     pub unsafe fn new(device: *mut ID3D11Device) -> error::Result<Device> {
         match NonNull::new(device) {
             Some(inner) => Ok(Device(inner)),
-            None => Err(error::NullPointer),
+            None => Err(null_ptr_err!()),
+        }
+    }
+
+    pub fn new_swapchain(&mut self, hwnd: &Hwnd) -> error::Result<SwapChain> {
+        unsafe {
+            let mut dxgi_device = ptr::null_mut();
+            self.as_ref().QueryInterface(&dxgi::IDXGIDevice::uuidof(), &mut dxgi_device).result()?;
+            let dxgi_device = NonNull::new(dxgi_device as *mut dxgi::IDXGIDevice).ok_or(null_ptr_err!())?;
+
+            let mut dxgi_adapter = ptr::null_mut();
+            dxgi_device.as_ref().GetParent(&dxgi::IDXGIAdapter::uuidof(), &mut dxgi_adapter).result()?;
+            let dxgi_adapter = NonNull::new(dxgi_adapter as *mut dxgi::IDXGIAdapter).ok_or(null_ptr_err!())?;
+
+            let mut dxgi_factory = ptr::null_mut();
+            dxgi_adapter.as_ref().GetParent(&dxgi::IDXGIFactory::uuidof(), &mut dxgi_factory).result()?;
+            let dxgi_factory = NonNull::new(dxgi_factory as *mut dxgi::IDXGIFactory).ok_or(null_ptr_err!())?;
+
+            let mut desc = SwapChain::get_desc(hwnd);
+            let mut swapchain_ptr = ptr::null_mut();
+
+            dxgi_factory.as_ref().CreateSwapChain(&**self.as_mut() as *const _ as *mut _, &mut desc, &mut swapchain_ptr).result()?;
+
+            SwapChain::new(swapchain_ptr, self)
         }
     }
 

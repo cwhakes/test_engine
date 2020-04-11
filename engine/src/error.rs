@@ -17,7 +17,7 @@ pub enum Okay {
 pub enum Error {
     Blob(Blob),
     HResult(winnt::HRESULT),
-    NullPointer,
+    NullPointer(&'static str, u32, u32),
 }
 
 impl From<Blob> for Error {
@@ -31,7 +31,7 @@ impl fmt::Display for Error {
         match self {
             Blob(blob) => write!(f, "HRESULT: {}", blob),
             HResult(hresult) => write!(f, "HRESULT: {}", hresult),
-            NullPointer => write!(f, "Null Pointer Encountered"),
+            NullPointer(file, line, col) => write!(f, "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}", file, line, col),
         }
     }
 }
@@ -50,4 +50,11 @@ impl HResultToResult for winnt::HRESULT {
             Err(Error::HResult(self))
         }
     }
+}
+
+#[macro_export]
+macro_rules! null_ptr_err {
+    () => {
+        crate::error::Error::NullPointer(file!(), line!(), column!())
+    };
 }

@@ -41,7 +41,7 @@ impl<C> ConstantBuffer<C> {
 
             device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
 
-            let buffer = NonNull::new(buffer).ok_or(error::NullPointer)?;
+            let buffer = NonNull::new(buffer).ok_or(null_ptr_err!())?;
 
             Ok(ConstantBuffer {
                 buffer,

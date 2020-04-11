@@ -39,7 +39,7 @@ impl<V: Vertex> VertexBuffer<V> {
 
             device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
 
-            let buffer = NonNull::new(buffer).ok_or(error::NullPointer)?;
+            let buffer = NonNull::new(buffer).ok_or(null_ptr_err!())?;
             
             let layout_desc: Vec<_> = V::desc(0)
                 .semantic_index_fix()
@@ -56,7 +56,7 @@ impl<V: Vertex> VertexBuffer<V> {
             ).result()?;
 
 
-            let layout = NonNull::new(layout).ok_or(error::NullPointer)?;
+            let layout = NonNull::new(layout).ok_or(null_ptr_err!())?;
 
             Ok(VertexBuffer {
                 len: vertices.len(),

@@ -17,6 +17,10 @@ pub struct SwapChain {
     back_buffer: Option<BackBuffer>,
 }
 
+//TODO FIXME Verify
+unsafe impl Send for SwapChain {}
+unsafe impl Sync for SwapChain {}
+
 impl SwapChain {
     pub fn get_desc(hwnd: &Hwnd) -> DXGI_SWAP_CHAIN_DESC {
         let (width, height) = hwnd.rect();
@@ -41,7 +45,7 @@ impl SwapChain {
     /// 
     /// `swapchain` must point to a valid IDXGISwapChain
     pub unsafe fn new(swapchain: *mut IDXGISwapChain, device: &Device) -> error::Result<SwapChain> {
-        let inner = NonNull::new(swapchain).ok_or(error::NullPointer)?;
+        let inner = NonNull::new(swapchain).ok_or(null_ptr_err!())?;
 
         let mut swapchain = SwapChain { inner, back_buffer: None };
         let back_buffer = BackBuffer::new(&swapchain, device)?;
@@ -95,7 +99,7 @@ impl BackBuffer {
             if let Some(buffer) = buffer.as_ref() {
                 buffer.Release();
             }
-            NonNull::new(rtv).map(BackBuffer).ok_or(error::NullPointer)
+            NonNull::new(rtv).map(BackBuffer).ok_or(null_ptr_err!())
         }
     }
 }

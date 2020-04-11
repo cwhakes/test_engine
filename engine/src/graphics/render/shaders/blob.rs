@@ -13,7 +13,7 @@ impl Blob {
     pub unsafe fn new(blob: *mut ID3DBlob) -> error::Result<Blob> {
         match NonNull::new(blob) {
             Some(inner) => Ok(Blob(inner)),
-            None => Err(error::NullPointer),
+            None => Err(null_ptr_err!()),
         }
     }
 }
