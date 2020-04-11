@@ -5,12 +5,12 @@ use engine::input::{self, Listener, INPUT};
 use engine::math::{Matrix4x4, Point};
 use engine::time::{get_tick_count, DeltaT};
 use engine::vertex;
-use engine::window::{Hwnd, Window, WindowInner};
+use engine::window::{Application, Hwnd, Window};
 
 use std::sync::Mutex;
 
 lazy_static! {
-    pub static ref WINDOW: Mutex<Option<AppWindow>> = Mutex::new(None);
+    pub static ref WINDOW: Window<AppWindow> = Window::new();
 }
 
 #[repr(C)]
@@ -40,7 +40,7 @@ struct AppWindowVariables {
 }
 
 pub struct AppWindow {
-    window_inner: WindowInner,
+    hwnd: Hwnd,
     swapchain: SwapChain,
     vertex_buffer: VertexBuffer<VertexColor>,
     vertex_shader: Shader<shaders::Vertex>,
@@ -50,17 +50,17 @@ pub struct AppWindow {
     variables: AppWindowVariables
 }
 
-impl Window for AppWindow {
-    fn me() -> &'static Mutex<Option<AppWindow>> {
+impl Application for AppWindow {
+    fn me() -> &'static Window<AppWindow> {
         &WINDOW
     }
 
-    fn window_inner(&self) -> &WindowInner {
-        &self.window_inner
+    fn hwnd(&self) -> &Hwnd {
+        &self.hwnd
     }
 
-    fn window_inner_mut(&mut self) -> &mut WindowInner {
-        &mut self.window_inner
+    fn hwnd_mut(&mut self) -> &mut Hwnd {
+        &mut self.hwnd
     }
 
     fn on_create(hwnd: Hwnd) {
@@ -116,12 +116,9 @@ impl Window for AppWindow {
             7, 6, 1, 1, 0, 7, //left
         ];
 
-        let mut window_inner = WindowInner::default();
-        window_inner.hwnd = Some(hwnd);
-
         let mut graphics = GRAPHICS.lock().unwrap();
         let render = &mut graphics.render;
-        let swapchain = render.device_mut().new_swapchain(window_inner.hwnd.as_ref().unwrap()).unwrap();
+        let swapchain = render.device_mut().new_swapchain(&hwnd).unwrap();
         let (vertex_shader, blob) = render
             .device()
             .new_shader::<shaders::Vertex>("vertex_shader.hlsl")
@@ -143,8 +140,8 @@ impl Window for AppWindow {
             .unwrap();
 
         let app_window = AppWindow {
+            hwnd,
             swapchain,
-            window_inner,
             vertex_buffer,
             vertex_shader,
             pixel_shader,
@@ -153,8 +150,8 @@ impl Window for AppWindow {
             variables: AppWindowVariables::new(),
         };
 
-        *WINDOW.lock().unwrap() = Some(app_window);
-        INPUT.lock().unwrap().add_listener(&*WINDOW);
+        WINDOW.set_application(app_window);
+        INPUT.lock().unwrap().add_listener(WINDOW.listener());
         input::show_cursor(false);
     }
 
@@ -162,7 +159,7 @@ impl Window for AppWindow {
         let g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
         context.clear_render_target_color(&self.swapchain, 1.0, 0.0, 0.0, 1.0);
-        let (width, height) = self.window_inner.hwnd.as_ref().unwrap().rect();
+        let (width, height) = self.hwnd.rect();
         context.set_viewport_size(width as f32, height as f32);
 
         self.variables.update(&mut self.constant_buffer, context, (width, height));
@@ -184,18 +181,11 @@ impl Window for AppWindow {
 
     fn on_focus(window: &'static Mutex<Option<AppWindow>>) {
         INPUT.lock().unwrap().add_listener(window);
-        
-        if let Some(window) = window.lock().unwrap().as_ref() {
-            let (width, height) = window.window_inner.hwnd.as_ref().unwrap().rect();
-            let (width, height) = (width as i32, height as i32);
-            
-            input::show_cursor(false);
-            input::set_cursor_position((width/2, height/2));
-        }
+
+        //TODO: Stop first move
     }
 
     fn on_kill_focus(window: &'static Mutex<Option<AppWindow>>) {
-        input::show_cursor(true);
         INPUT.lock().unwrap().remove_listener(window)
     }
 
@@ -225,7 +215,7 @@ impl Listener for AppWindow {
         self.variables.rightward = 0.0;
     }
     fn on_mouse_move(&mut self, pos: Point) {
-        let (width, height) = self.window_inner.hwnd.as_ref().unwrap().rect();
+        let (width, height) = self.hwnd.rect();
         let (width, height) = (width as i32, height as i32);
 
         self.variables.rot_x += (pos.y - height/2) as f32 / 100.0;

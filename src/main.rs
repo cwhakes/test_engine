@@ -6,19 +6,12 @@ extern crate vertex_derive;
 mod app;
 
 use engine::input::INPUT;
-use engine::window::Window;
 
 fn main() {
-    app::AppWindow::init();
+    app::WINDOW.init();
 
-    while app::WINDOW
-        .lock()
-        .unwrap()
-        .as_mut()
-        .map(|w| w.window_inner().running)
-        .unwrap_or(false)
-    {
+    while app::WINDOW.is_running() {
         INPUT.lock().unwrap().update();
-        app::WINDOW.lock().unwrap().as_mut().map(|w| w.broadcast());
+        app::WINDOW.broadcast();
     }
 }

@@ -4,6 +4,7 @@ pub use hwnd::Hwnd;
 
 use crate::util::os_vec;
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::{mem, ptr};
 
@@ -19,10 +20,10 @@ use winapi::um::winuser::{ShowWindow, UpdateWindow};
 use winapi::um::winuser::{IDC_ARROW, IDI_APPLICATION};
 use winapi::um::winuser::{WS_EX_OVERLAPPEDWINDOW, WS_OVERLAPPEDWINDOW};
 
-pub trait Window: Send + Sync {
-    fn me() -> &'static Mutex<Option<Self>> where Self: Sized;
-    fn window_inner(&self) -> &WindowInner;
-    fn window_inner_mut(&mut self) -> &mut WindowInner;
+pub trait Application: Send + Sync {
+    fn me() -> &'static Window<Self> where Self: Sized;
+    fn hwnd(&self) -> &Hwnd;
+    fn hwnd_mut(&mut self) -> &mut Hwnd;
 
     fn on_create(_hwnd: Hwnd) where Self: Sized {}
     fn on_update(&mut self) {}
@@ -30,11 +31,22 @@ pub trait Window: Send + Sync {
     fn on_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
     fn on_kill_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
     fn on_resize(&mut self) {}
+}
 
-    fn init()
-    where
-        Self: Sized + 'static,
-    {
+pub struct Window<A: Application> {
+    pub running: AtomicBool,
+    pub application: Mutex<Option<A>>,
+}
+
+impl<A: Application> Window<A> {
+    pub fn new() -> Window<A> {
+        Window {
+            running: AtomicBool::new(false),
+            application: Mutex::new(None) ,
+        }
+    }
+
+    pub fn init(&self) where A: 'static {
         unsafe {
             let class_name = os_vec("MyWindowClass");
             let menu_name = os_vec("");
@@ -78,10 +90,24 @@ pub trait Window: Send + Sync {
         }
     }
 
+    pub fn set_application(&self, app: A) {
+        *self.application.lock().unwrap() = Some(app);
+    }
+
+    pub fn listener(&self) -> &Mutex<Option<A>> {
+        &self.application
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.running.load(Ordering::Relaxed)
+    }
+
     /// Engine event loop
-    fn broadcast(&mut self) {
+    pub fn broadcast(&self) {
         unsafe {
-            self.on_update();
+            if let Some(app) = self.application.lock().unwrap().as_mut() {
+                app.on_update()
+            }
 
             let mut msg = Default::default();
             while 0 < PeekMessageW(&mut msg, ptr::null_mut(), 0, 0, winuser::PM_REMOVE) {
@@ -108,59 +134,33 @@ pub trait Window: Send + Sync {
         match msg {
             winuser::WM_CREATE => {
                 let hwnd = Hwnd::new(hwnd);
-                Self::on_create(hwnd);
-                if let Some(window) = &mut *Self::me().lock().unwrap() {
-                    window.window_inner_mut().running = true;
-                }
+                A::on_create(hwnd);
+                A::me().running.store(true, Ordering::Relaxed);
                 0
             }
             winuser::WM_SETFOCUS => {
-                std::thread::spawn(|| {
-                    Self::on_focus(Self::me());
-                });
+                A::on_focus(&A::me().application);
                 0
             }
             winuser::WM_KILLFOCUS => {
-                std::thread::spawn(|| {
-                    Self::on_kill_focus(Self::me());
-                });
+                A::on_kill_focus(&A::me().application);
                 0
             }
             winuser::WM_SIZE => {
-                std::thread::spawn(|| {
-                    if let Some(window) = &mut *Self::me().lock().unwrap() {
-                        window.on_resize();
-                    }
-                });
+                if let Some(window) = &mut *A::me().application.lock().unwrap() {
+                    window.on_resize();
+                }
                 0
             }
             winuser::WM_DESTROY => {
-                //Spawn a different thread to prevent recursive lock
-                std::thread::spawn(|| {
-                    if let Some(window) = &mut *Self::me().lock().unwrap() {
-                        window.window_inner_mut().running = false;
-                        window.on_destroy();
-                    };
-                });
+                A::me().running.store(false, Ordering::Relaxed);
+                if let Some(window) = &mut *A::me().application.lock().unwrap() {
+                    window.on_destroy();
+                };
                 winuser::PostQuitMessage(0);
                 0
             }
             _ => winuser::DefWindowProcW(hwnd, msg, wparam, lparam),
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct WindowInner {
-    pub hwnd: Option<Hwnd>,
-    pub running: bool,
-}
-
-impl WindowInner {
-    pub fn new() -> WindowInner {
-        WindowInner {
-            hwnd: None,
-            running: false,
         }
     }
 }
