@@ -1,15 +1,13 @@
 struct VS_INPUT
 {
-    float4 pos: POSITION;
-    float3 color: COLOR;
-    float3 color1: COLOR1;
+    float4 pos: POSITION0;
+    float2 tex_coord: TEXCOORD0;
 };
 
 struct VS_OUTPUT
 {
     float4 pos: SV_POSITION;
-    float3 color: COLOR;
-    float3 color1: COLOR1;
+    float2 tex_coord: TEXCOORD0;
 };
 
 cbuffer constant: register(b0)
@@ -32,12 +30,7 @@ VS_OUTPUT vsmain( VS_INPUT input )
 // Projection space
     output.pos = mul(output.pos, m_proj);
 
-    output.color = input.color;
-    output.color1 = input.color1;
+    output.tex_coord = input.tex_coord;
 
-    //if (output.pos.y > 0 && output.pos.y < 1)
-    //{
-    //    output.pos.x += 0.25f;
-    //}
     return output;
 }

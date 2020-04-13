@@ -1,6 +1,7 @@
 use engine::graphics::render::shaders::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, Context, IndexBuffer, SwapChain, VertexBuffer};
 use engine::graphics::GRAPHICS;
+use engine::graphics::resource::texture::Texture;
 use engine::input::{self, Listener, INPUT};
 use engine::math::{Matrix4x4, Point};
 use engine::time::{get_tick_count, DeltaT};
@@ -15,7 +16,7 @@ lazy_static! {
 
 #[repr(C)]
 #[derive(Vertex)]
-struct VertexColor(vertex::Position, vertex::Color, vertex::Color);
+struct VertexColor(vertex::Position, vertex::TexCoord);
 
 #[repr(C, align(16))]
 #[derive(Default, Debug)]
@@ -47,7 +48,8 @@ pub struct AppWindow {
     pixel_shader: Shader<shaders::Pixel>,
     constant_buffer: ConstantBuffer<Constant>,
     index_buffer: IndexBuffer,
-    variables: AppWindowVariables
+    wood_tex: Texture,
+    variables: AppWindowVariables,
 }
 
 impl Application for AppWindow {
@@ -64,56 +66,63 @@ impl Application for AppWindow {
     }
 
     fn on_create(hwnd: Hwnd) {
+        let position_list: [vertex::Position; 8] = [
+            [-0.5, -0.5, -0.5].into(),
+            [-0.5, 0.5, -0.5].into(),
+            [0.5, 0.5, -0.5].into(),
+            [0.5, -0.5, -0.5].into(),
+            [0.5, -0.5, 0.5].into(),
+            [0.5, 0.5, 0.5].into(),
+            [-0.5, 0.5, 0.5].into(),
+            [-0.5, -0.5, 0.5].into(),
+        ];
+
+        let tex_coord_list: [vertex::TexCoord; 4] = [
+            [0.0, 0.0].into(),
+            [0.0, 1.0].into(),
+            [1.0, 0.0].into(),
+            [1.0, 1.0].into(),
+        ];
+
         let vertex_list = [
-            VertexColor(
-                [-0.5, -0.5, -0.5].into(),
-                [0.0, 0.0, 0.0].into(),
-                [0.2, 0.2, 0.2].into(),
-            ),
-            VertexColor(
-                [-0.5, 0.5, -0.5].into(),
-                [0.0, 1.0, 0.0].into(),
-                [0.2, 0.2, 0.2].into(),
-            ),
-            VertexColor(
-                [0.5, 0.5, -0.5].into(),
-                [1.0, 1.0, 0.0].into(),
-                [0.2, 0.2, 0.2].into(),
-            ),
-            VertexColor(
-                [0.5, -0.5, -0.5].into(),
-                [1.0, 0.0, 0.0].into(),
-                [0.2, 0.2, 0.2].into(),
-            ),
-            VertexColor(
-                [0.5, -0.5, 0.5].into(),
-                [1.0, 0.0, 1.0].into(),
-                [0.2, 0.2, 0.2].into(),
-            ),
-            VertexColor(
-                [0.5, 0.5, 0.5].into(),
-                [1.0, 1.0, 1.0].into(),
-                [0.2, 0.2, 0.2].into(),
-            ),
-            VertexColor(
-                [-0.5, 0.5, 0.5].into(),
-                [0.0, 1.0, 1.0].into(),
-                [0.2, 0.2, 0.2].into(),
-            ),
-            VertexColor(
-                [-0.5, -0.5, 0.5].into(),
-                [0.0, 0.0, 1.0].into(),
-                [0.2, 0.2, 0.2].into(),
-            ),
+            VertexColor(position_list[0].clone(), tex_coord_list[1].clone()),
+            VertexColor(position_list[1].clone(), tex_coord_list[0].clone()),
+            VertexColor(position_list[2].clone(), tex_coord_list[2].clone()),
+            VertexColor(position_list[3].clone(), tex_coord_list[3].clone()),
+
+            VertexColor(position_list[4].clone(), tex_coord_list[1].clone()),
+            VertexColor(position_list[5].clone(), tex_coord_list[0].clone()),
+            VertexColor(position_list[6].clone(), tex_coord_list[2].clone()),
+            VertexColor(position_list[7].clone(), tex_coord_list[3].clone()),
+
+            VertexColor(position_list[1].clone(), tex_coord_list[1].clone()),
+            VertexColor(position_list[6].clone(), tex_coord_list[0].clone()),
+            VertexColor(position_list[5].clone(), tex_coord_list[2].clone()),
+            VertexColor(position_list[2].clone(), tex_coord_list[3].clone()),
+
+            VertexColor(position_list[7].clone(), tex_coord_list[1].clone()),
+            VertexColor(position_list[0].clone(), tex_coord_list[0].clone()),
+            VertexColor(position_list[3].clone(), tex_coord_list[2].clone()),
+            VertexColor(position_list[4].clone(), tex_coord_list[3].clone()),
+
+            VertexColor(position_list[3].clone(), tex_coord_list[1].clone()),
+            VertexColor(position_list[2].clone(), tex_coord_list[0].clone()),
+            VertexColor(position_list[5].clone(), tex_coord_list[2].clone()),
+            VertexColor(position_list[4].clone(), tex_coord_list[3].clone()),
+
+            VertexColor(position_list[7].clone(), tex_coord_list[1].clone()),
+            VertexColor(position_list[6].clone(), tex_coord_list[0].clone()),
+            VertexColor(position_list[1].clone(), tex_coord_list[2].clone()),
+            VertexColor(position_list[0].clone(), tex_coord_list[3].clone()),
         ];
 
         let index_list = [
             0, 1, 2, 2, 3, 0, //front
             4, 5, 6, 6, 7, 4, //back
-            1, 6, 5, 5, 2, 1, //top
-            7, 0, 3, 3, 4, 7, //bottom
-            3, 2, 5, 5, 4, 3, //right
-            7, 6, 1, 1, 0, 7, //left
+            8, 9, 10, 10, 11, 8, //top
+            12, 13, 14, 14, 15, 12, //bottom
+            16, 17, 18, 18, 19, 16, //right
+            20, 21, 22, 22, 23, 20, //left
         ];
 
         let mut graphics = GRAPHICS.lock().unwrap();
@@ -138,6 +147,7 @@ impl Application for AppWindow {
                 ..Default::default()
             })
             .unwrap();
+        let wood_tex = graphics.get_texture_from_file("assets\\Textures\\wood.jpg".as_ref()).unwrap();
 
         let app_window = AppWindow {
             hwnd,
@@ -147,18 +157,20 @@ impl Application for AppWindow {
             pixel_shader,
             constant_buffer,
             index_buffer,
+            wood_tex,
             variables: AppWindowVariables::new(),
         };
 
         WINDOW.set_application(app_window);
         INPUT.lock().unwrap().add_listener(WINDOW.listener());
         input::show_cursor(false);
+        graphics.render.device().debug().unwrap();
     }
 
     fn on_update(&mut self) {
         let g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
-        context.clear_render_target_color(&self.swapchain, 1.0, 0.0, 0.0, 1.0);
+        context.clear_render_target_color(&self.swapchain, 0.2, 0.4, 0.8, 1.0);
         let (width, height) = self.hwnd.rect();
         context.set_viewport_size(width as f32, height as f32);
 
@@ -166,6 +178,7 @@ impl Application for AppWindow {
 
         context.set_shader(&mut self.vertex_shader);
         context.set_shader(&mut self.pixel_shader);
+        context.set_texture::<shaders::Pixel>(&mut self.wood_tex);
         context.set_vertex_buffer(&mut self.vertex_buffer);
         context.set_index_buffer(&mut self.index_buffer);
         context.draw_indexed_triangle_list(self.index_buffer.len(), 0, 0);
@@ -218,8 +231,8 @@ impl Listener for AppWindow {
         let (width, height) = self.hwnd.rect();
         let (width, height) = (width as i32, height as i32);
 
-        self.variables.rot_x += (pos.y - height/2) as f32 / 100.0;
-        self.variables.rot_y += (pos.x - width/2) as f32 / 100.0;
+        self.variables.rot_x += (pos.y - height/2) as f32  * self.variables.delta_t.get() * 10.0;
+        self.variables.rot_y += (pos.x - width/2) as f32  * self.variables.delta_t.get() * 10.0;
 
         input::set_cursor_position((width/2, height/2));
     }
@@ -253,7 +266,7 @@ impl AppWindowVariables {
         }
         self.delta_scale += self.delta_t.get() / 1.0;
 
-        let world = Matrix4x4::identity();
+        let world = Matrix4x4::scaling([self.scale_cube, self.scale_cube, self.scale_cube]);
         
         let mut world_cam = Matrix4x4::identity();
         world_cam *= Matrix4x4::rotation_x(self.rot_x);

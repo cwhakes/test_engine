@@ -2,9 +2,10 @@ mod hwnd;
 
 pub use hwnd::Hwnd;
 
+use crate::input::INPUT;
 use crate::util::os_vec;
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering, spin_loop_hint};
 use std::sync::Mutex;
 use std::{mem, ptr};
 
@@ -46,7 +47,7 @@ impl<A: Application> Window<A> {
         }
     }
 
-    pub fn init(&self) where A: 'static {
+    pub fn init() where A: 'static {
         unsafe {
             let class_name = os_vec("MyWindowClass");
             let menu_name = os_vec("");
@@ -98,23 +99,24 @@ impl<A: Application> Window<A> {
         &self.application
     }
 
-    pub fn is_running(&self) -> bool {
-        self.running.load(Ordering::Relaxed)
-    }
-
     /// Engine event loop
-    pub fn broadcast(&self) {
+    pub fn broadcast(&self) -> bool {
         unsafe {
             if let Some(app) = self.application.lock().unwrap().as_mut() {
                 app.on_update()
             }
+
+            INPUT.lock().unwrap().update();
 
             let mut msg = Default::default();
             while 0 < PeekMessageW(&mut msg, ptr::null_mut(), 0, 0, winuser::PM_REMOVE) {
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
-            std::thread::sleep(Default::default());
+            
+            spin_loop_hint();
+
+            self.running.load(Ordering::Relaxed)
         }
     }
 

@@ -2,6 +2,8 @@ use crate::graphics::render::shaders::Blob;
 
 use std::{error, fmt, result};
 
+use std::io;
+use image::error::ImageError;
 use winapi::shared::winerror;
 use winapi::um::winnt;
 
@@ -13,10 +15,11 @@ pub enum Okay {
     HResult(winnt::HRESULT),
 }
 
-#[derive(Debug)]
 pub enum Error {
     Blob(Blob),
     HResult(winnt::HRESULT),
+    ImageError(ImageError),
+    Io(io::Error),
     NullPointer(&'static str, u32, u32),
 }
 
@@ -26,11 +29,37 @@ impl From<Blob> for Error {
     }
 }
 
+impl From<ImageError> for Error {
+    fn from(image_err: ImageError) -> Self {
+        Error::ImageError(image_err)
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(io_err: io::Error) -> Self {
+        Error::Io(io_err)
+    }
+}
+
+impl fmt::Debug for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Blob(blob) => write!(f, "Blob Error: {}", blob),
+            HResult(hresult) => write!(f, "HRESULT: {:x}", hresult),
+            ImageError(image_err) => write!(f, "Image Error: {}", image_err),
+            Io(io_err) => write!(f, "Io Error: {}", io_err),
+            NullPointer(file, line, col) => write!(f, "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}", file, line, col),
+        }
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Blob(blob) => write!(f, "HRESULT: {}", blob),
-            HResult(hresult) => write!(f, "HRESULT: {}", hresult),
+            Blob(blob) => write!(f, "Blob Error: {}", blob),
+            HResult(hresult) => write!(f, "HRESULT: {:x}", hresult),
+            ImageError(image_err) => write!(f, "Image Error: {}", image_err),
+            Io(io_err) => write!(f, "Io Error: {}", io_err),
             NullPointer(file, line, col) => write!(f, "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}", file, line, col),
         }
     }

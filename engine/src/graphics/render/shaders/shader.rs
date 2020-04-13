@@ -2,6 +2,7 @@ use super::{blob::Blob, compile_shader};
 
 use crate::error;
 use crate::graphics::render::{ConstantBuffer, Device};
+use crate::graphics::resource::texture::Texture;
 
 use std::ptr::{self, NonNull};
 use std::{convert, ffi, ops};
@@ -26,6 +27,7 @@ pub trait ShaderType {
     );
 
     fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: &mut Self::ShaderInterface);
+    fn set_texture(context: &d3d11::ID3D11DeviceContext, texture: &mut Texture);
 
     fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &mut ConstantBuffer<C>);
 

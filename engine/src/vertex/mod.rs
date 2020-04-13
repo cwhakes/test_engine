@@ -1,8 +1,10 @@
 mod color;
 mod position;
+mod tex_coord;
 
 pub use color::Color;
 pub use position::Position;
+pub use tex_coord::TexCoord;
 
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};

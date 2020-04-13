@@ -52,7 +52,7 @@ impl Render {
                     null_mut(),
                     driver_type,
                     null_mut(),
-                    0,
+                    d3d11::D3D11_CREATE_DEVICE_DEBUG,
                     feature_levels.as_ptr(),
                     feature_levels.len() as u32,
                     d3d11::D3D11_SDK_VERSION,

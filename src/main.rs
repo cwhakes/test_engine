@@ -5,13 +5,10 @@ extern crate vertex_derive;
 
 mod app;
 
-use engine::input::INPUT;
+use engine::window::Window;
 
 fn main() {
-    app::WINDOW.init();
+    Window::<app::AppWindow>::init();
 
-    while app::WINDOW.is_running() {
-        INPUT.lock().unwrap().update();
-        app::WINDOW.broadcast();
-    }
+    while app::WINDOW.broadcast() {}
 }

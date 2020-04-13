@@ -2,6 +2,7 @@ use super::shaders::{Shader, ShaderType};
 use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 
 use crate::error;
+use crate::graphics::resource::texture::Texture;
 use crate::vertex::Vertex;
 
 use std::ptr::{self, NonNull};
@@ -61,6 +62,10 @@ impl Context {
 
     pub fn set_shader<S: ShaderType>(&self, shader: &mut Shader<S>) {
         S::set_shader(self.as_ref(), shader.as_mut());
+    }
+
+    pub fn set_texture<S: ShaderType>(&self, texture: &mut Texture) {
+        S::set_texture(self.as_ref(), texture);
     }
 
     pub fn draw_triangle_list(&self, vertices_len: usize, vertices_start: usize) {

@@ -1,6 +1,7 @@
 use super::shader::ShaderType;
 
 use crate::graphics::render::ConstantBuffer;
+use crate::graphics::resource::texture::Texture;
 
 use std::ffi::c_void;
 use std::ptr;
@@ -24,6 +25,12 @@ impl ShaderType for Pixel {
 
     fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: &mut Self::ShaderInterface) {
         unsafe { context.PSSetShader(shader, ptr::null(), 0) }
+    }
+
+    fn set_texture(context: &d3d11::ID3D11DeviceContext, texture: &mut Texture) {
+        unsafe {
+            context.PSSetShaderResources(0, 1, &texture.resource_view_ptr());
+        }
     }
 
     fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &mut ConstantBuffer<C>) {

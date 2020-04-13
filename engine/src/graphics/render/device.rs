@@ -8,6 +8,7 @@ use crate::window::Hwnd;
 
 use std::ptr::{self, NonNull};
 
+use winapi::um::d3d11sdklayers::{ID3D11Debug, D3D11_RLDO_DETAIL};
 use winapi::shared::dxgi;
 use winapi::um::d3d11::{ID3D11Device};
 use winapi::Interface;
@@ -62,6 +63,16 @@ impl Device {
 
     pub fn new_vertex_buffer<V: Vertex>(&self, vertices: &[V], bytecode: &[u8]) -> error::Result<VertexBuffer<V>> {
         VertexBuffer::new(self, vertices, bytecode)
+    }
+
+    pub fn debug(&self) -> error::Result<()> {
+        unsafe {
+            let mut debug = ptr::null_mut();
+            self.as_ref().QueryInterface(&ID3D11Debug::uuidof(), &mut debug).result()?;
+            let debug = NonNull::new(debug as *mut ID3D11Debug).ok_or(null_ptr_err!())?;
+            debug.as_ref().ReportLiveDeviceObjects(D3D11_RLDO_DETAIL).result()?;
+            Ok(())
+        }
     }
 }
 
