@@ -1,5 +1,3 @@
-use super::Vector3d;
-
 use std::convert;
 
 #[repr(C)]
@@ -29,17 +27,6 @@ impl convert::From<[f32; 4]> for Vector4d {
             y: array[1],
             z: array[2],
             w: array[3],
-        }
-    }
-}
-
-impl convert::From<Vector3d> for Vector4d {
-    fn from(vector_3d: Vector3d) -> Self {
-        Vector4d {
-            x: vector_3d.x,
-            y: vector_3d.x,
-            z: vector_3d.x,
-            w: 1.0,
         }
     }
 }

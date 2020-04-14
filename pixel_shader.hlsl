@@ -20,5 +20,5 @@ cbuffer constant: register(b0)
 
  float4 psmain( PS_INPUT input ) : SV_Target
  {      
-    return Texture.Sample(TextureSampler, input.tex_coord);
+    return Texture.Sample(TextureSampler, input.tex_coord * 0.5);
  }

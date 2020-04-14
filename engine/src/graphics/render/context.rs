@@ -5,30 +5,38 @@ use crate::error;
 use crate::graphics::resource::texture::Texture;
 use crate::vertex::Vertex;
 
-use std::ptr::{self, NonNull};
+use std::ptr::NonNull;
 
 use winapi::shared::dxgiformat;
-use winapi::um::d3d11::{ID3D11DeviceContext, D3D11_VIEWPORT};
+use winapi::um::d3d11;
 use winapi::um::d3dcommon;
 
-pub struct Context(NonNull<ID3D11DeviceContext>);
+pub struct Context(NonNull<d3d11::ID3D11DeviceContext>);
 
 impl Context {
     /// # Safety
     /// 
     /// `context` must point to a valid ID3D11DeviceContext
-    pub unsafe fn new(context: *mut ID3D11DeviceContext) -> error::Result<Context> {
+    pub unsafe fn new(context: *mut d3d11::ID3D11DeviceContext) -> error::Result<Context> {
         match NonNull::new(context) {
             Some(inner) => Ok(Context(inner)),
             None => Err(null_ptr_err!()),
         }
     }
 
-    pub fn clear_render_target_color(&self, swapchain: &SwapChain, r: f32, g: f32, b: f32, a: f32) {
+    pub fn clear_render_target_color(&self, swapchain: &mut SwapChain, r: f32, g: f32, b: f32, a: f32) {
         unsafe {
             if let Some(back_buffer) = swapchain.back_buffer_ptr() {
-                self.as_ref().ClearRenderTargetView(back_buffer, &[r, g, b, a]);
-                self.as_ref().OMSetRenderTargets(1, &back_buffer, ptr::null_mut());
+                if let Some(depth_buffer) = swapchain.depth_buffer_mut() {
+                    self.as_ref().ClearRenderTargetView(back_buffer, &[r, g, b, a]);
+                    self.as_ref().ClearDepthStencilView(
+                        depth_buffer.as_mut(),
+                        d3d11::D3D11_CLEAR_DEPTH | d3d11::D3D11_CLEAR_STENCIL,
+                        1.0,
+                        0,
+                    );
+                    self.as_ref().OMSetRenderTargets(1, &back_buffer, depth_buffer.as_mut());
+                }
             }
         }
     }
@@ -97,7 +105,7 @@ impl Context {
 
     pub fn set_viewport_size(&self, width: f32, height: f32) {
         unsafe {
-            let mut vp = D3D11_VIEWPORT::default();
+            let mut vp = d3d11::D3D11_VIEWPORT::default();
             vp.Width = width;
             vp.Height = height;
             vp.MinDepth = 0.0;
@@ -108,14 +116,14 @@ impl Context {
     }
 }
 
-impl AsRef<ID3D11DeviceContext> for Context {
-    fn as_ref(&self) -> &ID3D11DeviceContext {
+impl AsRef<d3d11::ID3D11DeviceContext> for Context {
+    fn as_ref(&self) -> &d3d11::ID3D11DeviceContext {
         unsafe { self.0.as_ref() }
     }
 }
 
-impl AsMut<ID3D11DeviceContext> for Context {
-    fn as_mut(&mut self) -> &mut ID3D11DeviceContext {
+impl AsMut<d3d11::ID3D11DeviceContext> for Context {
+    fn as_mut(&mut self) -> &mut d3d11::ID3D11DeviceContext {
         unsafe { self.0.as_mut() }
     }
 }

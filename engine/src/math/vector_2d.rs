@@ -1,5 +1,7 @@
 use std::{convert, ops};
 
+use wavefront_obj::obj;
+
 #[repr(C)]
 #[derive(Clone, Debug, Default)]
 pub struct Vector2d {
@@ -26,6 +28,15 @@ impl convert::From<[f32; 2]> for Vector2d {
         Vector2d {
             x: array[0],
             y: array[1],
+        }
+    }
+}
+
+impl convert::From<obj::TVertex> for Vector2d {
+    fn from(vertex: obj::TVertex) -> Self {
+        Vector2d {
+            x: vertex.u as f32,
+            y: vertex.v as f32,
         }
     }
 }

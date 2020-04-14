@@ -7,6 +7,8 @@ edition = "2018"
 [dependencies]
 image = "0.23.3"
 lazy_static = "1.4.0"
+vertex_derive = { path = "../vertex_derive" }
+wavefront_obj = "7.0.0"
 winapi = { version = "0.3.8", features = [
     "d3d11",
     "d3d11sdklayers",

@@ -4,6 +4,7 @@ use std::{error, fmt, result};
 
 use std::io;
 use image::error::ImageError;
+use wavefront_obj::ParseError;
 use winapi::shared::winerror;
 use winapi::um::winnt;
 
@@ -20,6 +21,7 @@ pub enum Error {
     HResult(winnt::HRESULT),
     ImageError(ImageError),
     Io(io::Error),
+    ObjError(ParseError),
     NullPointer(&'static str, u32, u32),
 }
 
@@ -41,13 +43,21 @@ impl From<io::Error> for Error {
     }
 }
 
+impl From<ParseError> for Error {
+    fn from(obj_error: ParseError) -> Self {
+        Error::ObjError(obj_error)
+    }
+}
+
+
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Blob(blob) => write!(f, "Blob Error: {}", blob),
+            Blob(blob) => write!(f, "Blob Error: {:?}", blob),
             HResult(hresult) => write!(f, "HRESULT: {:x}", hresult),
-            ImageError(image_err) => write!(f, "Image Error: {}", image_err),
-            Io(io_err) => write!(f, "Io Error: {}", io_err),
+            ImageError(image_err) => write!(f, "Image Error: {:?}", image_err),
+            Io(io_err) => write!(f, "Io Error: {:?}", io_err),
+            ObjError(obj_err) => write!(f, "Obj Error: {:?}", obj_err),
             NullPointer(file, line, col) => write!(f, "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}", file, line, col),
         }
     }
@@ -60,6 +70,7 @@ impl fmt::Display for Error {
             HResult(hresult) => write!(f, "HRESULT: {:x}", hresult),
             ImageError(image_err) => write!(f, "Image Error: {}", image_err),
             Io(io_err) => write!(f, "Io Error: {}", io_err),
+            ObjError(obj_err) => write!(f, "Obj Error: {:?}", obj_err),
             NullPointer(file, line, col) => write!(f, "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}", file, line, col),
         }
     }

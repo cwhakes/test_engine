@@ -1,6 +1,6 @@
-use super::Vector4d;
-
 use std::{convert, ops};
+
+use wavefront_obj::obj;
 
 #[repr(C)]
 #[derive(Clone, Debug, Default)]
@@ -35,13 +35,12 @@ impl convert::From<[f32; 3]> for Vector3d {
     }
 }
 
-impl convert::From<Vector4d> for Vector3d {
-    fn from(vector_4d: Vector4d) -> Self {
-        let w = vector_4d.w;
+impl convert::From<obj::Vertex> for Vector3d {
+    fn from(vertex: obj::Vertex) -> Self {
         Vector3d {
-            x: vector_4d.x / w,
-            y: vector_4d.x / w,
-            z: vector_4d.x / w,
+            x: vertex.x as f32,
+            y: vertex.y as f32,
+            z: vertex.z as f32,
         }
     }
 }

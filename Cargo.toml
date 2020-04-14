@@ -8,14 +8,3 @@ edition = "2018"
 engine = { path = "./engine" }
 lazy_static = "1.4.0"
 vertex_derive = { path = "./vertex_derive" }
-winapi = { version = "0.3.8", features = [
-    "d3d11",
-    "d3dcommon",
-    "d3dcompiler",
-    "dxgidebug",
-    "impl-default",
-    "std",
-    "sysinfoapi",
-    "winerror",
-    "winuser"
-] }

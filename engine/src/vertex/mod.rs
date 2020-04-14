@@ -6,6 +6,9 @@ pub use color::Color;
 pub use position::Position;
 pub use tex_coord::TexCoord;
 
+/// Re-export used in proc macro
+pub use winapi::um::d3d11::D3D11_INPUT_ELEMENT_DESC;
+
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 

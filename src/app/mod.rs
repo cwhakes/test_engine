@@ -1,11 +1,10 @@
 use engine::graphics::render::shaders::{self, Shader};
-use engine::graphics::render::{ConstantBuffer, Context, IndexBuffer, SwapChain, VertexBuffer};
+use engine::graphics::render::{ConstantBuffer, Context, SwapChain, };
 use engine::graphics::GRAPHICS;
-use engine::graphics::resource::texture::Texture;
+use engine::graphics::resource::{texture::Texture, mesh::Mesh};
 use engine::input::{self, Listener, INPUT};
 use engine::math::{Matrix4x4, Point};
 use engine::time::{get_tick_count, DeltaT};
-use engine::vertex;
 use engine::window::{Application, Hwnd, Window};
 
 use std::sync::Mutex;
@@ -13,10 +12,6 @@ use std::sync::Mutex;
 lazy_static! {
     pub static ref WINDOW: Window<AppWindow> = Window::new();
 }
-
-#[repr(C)]
-#[derive(Vertex)]
-struct VertexColor(vertex::Position, vertex::TexCoord);
 
 #[repr(C, align(16))]
 #[derive(Default, Debug)]
@@ -43,12 +38,11 @@ struct AppWindowVariables {
 pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
-    vertex_buffer: VertexBuffer<VertexColor>,
     vertex_shader: Shader<shaders::Vertex>,
     pixel_shader: Shader<shaders::Pixel>,
     constant_buffer: ConstantBuffer<Constant>,
-    index_buffer: IndexBuffer,
     wood_tex: Texture,
+    teapot: Mesh,
     variables: AppWindowVariables,
 }
 
@@ -66,69 +60,10 @@ impl Application for AppWindow {
     }
 
     fn on_create(hwnd: Hwnd) {
-        let position_list: [vertex::Position; 8] = [
-            [-0.5, -0.5, -0.5].into(),
-            [-0.5, 0.5, -0.5].into(),
-            [0.5, 0.5, -0.5].into(),
-            [0.5, -0.5, -0.5].into(),
-            [0.5, -0.5, 0.5].into(),
-            [0.5, 0.5, 0.5].into(),
-            [-0.5, 0.5, 0.5].into(),
-            [-0.5, -0.5, 0.5].into(),
-        ];
-
-        let tex_coord_list: [vertex::TexCoord; 4] = [
-            [0.0, 0.0].into(),
-            [0.0, 1.0].into(),
-            [1.0, 0.0].into(),
-            [1.0, 1.0].into(),
-        ];
-
-        let vertex_list = [
-            VertexColor(position_list[0].clone(), tex_coord_list[1].clone()),
-            VertexColor(position_list[1].clone(), tex_coord_list[0].clone()),
-            VertexColor(position_list[2].clone(), tex_coord_list[2].clone()),
-            VertexColor(position_list[3].clone(), tex_coord_list[3].clone()),
-
-            VertexColor(position_list[4].clone(), tex_coord_list[1].clone()),
-            VertexColor(position_list[5].clone(), tex_coord_list[0].clone()),
-            VertexColor(position_list[6].clone(), tex_coord_list[2].clone()),
-            VertexColor(position_list[7].clone(), tex_coord_list[3].clone()),
-
-            VertexColor(position_list[1].clone(), tex_coord_list[1].clone()),
-            VertexColor(position_list[6].clone(), tex_coord_list[0].clone()),
-            VertexColor(position_list[5].clone(), tex_coord_list[2].clone()),
-            VertexColor(position_list[2].clone(), tex_coord_list[3].clone()),
-
-            VertexColor(position_list[7].clone(), tex_coord_list[1].clone()),
-            VertexColor(position_list[0].clone(), tex_coord_list[0].clone()),
-            VertexColor(position_list[3].clone(), tex_coord_list[2].clone()),
-            VertexColor(position_list[4].clone(), tex_coord_list[3].clone()),
-
-            VertexColor(position_list[3].clone(), tex_coord_list[1].clone()),
-            VertexColor(position_list[2].clone(), tex_coord_list[0].clone()),
-            VertexColor(position_list[5].clone(), tex_coord_list[2].clone()),
-            VertexColor(position_list[4].clone(), tex_coord_list[3].clone()),
-
-            VertexColor(position_list[7].clone(), tex_coord_list[1].clone()),
-            VertexColor(position_list[6].clone(), tex_coord_list[0].clone()),
-            VertexColor(position_list[1].clone(), tex_coord_list[2].clone()),
-            VertexColor(position_list[0].clone(), tex_coord_list[3].clone()),
-        ];
-
-        let index_list = [
-            0, 1, 2, 2, 3, 0, //front
-            4, 5, 6, 6, 7, 4, //back
-            8, 9, 10, 10, 11, 8, //top
-            12, 13, 14, 14, 15, 12, //bottom
-            16, 17, 18, 18, 19, 16, //right
-            20, 21, 22, 22, 23, 20, //left
-        ];
-
         let mut graphics = GRAPHICS.lock().unwrap();
         let render = &mut graphics.render;
         let swapchain = render.device_mut().new_swapchain(&hwnd).unwrap();
-        let (vertex_shader, blob) = render
+        let (vertex_shader, _) = render
             .device()
             .new_shader::<shaders::Vertex>("vertex_shader.hlsl")
             .unwrap();
@@ -136,28 +71,23 @@ impl Application for AppWindow {
             .device()
             .new_shader::<shaders::Pixel>("pixel_shader.hlsl")
             .unwrap();
-        let vertex_buffer = render
-            .device()
-            .new_vertex_buffer(&vertex_list, &blob)
-            .unwrap();
-        let index_buffer = render.device().new_index_buffer(&index_list).unwrap();
         let constant_buffer = render
             .device()
             .new_constant_buffer(&Constant {
                 ..Default::default()
             })
             .unwrap();
-        let wood_tex = graphics.get_texture_from_file("assets\\Textures\\wood.jpg".as_ref()).unwrap();
+        let wood_tex = graphics.get_texture_from_file("assets\\Textures\\brick.png".as_ref()).unwrap();
+        let teapot = graphics.get_mesh_from_file("assets\\Meshes\\teapot.obj".as_ref()).unwrap();
 
         let app_window = AppWindow {
             hwnd,
             swapchain,
-            vertex_buffer,
             vertex_shader,
             pixel_shader,
             constant_buffer,
-            index_buffer,
             wood_tex,
+            teapot,
             variables: AppWindowVariables::new(),
         };
 
@@ -170,7 +100,7 @@ impl Application for AppWindow {
     fn on_update(&mut self) {
         let g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
-        context.clear_render_target_color(&self.swapchain, 0.2, 0.4, 0.8, 1.0);
+        context.clear_render_target_color(&mut self.swapchain, 0.2, 0.4, 0.8, 1.0);
         let (width, height) = self.hwnd.rect();
         context.set_viewport_size(width as f32, height as f32);
 
@@ -179,9 +109,9 @@ impl Application for AppWindow {
         context.set_shader(&mut self.vertex_shader);
         context.set_shader(&mut self.pixel_shader);
         context.set_texture::<shaders::Pixel>(&mut self.wood_tex);
-        context.set_vertex_buffer(&mut self.vertex_buffer);
-        context.set_index_buffer(&mut self.index_buffer);
-        context.draw_indexed_triangle_list(self.index_buffer.len(), 0, 0);
+        context.set_vertex_buffer(&mut self.teapot.inner().vertex_buffer);
+        context.set_index_buffer(&mut self.teapot.inner().index_buffer);
+        context.draw_indexed_triangle_list(self.teapot.inner().index_buffer.len(), 0, 0);
 
         self.swapchain.present(0);
 
@@ -231,8 +161,8 @@ impl Listener for AppWindow {
         let (width, height) = self.hwnd.rect();
         let (width, height) = (width as i32, height as i32);
 
-        self.variables.rot_x += (pos.y - height/2) as f32  * self.variables.delta_t.get() * 10.0;
-        self.variables.rot_y += (pos.x - width/2) as f32  * self.variables.delta_t.get() * 10.0;
+        self.variables.rot_x += (pos.y - height/2) as f32  * 0.002;
+        self.variables.rot_y += (pos.x - width/2) as f32  * 0.002;
 
         input::set_cursor_position((width/2, height/2));
     }
