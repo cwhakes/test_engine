@@ -18,6 +18,7 @@ pub enum Okay {
 
 pub enum Error {
     Blob(Blob),
+    Custom(String),
     HResult(winnt::HRESULT),
     ImageError(ImageError),
     Io(io::Error),
@@ -54,6 +55,7 @@ impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Blob(blob) => write!(f, "Blob Error: {:?}", blob),
+            Custom(string) => write!(f, "Custom Error: {:?}", string),
             HResult(hresult) => write!(f, "HRESULT: {:x}", hresult),
             ImageError(image_err) => write!(f, "Image Error: {:?}", image_err),
             Io(io_err) => write!(f, "Io Error: {:?}", io_err),
@@ -67,6 +69,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Blob(blob) => write!(f, "Blob Error: {}", blob),
+            Custom(string) => write!(f, "Custom Error: {:?}", string),
             HResult(hresult) => write!(f, "HRESULT: {:x}", hresult),
             ImageError(image_err) => write!(f, "Image Error: {}", image_err),
             Io(io_err) => write!(f, "Io Error: {}", io_err),

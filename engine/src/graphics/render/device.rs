@@ -11,15 +11,18 @@ use std::ptr::{self, NonNull};
 use winapi::um::d3d11sdklayers::{ID3D11Debug, D3D11_RLDO_DETAIL};
 use winapi::shared::dxgi;
 use winapi::um::d3d11::{ID3D11Device};
-use winapi::Interface;
 
 pub struct Device(NonNull<ID3D11Device>);
+
+//TODO FIXME verify we can do this
+unsafe impl Send for Device {}
+unsafe impl Sync for Device {}
 
 impl Device {
     /// # Safety
     /// 
     /// `device` must point to a valid ID3D11Device
-    pub unsafe fn new(device: *mut ID3D11Device) -> error::Result<Device> {
+    pub unsafe fn from_ptr(device: *mut ID3D11Device) -> error::Result<Device> {
         match NonNull::new(device) {
             Some(inner) => Ok(Device(inner)),
             None => Err(null_ptr_err!()),
@@ -28,18 +31,10 @@ impl Device {
 
     pub fn new_swapchain(&mut self, hwnd: &Hwnd) -> error::Result<SwapChain> {
         unsafe {
-            let mut dxgi_device = ptr::null_mut();
-            self.as_ref().QueryInterface(&dxgi::IDXGIDevice::uuidof(), &mut dxgi_device).result()?;
-            let dxgi_device = NonNull::new(dxgi_device as *mut dxgi::IDXGIDevice).ok_or(null_ptr_err!())?;
-
-            let mut dxgi_adapter = ptr::null_mut();
-            dxgi_device.as_ref().GetParent(&dxgi::IDXGIAdapter::uuidof(), &mut dxgi_adapter).result()?;
-            let dxgi_adapter = NonNull::new(dxgi_adapter as *mut dxgi::IDXGIAdapter).ok_or(null_ptr_err!())?;
-
-            let mut dxgi_factory = ptr::null_mut();
-            dxgi_adapter.as_ref().GetParent(&dxgi::IDXGIFactory::uuidof(), &mut dxgi_factory).result()?;
-            let dxgi_factory = NonNull::new(dxgi_factory as *mut dxgi::IDXGIFactory).ok_or(null_ptr_err!())?;
-
+            let dxgi_device = self.as_ref().query_interface::<dxgi::IDXGIDevice>()?;
+            let dxgi_adapter = dxgi_device.as_ref().get_parent::<dxgi::IDXGIAdapter>()?;
+            let dxgi_factory = dxgi_adapter.as_ref().get_parent::<dxgi::IDXGIFactory>()?;
+            
             let mut desc = SwapChain::get_desc(hwnd);
             let mut swapchain_ptr = ptr::null_mut();
 
@@ -67,9 +62,7 @@ impl Device {
 
     pub fn debug(&self) -> error::Result<()> {
         unsafe {
-            let mut debug = ptr::null_mut();
-            self.as_ref().QueryInterface(&ID3D11Debug::uuidof(), &mut debug).result()?;
-            let debug = NonNull::new(debug as *mut ID3D11Debug).ok_or(null_ptr_err!())?;
+            let debug = self.as_ref().query_interface::<ID3D11Debug>()?;
             debug.as_ref().ReportLiveDeviceObjects(D3D11_RLDO_DETAIL).result()?;
             Ok(())
         }

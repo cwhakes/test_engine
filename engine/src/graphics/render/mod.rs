@@ -18,8 +18,7 @@ use crate::prelude::*;
 use crate::error;
 
 use std::ptr::null_mut;
-use winapi::um::d3d11;
-use winapi::um::d3dcommon;
+use winapi::um::{d3d11, d3dcommon};
 
 pub struct Render {
     device: Device,
@@ -27,34 +26,33 @@ pub struct Render {
     context: Context,
 }
 
-//TODO FIXME verify we can do this
-unsafe impl Send for Render {}
-unsafe impl Sync for Render {}
+const DRIVER_TYPES: [d3dcommon::D3D_DRIVER_TYPE; 3] = [
+    d3dcommon::D3D_DRIVER_TYPE_HARDWARE,
+    d3dcommon::D3D_DRIVER_TYPE_WARP,
+    d3dcommon::D3D_DRIVER_TYPE_REFERENCE,
+];
+
+const FEATURE_LEVELS: [d3dcommon::D3D_FEATURE_LEVEL; 1] = [
+    d3dcommon::D3D_FEATURE_LEVEL_11_0
+];
 
 impl Render {
     pub fn new() -> error::Result<Render> {
         unsafe {
-            let driver_types = [
-                d3dcommon::D3D_DRIVER_TYPE_HARDWARE,
-                d3dcommon::D3D_DRIVER_TYPE_WARP,
-                d3dcommon::D3D_DRIVER_TYPE_REFERENCE,
-            ];
-
-            let feature_levels = [d3dcommon::D3D_FEATURE_LEVEL_11_0];
-
             let mut device = null_mut();
             let mut feature_level = Default::default();
             let mut context = null_mut();
-            let mut result = Err(error::HResult(-1)); //Default to error
+            //Default to error
+            let mut result = Err(error::Custom("No driver types specified".to_string()));
 
-            for &driver_type in driver_types.iter() {
+            for &driver_type in DRIVER_TYPES.iter() {
                 result = d3d11::D3D11CreateDevice(
                     null_mut(),
                     driver_type,
                     null_mut(),
                     d3d11::D3D11_CREATE_DEVICE_DEBUG,
-                    feature_levels.as_ptr(),
-                    feature_levels.len() as u32,
+                    FEATURE_LEVELS.as_ptr(),
+                    FEATURE_LEVELS.len() as u32,
                     d3d11::D3D11_SDK_VERSION,
                     &mut device,
                     &mut feature_level,
@@ -67,13 +65,10 @@ impl Render {
             }
             result?;
 
-            let device = Device::new(device)?;
-            let context = Context::new(context)?;
-
             Ok(Render {
-                device,
+                device: Device::from_ptr(device)?,
                 _feature_level: feature_level,
-                context,
+                context: Context::from_ptr(context)?,
             })
         }
     }

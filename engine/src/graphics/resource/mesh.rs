@@ -30,13 +30,17 @@ impl Resource for Mesh {
         for object in obj_set.objects.iter().take(1) {
             for geometry in object.geometry.iter() {
                 let mut index = 0;
-
+                
                 for shape in geometry.shapes.iter() {
                     match shape.primitive {
                         obj::Primitive::Triangle(a, b, c) => {
                             for x in [a, b, c].iter() {
                                 let position = object.vertices[x.0].into();
-                                let texture = object.tex_vertices[x.1.unwrap()].into();
+                                let texture = if let Some(tex_index) = x.1 {
+                                    object.tex_vertices[tex_index].into()
+                                } else {
+                                    [0.0, 0.0].into()
+                                };
                                 vertices.push(MeshVertex(position, texture));
                                 indices.push(index as u32);
                                 index += 1;
@@ -48,6 +52,8 @@ impl Resource for Mesh {
 
             }
         }
+
+        if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
 
         let vs = shaders::compile_shader("vertex_mesh_layout.hlsl", "vsmain", "vs_5_0")?;
         let vertex_buffer = device.new_vertex_buffer(&vertices, &vs)?;
@@ -70,7 +76,7 @@ impl Mesh {
 
 //needed for custom derive
 use crate::{self as engine};
-#[derive(Vertex)]
+#[derive(Debug, Vertex)]
 #[repr(C)]
 pub struct MeshVertex(vertex::Position, vertex::TexCoord);
 

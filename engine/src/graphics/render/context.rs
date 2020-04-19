@@ -13,11 +13,15 @@ use winapi::um::d3dcommon;
 
 pub struct Context(NonNull<d3d11::ID3D11DeviceContext>);
 
+//TODO FIXME verify we can do this
+unsafe impl Send for Context {}
+unsafe impl Sync for Context {}
+
 impl Context {
     /// # Safety
     /// 
     /// `context` must point to a valid ID3D11DeviceContext
-    pub unsafe fn new(context: *mut d3d11::ID3D11DeviceContext) -> error::Result<Context> {
+    pub unsafe fn from_ptr(context: *mut d3d11::ID3D11DeviceContext) -> error::Result<Context> {
         match NonNull::new(context) {
             Some(inner) => Ok(Context(inner)),
             None => Err(null_ptr_err!()),
