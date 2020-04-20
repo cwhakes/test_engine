@@ -48,8 +48,8 @@ impl<T: ShaderType> Shader<T> {
         unsafe {
             let blob = compile_shader(location, T::ENTRY_POINT, T::TARGET).unwrap();
 
-            let bytecode = blob.as_ref().GetBufferPointer();
-            let bytecode_len = blob.as_ref().GetBufferSize();
+            let bytecode = blob.as_ptr() as *const _;
+            let bytecode_len = blob.len();
 
             let mut shader = ptr::null_mut();
             T::create_shader(device.as_ref(), bytecode, bytecode_len, &mut shader);

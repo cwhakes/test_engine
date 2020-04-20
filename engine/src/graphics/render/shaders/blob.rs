@@ -1,7 +1,7 @@
 use crate::error;
 
 use std::ptr::NonNull;
-use std::{convert, fmt, ops};
+use std::{fmt, ops};
 use winapi::um::d3dcommon::ID3DBlob;
 
 pub struct Blob(NonNull<ID3DBlob>);
@@ -15,18 +15,6 @@ impl Blob {
             Some(inner) => Ok(Blob(inner)),
             None => Err(null_ptr_err!()),
         }
-    }
-}
-
-impl convert::AsRef<ID3DBlob> for Blob {
-    fn as_ref(&self) -> &ID3DBlob {
-        unsafe { self.0.as_ref() }
-    }
-}
-
-impl convert::AsMut<ID3DBlob> for Blob {
-    fn as_mut(&mut self) -> &mut ID3DBlob {
-        unsafe { self.0.as_mut() }
     }
 }
 
@@ -52,8 +40,8 @@ impl ops::Deref for Blob {
     fn deref(&self) -> &Self::Target {
         unsafe {
             std::slice::from_raw_parts(
-                self.as_ref().GetBufferPointer() as *const u8,
-                self.as_ref().GetBufferSize(),
+                self.0.as_ref().GetBufferPointer() as *const u8,
+                self.0.as_ref().GetBufferSize(),
             )
         }
     }
@@ -63,8 +51,8 @@ impl ops::DerefMut for Blob {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe {
             std::slice::from_raw_parts_mut(
-                self.as_ref().GetBufferPointer() as *mut u8,
-                self.as_ref().GetBufferSize(),
+                self.0.as_mut().GetBufferPointer() as *mut u8,
+                self.0.as_mut().GetBufferSize(),
             )
         }
     }
@@ -73,7 +61,7 @@ impl ops::DerefMut for Blob {
 impl ops::Drop for Blob {
     fn drop(&mut self) {
         unsafe {
-            self.as_ref().Release();
+            self.0.as_mut().Release();
         }
     }
 }
