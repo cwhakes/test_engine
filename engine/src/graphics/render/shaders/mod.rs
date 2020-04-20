@@ -15,17 +15,18 @@ use crate::util::os_vec;
 use std::ffi::CString;
 use std::ptr::{null, null_mut};
 
-use winapi::um::d3dcommon;
 use winapi::um::d3dcompiler::D3DCompileFromFile;
 
 pub fn compile_shader(location: &str, entry_point: &str, target: &str) -> error::Result<Blob> {
     unsafe {
         let location = os_vec(location);
-        let entry_point = CString::new(entry_point).unwrap();
-        let target = CString::new(target).unwrap();
+        let entry_point = CString::new(entry_point)
+            .map_err(|_| error::Custom("Bad Entry Point".to_owned()))?;
+        let target = CString::new(target)
+            .map_err(|_| error::Custom("Bad Target".to_owned()))?;
 
-        let mut blob: *mut d3dcommon::ID3DBlob = null_mut();
-        let mut err_blob: *mut d3dcommon::ID3DBlob = null_mut();
+        let mut blob = null_mut();
+        let mut err_blob = null_mut();
 
         let result = D3DCompileFromFile(
             location.as_ptr(),

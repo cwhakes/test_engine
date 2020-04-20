@@ -1,7 +1,7 @@
 use engine::graphics::render::shaders::{self, Shader};
-use engine::graphics::render::{ConstantBuffer, Context, SwapChain, };
+use engine::graphics::render::{ConstantBuffer, Context, SwapChain};
+use engine::graphics::resource::{mesh::Mesh, texture::Texture};
 use engine::graphics::GRAPHICS;
-use engine::graphics::resource::{texture::Texture, mesh::Mesh};
 use engine::input::{self, Listener, INPUT};
 use engine::math::{Matrix4x4, Point};
 use engine::time::{get_tick_count, DeltaT};
@@ -77,8 +77,12 @@ impl Application for AppWindow {
                 ..Default::default()
             })
             .unwrap();
-        let wood_tex = graphics.get_texture_from_file("assets\\Textures\\brick.png".as_ref()).unwrap();
-        let teapot = graphics.get_mesh_from_file("assets\\Meshes\\teapot.obj".as_ref()).unwrap();
+        let wood_tex = graphics
+            .get_texture_from_file("assets\\Textures\\brick.png".as_ref())
+            .unwrap();
+        let teapot = graphics
+            .get_mesh_from_file("assets\\Meshes\\teapot.obj".as_ref())
+            .unwrap();
 
         let app_window = AppWindow {
             hwnd,
@@ -104,7 +108,8 @@ impl Application for AppWindow {
         let (width, height) = self.hwnd.rect();
         context.set_viewport_size(width as f32, height as f32);
 
-        self.variables.update(&mut self.constant_buffer, context, (width, height));
+        self.variables
+            .update(&mut self.constant_buffer, context, (width, height));
 
         context.set_shader(&mut self.vertex_shader);
         context.set_shader(&mut self.pixel_shader);
@@ -161,10 +166,10 @@ impl Listener for AppWindow {
         let (width, height) = self.hwnd.rect();
         let (width, height) = (width as i32, height as i32);
 
-        self.variables.rot_x += (pos.y - height/2) as f32  * 0.002;
-        self.variables.rot_y += (pos.x - width/2) as f32  * 0.002;
+        self.variables.rot_x += (pos.y - height / 2) as f32 * 0.002;
+        self.variables.rot_y += (pos.x - width / 2) as f32 * 0.002;
 
-        input::set_cursor_position((width/2, height/2));
+        input::set_cursor_position((width / 2, height / 2));
     }
     fn on_left_mouse_down(&mut self) {
         self.variables.scale_cube = 0.5
@@ -189,7 +194,12 @@ impl AppWindowVariables {
         }
     }
 
-    fn update(&mut self, constant_buffer: &mut ConstantBuffer<Constant>, context: &Context, (width, height): (u32, u32)) {
+    fn update(
+        &mut self,
+        constant_buffer: &mut ConstantBuffer<Constant>,
+        context: &Context,
+        (width, height): (u32, u32),
+    ) {
         self.delta_pos += self.delta_t.get() / 10.0;
         if self.delta_pos > 1.0 {
             self.delta_pos -= 1.0;
@@ -197,7 +207,7 @@ impl AppWindowVariables {
         self.delta_scale += self.delta_t.get() / 1.0;
 
         let world = Matrix4x4::scaling([self.scale_cube, self.scale_cube, self.scale_cube]);
-        
+
         let mut world_cam = Matrix4x4::identity();
         world_cam *= Matrix4x4::rotation_x(self.rot_x);
         world_cam *= Matrix4x4::rotation_y(self.rot_y);
@@ -211,7 +221,7 @@ impl AppWindowVariables {
 
         let view = world_cam.inverse().unwrap();
 
-        let proj = Matrix4x4::perspective(0.785, width as f32/height as f32, 0.1, 100.0);
+        let proj = Matrix4x4::perspective(0.785, width as f32 / height as f32, 0.1, 100.0);
 
         let mut constant = Constant {
             world,

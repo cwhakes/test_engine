@@ -46,7 +46,7 @@ unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 impl<T: ShaderType> Shader<T> {
     pub fn new(device: &Device, location: &str) -> error::Result<(Shader<T>, Blob)> {
         unsafe {
-            let blob = compile_shader(location, T::ENTRY_POINT, T::TARGET).unwrap();
+            let blob = compile_shader(location, T::ENTRY_POINT, T::TARGET)?;
 
             let bytecode = blob.as_ptr() as *const _;
             let bytecode_len = blob.len();

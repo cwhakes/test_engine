@@ -33,7 +33,7 @@ impl IndexBuffer {
 
             device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
 
-            let buffer = NonNull::new(buffer).unwrap();
+            let buffer = NonNull::new(buffer).ok_or(null_ptr_err!())?;
 
             Ok(IndexBuffer {
                 len: indices.len(),
