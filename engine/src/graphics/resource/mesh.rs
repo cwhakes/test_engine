@@ -41,7 +41,12 @@ impl Resource for Mesh {
                                 } else {
                                     [0.0, 0.0].into()
                                 };
-                                vertices.push(MeshVertex(position, texture));
+                                let normal = if let Some(norm_index) = x.2 {
+                                    object.normals[norm_index].into()
+                                } else {
+                                    [0.0, 0.0, 0.0].into()
+                                };
+                                vertices.push(MeshVertex(position, texture, normal));
                                 indices.push(index as u32);
                                 index += 1;
                             }
@@ -78,7 +83,7 @@ impl Mesh {
 use crate::{self as engine};
 #[derive(Debug, Vertex)]
 #[repr(C)]
-pub struct MeshVertex(vertex::Position, vertex::TexCoord);
+pub struct MeshVertex(vertex::Position, vertex::TexCoord, vertex::Normal);
 
 pub struct MeshInner {
     pub vertices: Vec<MeshVertex>,

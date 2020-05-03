@@ -1,8 +1,10 @@
 mod color;
+mod normal;
 mod position;
 mod tex_coord;
 
 pub use color::Color;
+pub use normal::Normal;
 pub use position::Position;
 pub use tex_coord::TexCoord;
 

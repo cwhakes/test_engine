@@ -1,3 +1,5 @@
+use super::Vector4d;
+
 use std::{convert, ops};
 
 use wavefront_obj::obj;
@@ -21,6 +23,15 @@ impl Vector3d {
             x: self.x * (1.0 - delta) + other.x * delta,
             y: self.y * (1.0 - delta) + other.y * delta,
             z: self.z * (1.0 - delta) + other.z * delta,
+        }
+    }
+
+    pub fn to_4d(&self, w: f32) -> Vector4d {
+        Vector4d {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+            w: w,
         }
     }
 }

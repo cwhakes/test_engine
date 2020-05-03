@@ -57,7 +57,7 @@ impl SwapChain {
         Ok(swapchain)
     }
 
-    pub fn inner(&self) -> &IDXGISwapChain {
+    fn inner(&self) -> &IDXGISwapChain {
         unsafe { self.inner.as_ref() }
     }
 
@@ -171,6 +171,14 @@ impl AsMut<d3d11::ID3D11DepthStencilView> for DepthBuffer {
     fn as_mut(&mut self) -> &mut d3d11::ID3D11DepthStencilView {
         unsafe {
             self.0.as_mut()
+        }
+    }
+}
+
+impl Drop for DepthBuffer {
+    fn drop(&mut self) {
+        unsafe {
+            self.0.as_ref().Release();
         }
     }
 }

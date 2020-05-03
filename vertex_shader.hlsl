@@ -2,12 +2,15 @@ struct VS_INPUT
 {
     float4 pos: POSITION0;
     float2 tex_coord: TEXCOORD0;
+    float3 normal: NORMAL0;
 };
 
 struct VS_OUTPUT
 {
     float4 pos: SV_POSITION;
     float2 tex_coord: TEXCOORD0;
+    float3 normal: NORMAL0;
+    float3 cam_dir: CAMDIR;
 };
 
 cbuffer constant: register(b0)
@@ -15,7 +18,8 @@ cbuffer constant: register(b0)
     row_major float4x4 m_world;
     row_major float4x4 m_view;
     row_major float4x4 m_proj;
-    unsigned int m_time;
+    float4 m_light_dir;
+    float4 m_camera_pos;
 };
 
 VS_OUTPUT vsmain( VS_INPUT input )
@@ -25,12 +29,14 @@ VS_OUTPUT vsmain( VS_INPUT input )
 
 // World space
     output.pos = mul(input.pos, m_world);
+    output.cam_dir = normalize(output.pos.xyz - m_camera_pos.xyz); 
 // View space
     output.pos = mul(output.pos, m_view);
 // Projection space
     output.pos = mul(output.pos, m_proj);
 
     output.tex_coord = input.tex_coord;
+    output.normal = input.normal;
 
     return output;
 }

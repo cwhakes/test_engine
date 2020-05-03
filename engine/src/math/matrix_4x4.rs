@@ -3,17 +3,17 @@ use super::{Vector3d, Vector4d};
 use std::{convert, ops};
 
 #[repr(C)]
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Matrix4x4(pub [[f32; 4]; 4]);
 
 impl Matrix4x4 {
     pub fn identity() -> Matrix4x4 {
-        let mut matrix = Matrix4x4::default();
-        matrix.0[0][0] = 1.0;
-        matrix.0[1][1] = 1.0;
-        matrix.0[2][2] = 1.0;
-        matrix.0[3][3] = 1.0;
-        matrix
+        Matrix4x4([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
     }
 
     pub fn translation(vec: impl Into<Vector3d>) -> Matrix4x4 {
@@ -179,6 +179,12 @@ impl Matrix4x4 {
 impl convert::From<[[f32; 4]; 4]> for Matrix4x4 {
     fn from(array: [[f32; 4]; 4]) -> Self {
         Matrix4x4(array)
+    }
+}
+
+impl Default for Matrix4x4 {
+    fn default() -> Self {
+        Matrix4x4::identity()
     }
 }
 
