@@ -1,10 +1,13 @@
+mod world;
+
+use world::World;
+
 use engine::graphics::render::shaders::{self, Shader};
-use engine::graphics::render::{ConstantBuffer, Context, SwapChain};
+use engine::graphics::render::{ConstantBuffer, SwapChain};
 use engine::graphics::resource::{mesh::Mesh, texture::Texture};
 use engine::graphics::GRAPHICS;
 use engine::input::{self, Listener, INPUT};
 use engine::math::{Matrix4x4, Point, Vector4d};
-use engine::time::DeltaT;
 use engine::window::{Application, Hwnd, Window};
 
 use std::sync::Mutex;
@@ -15,26 +18,12 @@ lazy_static! {
 
 #[repr(C, align(16))]
 #[derive(Default, Debug)]
-struct Constant {
+pub struct Constant {
     world: Matrix4x4,
     view: Matrix4x4,
     proj: Matrix4x4,
     light_dir: Vector4d,
     camera_pos: Vector4d,
-}
-
-#[derive(Default)]
-struct AppWindowVariables {
-    delta_t: DeltaT,
-    delta_pos: f32,
-    delta_scale: f32,
-    rot_x: f32,
-    rot_y: f32,
-    scale_cube: f32,
-    forward: f32,
-    rightward: f32,
-    world_camera: Matrix4x4,
-    light_source: Matrix4x4,
 }
 
 pub struct AppWindow {
@@ -45,7 +34,7 @@ pub struct AppWindow {
     constant_buffer: ConstantBuffer<Constant>,
     wood_tex: Texture,
     teapot: Mesh,
-    variables: AppWindowVariables,
+    variables: World,
 }
 
 impl Application for AppWindow {
@@ -94,7 +83,7 @@ impl Application for AppWindow {
             constant_buffer,
             wood_tex,
             teapot,
-            variables: AppWindowVariables::new(),
+            variables: World::new(),
         };
 
         WINDOW.set_application(app_window);
@@ -184,60 +173,5 @@ impl Listener for AppWindow {
     }
     fn on_right_mouse_up(&mut self) {
         self.variables.scale_cube = 1.0
-    }
-}
-
-impl AppWindowVariables {
-    fn new() -> AppWindowVariables {
-        AppWindowVariables {
-            scale_cube: 1.0,
-            world_camera: Matrix4x4::translation([0.0, 0.0, -1.0]),
-            ..Default::default()
-        }
-    }
-
-    fn update(
-        &mut self,
-        constant_buffer: &mut ConstantBuffer<Constant>,
-        context: &Context,
-        (width, height): (u32, u32),
-    ) {
-        //self.delta_pos += self.delta_t.get() / 10.0;
-        //if self.delta_pos > 1.0 {
-        //    self.delta_pos -= 1.0;
-        //}
-        self.delta_scale += self.delta_t.get() / 1.0;
-        self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
-
-        let world = Matrix4x4::scaling([self.scale_cube, self.scale_cube, self.scale_cube]);
-
-        let mut world_cam = Matrix4x4::identity();
-        world_cam *= Matrix4x4::rotation_x(self.rot_x);
-        world_cam *= Matrix4x4::rotation_y(self.rot_y);
-
-        let new_pos = self.world_camera.get_translation()
-            + world_cam.get_direction_z() * (self.forward * 5.0)
-            + world_cam.get_direction_x() * (self.rightward * 5.0);
-
-        world_cam.set_translation(new_pos);
-        self.world_camera = world_cam.clone();
-
-        let view = world_cam.inverse().unwrap();
-
-        let proj = Matrix4x4::perspective(0.785, width as f32 / height as f32, 0.001, 100.0);
-
-        let light_dir = self.light_source.get_direction_z().to_4d(0.0);
-        let camera_pos = self.world_camera.get_translation().to_4d(1.0);
-
-        let mut constant = Constant {
-            world,
-            view,
-            proj,
-            light_dir,
-            camera_pos,
-        };
-        constant_buffer.update(context, &mut constant);
-        context.set_constant_buffer::<shaders::Vertex, _>(constant_buffer);
-        context.set_constant_buffer::<shaders::Pixel, _>(constant_buffer);
     }
 }
