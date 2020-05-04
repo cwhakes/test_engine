@@ -35,18 +35,7 @@ impl Resource for Mesh {
                     match shape.primitive {
                         obj::Primitive::Triangle(a, b, c) => {
                             for x in [a, b, c].iter() {
-                                let position = object.vertices[x.0].into();
-                                let texture = if let Some(tex_index) = x.1 {
-                                    object.tex_vertices[tex_index].into()
-                                } else {
-                                    [0.0, 0.0].into()
-                                };
-                                let normal = if let Some(norm_index) = x.2 {
-                                    object.normals[norm_index].into()
-                                } else {
-                                    [0.0, 0.0, 0.0].into()
-                                };
-                                vertices.push(MeshVertex(position, texture, normal));
+                                vertices.push(MeshVertex::from_index(object, x));
                                 indices.push(index as u32);
                                 index += 1;
                             }
@@ -84,6 +73,24 @@ use crate::{self as engine};
 #[derive(Debug, Vertex)]
 #[repr(C)]
 pub struct MeshVertex(vertex::Position, vertex::TexCoord, vertex::Normal);
+
+impl MeshVertex {
+    fn from_index(object: &obj::Object, index: &obj::VTNIndex) -> MeshVertex {
+        let position = object.vertices[index.0].into();
+        let texture = if let Some(tex_index) = index.1 {
+            object.tex_vertices[tex_index].into()
+        } else {
+            [0.0, 0.0].into()
+        };
+        let normal = if let Some(norm_index) = index.2 {
+            object.normals[norm_index].into()
+        } else {
+            [0.0, 0.0, 0.0].into()
+        };
+
+        MeshVertex(position, texture, normal)
+    }
+}
 
 pub struct MeshInner {
     pub vertices: Vec<MeshVertex>,
