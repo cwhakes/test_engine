@@ -76,8 +76,13 @@ impl SwapChain {
     pub fn resize(&mut self, device: &Device) -> error::Result<()> {
         unsafe {
             self.back_buffer.take();
+            self.depth_buffer().take();
+
             self.inner().ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0).result()?;
+
             self.back_buffer = Some(BackBuffer::new(self, device)?);
+            self.depth_buffer = Some(DepthBuffer::new(self, device)?);
+
             Ok(())
         }
     }
