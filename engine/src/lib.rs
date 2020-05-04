@@ -8,6 +8,7 @@ pub mod error;
 
 pub mod prelude;
 
+pub mod components;
 pub mod graphics;
 pub mod input;
 pub mod math;

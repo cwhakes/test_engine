@@ -1,3 +1,5 @@
+use super::Vector3d;
+
 use std::convert;
 
 #[repr(C)]
@@ -10,6 +12,14 @@ pub struct Vector4d {
 }
 
 impl Vector4d {
+    pub fn to_3d_unchecked(&self) -> Vector3d {
+        Vector3d {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+        }
+    }
+
     pub fn cross(v1: &Vector4d, v2: &Vector4d, v3: &Vector4d) -> Vector4d {
         Vector4d {
             x: v1.y * (v2.z * v3.w - v3.z * v2.w) - v1.z * (v2.y * v3.w - v3.y * v2.w) + v1.w * (v2.y * v3.z - v2.z *v3.y),
