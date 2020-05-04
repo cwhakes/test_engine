@@ -3,11 +3,15 @@ use super::Device;
 
 use crate::prelude::*;
 use crate::error;
+use crate::graphics::render::shaders;
 
 use std::ffi::c_void;
 use std::ptr::{self, NonNull};
 
 use winapi::um::d3d11;
+
+#[repr(C, align(16))]
+struct ConstantWrapper<C>(C);
 
 /// Used to communicate a single value with shaders.
 /// Call `set_constant_buffer` on context to use.
@@ -16,7 +20,7 @@ where
     C: Sized,
 {
     buffer: NonNull<d3d11::ID3D11Buffer>,
-    _phantom: std::marker::PhantomData<C>,
+    _phantom: std::marker::PhantomData<ConstantWrapper<C>>,
 }
 
 //TODO FIXME Verify
@@ -25,7 +29,7 @@ unsafe impl<C> Sync for ConstantBuffer<C> where C: Sync {}
 
 impl<C> ConstantBuffer<C> {
     /// Constructs a new ConstantBuffer.
-    pub fn new(device: &Device, constant: &C) -> error::Result<ConstantBuffer<C>> {
+    pub fn new(device: &Device, constant: C) -> error::Result<ConstantBuffer<C>> {
         unsafe {
             let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
             buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
@@ -35,7 +39,7 @@ impl<C> ConstantBuffer<C> {
             buff_desc.MiscFlags = 0;
 
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-            data.pSysMem = constant as *const _ as *const c_void;
+            data.pSysMem = (&ConstantWrapper(constant)) as *const _ as *const c_void;
 
             let mut buffer = ptr::null_mut();
 
@@ -54,16 +58,19 @@ impl<C> ConstantBuffer<C> {
         self.buffer.as_ptr()
     }
 
-    pub fn update(&mut self, context: &Context, buffer: &mut C) {
+    pub fn update(&mut self, context: &Context, mut buffer: C) {
         unsafe {
             context.as_ref().UpdateSubresource(
                 &**self.buffer.as_ref() as *const _ as *mut _,
                 0,
                 ptr::null_mut(),
-                buffer as *mut _ as *mut _,
+                (&mut buffer) as *mut _ as *mut _,
                 0,
                 0,
             );
+
+            context.set_constant_buffer::<shaders::Vertex, _>(self);
+            context.set_constant_buffer::<shaders::Pixel, _>(self);
         }
     }
 }

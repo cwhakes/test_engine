@@ -2,6 +2,7 @@ use super::shaders::{Shader, ShaderType};
 use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 
 use crate::error;
+use crate::graphics::resource::mesh::Mesh;
 use crate::graphics::resource::texture::Texture;
 use crate::vertex::Vertex;
 
@@ -105,6 +106,12 @@ impl Context {
             self.as_ref()
                 .DrawIndexed(indices_len as u32, indices_start as u32, vertices_offset as i32);
         }
+    }
+
+    pub fn draw_mesh(&self, mesh: &Mesh) {
+        self.set_vertex_buffer(&mut mesh.inner().vertex_buffer);
+        self.set_index_buffer(&mut mesh.inner().index_buffer);
+        self.draw_indexed_triangle_list(mesh.inner().index_buffer.len(), 0, 0);
     }
 
     pub fn set_viewport_size(&self, width: f32, height: f32) {

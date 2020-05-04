@@ -16,7 +16,6 @@ lazy_static! {
     pub static ref WINDOW: Window<AppWindow> = Window::new();
 }
 
-#[repr(C, align(16))]
 #[derive(Default, Debug)]
 pub struct Constant {
     world: Matrix4x4,
@@ -66,7 +65,7 @@ impl Application for AppWindow {
             .unwrap();
         let constant_buffer = render
             .device()
-            .new_constant_buffer(&Constant {
+            .new_constant_buffer(Constant {
                 ..Default::default()
             })
             .unwrap();
@@ -102,16 +101,21 @@ impl Application for AppWindow {
         context.clear_render_target_color(&mut self.swapchain, 0.2, 0.4, 0.8, 1.0);
         let (width, height) = self.hwnd.rect();
         context.set_viewport_size(width as f32, height as f32);
-
-        self.variables
-            .update(&mut self.constant_buffer, context);
-
         context.set_shader(&mut self.vertex_shader);
         context.set_shader(&mut self.pixel_shader);
         context.set_texture::<shaders::Pixel>(&mut self.wood_tex);
-        context.set_vertex_buffer(&mut self.teapot.inner().vertex_buffer);
-        context.set_index_buffer(&mut self.teapot.inner().index_buffer);
-        context.draw_indexed_triangle_list(self.teapot.inner().index_buffer.len(), 0, 0);
+
+        self.variables.update();
+        
+        let constant = self.variables.shader_constant();
+        self.constant_buffer.update(context, constant);
+        context.draw_mesh(&self.teapot);
+
+        self.variables.set_world_matrix(Matrix4x4::translation([1.0, 0.0, 0.0]));
+        let constant = self.variables.shader_constant();
+        self.constant_buffer.update(context, constant);
+        context.draw_mesh(&self.teapot);
+        self.variables.set_world_matrix(Matrix4x4::translation([0.0, 0.0, 0.0]));
 
         self.swapchain.present(0);
     }

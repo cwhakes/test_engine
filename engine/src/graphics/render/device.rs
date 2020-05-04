@@ -44,7 +44,7 @@ impl Device {
         }
     }
 
-    pub fn new_constant_buffer<C>(&self, constant: &C) -> error::Result<ConstantBuffer<C>> {
+    pub fn new_constant_buffer<C>(&self, constant: C) -> error::Result<ConstantBuffer<C>> {
         ConstantBuffer::new(self, constant)
     }
 
