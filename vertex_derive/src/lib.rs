@@ -3,7 +3,7 @@ extern crate proc_macro;
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, parse_quote, Data, DeriveInput, Fields, GenericParam, Generics};
+use syn::{parse_macro_input, parse_quote, Data, DeriveInput, Field, Fields, GenericParam, Generics};
 
 #[proc_macro_derive(Vertex)]
 pub fn derive_vertex(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -41,34 +41,10 @@ fn desc_chain(data: &Data) -> TokenStream {
         Data::Struct(ref data) => {
             match data.fields {
                 Fields::Named(ref fields) => {
-                    let recurse = fields.named.iter().map(|f| {
-                        let ty = &f.ty;
-                        quote_spanned! {f.span()=>
-                            let iter = iter.chain(#ty::desc(offset));
-                            #[allow(unused_variables)]
-                            let offset = offset + std::mem::size_of::<#ty>();
-                        }
-                    });
-                    quote! {
-                        let iter = None.into_iter();
-                        #(#recurse)*
-                        Box::new(iter)
-                    }
+                    desc_chain_inner(fields.named.iter())
                 }
                 Fields::Unnamed(ref fields) => {
-                    let recurse = fields.unnamed.iter().map(|f| {
-                        let ty = &f.ty;
-                        quote_spanned! {f.span()=>
-                            let iter = iter.chain(#ty::desc(offset));
-                            #[allow(unused_variables)]
-                            let offset = offset + std::mem::size_of::<#ty>();
-                        }
-                    });
-                    quote! {
-                        let iter = None.into_iter();
-                        #(#recurse)*
-                        Box::new(iter)
-                    }
+                    desc_chain_inner(fields.unnamed.iter())
                 }
                 Fields::Unit => {
                     quote! {
@@ -78,5 +54,21 @@ fn desc_chain(data: &Data) -> TokenStream {
             }
         }
         Data::Enum(_) | Data::Union(_) => unimplemented!(),
+    }
+}
+
+fn desc_chain_inner<'a>(iter: impl Iterator<Item=&'a Field>) -> TokenStream {
+    let recurse = iter.map(|f| {
+        let ty = &f.ty;
+        quote_spanned! {f.span()=>
+            let iter = iter.chain(#ty::desc(offset));
+            #[allow(unused_variables)]
+            let offset = offset + std::mem::size_of::<#ty>();
+        }
+    });
+    quote! {
+        let iter = None.into_iter();
+        #(#recurse)*
+        Box::new(iter)
     }
 }
