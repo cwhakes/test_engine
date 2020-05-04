@@ -11,7 +11,7 @@ lazy_static! {
 }
 
 pub trait Listener {
-    fn name(&self) -> &'static str;
+    fn name(&self) -> String;
     fn on_key_down(&mut self, _key: usize) {}
     fn on_key_up(&mut self, _key: usize) {}
 
@@ -23,11 +23,11 @@ pub trait Listener {
 }
 
 impl<T: Listener> Listener for Option<T> {
-    fn name(&self) -> &'static str {
+    fn name(&self) -> String {
         if let Some(lis) = self {
             lis.name()
         } else {
-            ""
+            "".to_string()
         }
     }
     fn on_key_down(&mut self, key: usize) {
@@ -81,7 +81,7 @@ impl Input {
     }
 
     pub fn remove_listener(&mut self, listener: &'static Mutex<dyn Listener + Send + Sync>) {
-        self.hashmap.remove(listener.lock().unwrap().name());
+        self.hashmap.remove(&listener.lock().unwrap().name());
     }
 
     pub fn update(&mut self) {

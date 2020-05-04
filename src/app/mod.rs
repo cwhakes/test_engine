@@ -6,7 +6,7 @@ use engine::graphics::render::shaders::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, SwapChain};
 use engine::graphics::resource::{mesh::Mesh, texture::Texture};
 use engine::graphics::GRAPHICS;
-use engine::input::{self, Listener, INPUT};
+use engine::input::{self, INPUT};
 use engine::math::{Matrix4x4, Point, Vector4d};
 use engine::window::{Application, Hwnd, Window};
 
@@ -26,6 +26,7 @@ pub struct Constant {
     camera_pos: Vector4d,
 }
 
+#[derive(Listener)]
 pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
@@ -34,6 +35,7 @@ pub struct AppWindow {
     constant_buffer: ConstantBuffer<Constant>,
     wood_tex: Texture,
     teapot: Mesh,
+    #[listener]
     variables: World,
 }
 
@@ -75,7 +77,7 @@ impl Application for AppWindow {
             .get_mesh_from_file("assets\\Meshes\\statue.obj".as_ref())
             .unwrap();
 
-        let app_window = AppWindow {
+        let mut app_window = AppWindow {
             hwnd,
             swapchain,
             vertex_shader,
@@ -85,6 +87,8 @@ impl Application for AppWindow {
             teapot,
             variables: World::new(),
         };
+
+        app_window.variables.set_screen_size(app_window.hwnd.rect());
 
         WINDOW.set_application(app_window);
         INPUT.lock().unwrap().add_listener(WINDOW.listener());
@@ -100,7 +104,7 @@ impl Application for AppWindow {
         context.set_viewport_size(width as f32, height as f32);
 
         self.variables
-            .update(&mut self.constant_buffer, context, (width, height));
+            .update(&mut self.constant_buffer, context);
 
         context.set_shader(&mut self.vertex_shader);
         context.set_shader(&mut self.pixel_shader);
@@ -110,8 +114,6 @@ impl Application for AppWindow {
         context.draw_indexed_triangle_list(self.teapot.inner().index_buffer.len(), 0, 0);
 
         self.swapchain.present(0);
-
-        self.variables.delta_t.update();
     }
 
     fn on_destroy(&mut self) {
@@ -129,49 +131,8 @@ impl Application for AppWindow {
     }
 
     fn on_resize(&mut self) {
+        self.variables.set_screen_size(self.hwnd.rect());
         let graphics = GRAPHICS.lock().unwrap();
         self.swapchain.resize(graphics.render.device()).unwrap();
-    }
-}
-
-impl Listener for AppWindow {
-    fn name(&self) -> &'static str {
-        "AppWindow"
-    }
-
-    fn on_key_down(&mut self, key: usize) {
-        let key = key as u8;
-        match key {
-            b'W' => self.variables.forward = 0.1 * self.variables.delta_t.get(),
-            b'S' => self.variables.forward = -0.1 * self.variables.delta_t.get(),
-            b'A' => self.variables.rightward = -0.1 * self.variables.delta_t.get(),
-            b'D' => self.variables.rightward = 0.1 * self.variables.delta_t.get(),
-            _ => {}
-        }
-    }
-    fn on_key_up(&mut self, _key: usize) {
-        self.variables.forward = 0.0;
-        self.variables.rightward = 0.0;
-    }
-    fn on_mouse_move(&mut self, pos: Point) {
-        let (width, height) = self.hwnd.rect();
-        let (width, height) = (width as i32, height as i32);
-
-        self.variables.rot_x += (pos.y - height / 2) as f32 * 0.002;
-        self.variables.rot_y += (pos.x - width / 2) as f32 * 0.002;
-
-        input::set_cursor_position((width / 2, height / 2));
-    }
-    fn on_left_mouse_down(&mut self) {
-        self.variables.scale_cube = 0.5
-    }
-    fn on_right_mouse_down(&mut self) {
-        self.variables.scale_cube = 1.5
-    }
-    fn on_left_mouse_up(&mut self) {
-        self.variables.scale_cube = 1.0
-    }
-    fn on_right_mouse_up(&mut self) {
-        self.variables.scale_cube = 1.0
     }
 }

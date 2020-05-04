@@ -7,4 +7,5 @@ edition = "2018"
 [dependencies]
 engine = { path = "./engine" }
 lazy_static = "1.4.0"
+listener_derive = { path = "./listener_derive" }
 vertex_derive = { path = "./vertex_derive" }

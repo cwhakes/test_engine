@@ -27,7 +27,7 @@ impl Resource for Mesh {
         let mut indices = Vec::new();
         
         //TODO handle multiple models
-        for object in obj_set.objects.iter().take(1) {
+        for object in obj_set.objects.iter() {
             for geometry in object.geometry.iter() {
                 let mut index = 0;
                 

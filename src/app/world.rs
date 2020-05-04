@@ -3,21 +3,24 @@ use super::Constant;
 use engine::components::Camera;
 use engine::graphics::render::shaders;
 use engine::graphics::render::{ConstantBuffer, Context};
-use engine::math::Matrix4x4;
+use engine::input::{self, Listener};
+use engine::math::{Matrix4x4, Point};
 use engine::time::DeltaT;
+
+static SPEED: f32 = 0.5;
 
 #[derive(Default)]
 pub struct World {
-    pub delta_t: DeltaT,
-    pub delta_pos: f32,
-    pub delta_scale: f32,
+    screen_width: f32,
+    screen_height: f32,
+
+    delta_t: DeltaT,
     pub rot_x: f32,
     pub rot_y: f32,
     pub scale_cube: f32,
     pub forward: f32,
     pub rightward: f32,
     pub camera: Camera,
-    //pub world_camera: Matrix4x4,
     pub light_source: Matrix4x4,
 }
 
@@ -37,25 +40,28 @@ impl World {
         &mut self,
         constant_buffer: &mut ConstantBuffer<Constant>,
         context: &Context,
-        (width, height): (u32, u32),
     ) {
+        self.delta_t.update();
         
-        self.delta_scale += self.delta_t.get() / 1.0;
         self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
 
         let world = Matrix4x4::scaling([self.scale_cube, self.scale_cube, self.scale_cube]);
 
         self.camera
             .set_rotation(self.rot_x, self.rot_y)
-            .move_forward(self.forward * 5.0)
-            .move_rightward(self.rightward * 5.0);
+            .move_forward(SPEED * self.forward * self.delta_t.get())
+            .move_rightward(SPEED * self.rightward * self.delta_t.get());
 
         let view = self.camera.get_view();
 
-        let proj = Matrix4x4::perspective(0.785, width as f32 / height as f32, 0.001, 100.0);
+        let proj = Matrix4x4::perspective(
+            std::f32::consts::PI/4.0,
+            self.screen_width / self.screen_height,
+            0.01,
+            100.0
+        );
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
-        //let camera_pos = self.world_camera.get_translation().to_4d(1.0);
         let camera_pos = self.camera.get_position();
 
         let mut constant = Constant {
@@ -68,5 +74,51 @@ impl World {
         constant_buffer.update(context, &mut constant);
         context.set_constant_buffer::<shaders::Vertex, _>(constant_buffer);
         context.set_constant_buffer::<shaders::Pixel, _>(constant_buffer);
+    }
+
+    pub fn set_screen_size(&mut self, (width, height): (u32, u32)) {
+        self.screen_width = width as f32;
+        self.screen_height = height as f32;
+    }
+}
+
+impl Listener for World {
+    fn name(&self) -> String {
+        "World".to_string()
+    }
+
+    fn on_key_down(&mut self, key: usize) {
+        let key = key as u8;
+        match key {
+            b'W' => self.forward = 1.0,
+            b'S' => self.forward = -1.0,
+            b'A' => self.rightward = -1.0,
+            b'D' => self.rightward = 1.0,
+            _ => {}
+        }
+    }
+    fn on_key_up(&mut self, _key: usize) {
+        self.forward = 0.0;
+        self.rightward = 0.0;
+    }
+    fn on_mouse_move(&mut self, pos: Point) {
+        let (width, height) = (self.screen_width as i32, self.screen_height as i32);
+
+        self.rot_x += (pos.y - height / 2) as f32 * 0.002;
+        self.rot_y += (pos.x - width / 2) as f32 * 0.002;
+
+        input::set_cursor_position((width / 2, height / 2));
+    }
+    fn on_left_mouse_down(&mut self) {
+        self.scale_cube = 0.5
+    }
+    fn on_right_mouse_down(&mut self) {
+        self.scale_cube = 1.5
+    }
+    fn on_left_mouse_up(&mut self) {
+        self.scale_cube = 1.0
+    }
+    fn on_right_mouse_up(&mut self) {
+        self.scale_cube = 1.0
     }
 }
