@@ -1,15 +1,12 @@
-mod color;
-mod normal;
-mod position;
-mod tex_coord;
+#[macro_use]
+mod generate;
 
-pub use color::Color;
-pub use normal::Normal;
-pub use position::Position;
-pub use tex_coord::TexCoord;
+use crate::math::{Vector2d, Vector3d};
 
 /// Re-export used in proc macro
 pub use winapi::um::d3d11::D3D11_INPUT_ELEMENT_DESC;
+
+use winapi::shared::dxgiformat;
 
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
@@ -23,6 +20,11 @@ pub trait Vertex {
     /// Collect results into an array
     fn desc(offset: usize) -> Box<dyn Iterator<Item = d3d11::D3D11_INPUT_ELEMENT_DESC>>;
 }
+
+vertex_generate!(Color, Vector3d, b"COLOR\0", dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT);
+vertex_generate!(Normal, Vector3d, b"NORMAL\0", dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT);
+vertex_generate!(Position, Vector3d, b"POSITION\0", dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT);
+vertex_generate!(TexCoord, Vector2d, b"TEXCOORD\0", dxgiformat::DXGI_FORMAT_R32G32_FLOAT);
 
 /// SemanticIndexes must be unique per SemanticName.
 /// Import this trait and call `semantic_index_fix` before collecting descriptions into an array.
