@@ -7,6 +7,7 @@ use std::ptr::{self, NonNull};
 use winapi::Interface;
 use winapi::shared::dxgi::IDXGIObject;
 use winapi::um::unknwnbase::IUnknown;
+use winapi::um::winnt;
 
 /// Make a wide-encoded string for use with some APIs.
 pub fn os_vec(text: &str) -> Vec<u16> {
@@ -14,6 +15,14 @@ pub fn os_vec(text: &str) -> Vec<u16> {
         .encode_wide()
         .chain(Some(0).into_iter())
         .collect()
+}
+
+pub fn get_output<T, F>(function: F) -> error::Result<NonNull<T>> where
+    F: FnOnce(&mut *mut T) -> winnt::HRESULT
+{
+    let mut ptr = ptr::null_mut();
+    function(&mut ptr).result()?;
+    NonNull::new(ptr).ok_or(null_ptr_err!())
 }
 
 /// A wrapper for the winapi function of the same name, used through the prelude

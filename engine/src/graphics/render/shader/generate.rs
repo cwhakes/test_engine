@@ -1,26 +1,30 @@
 macro_rules! shader_generate {
-    ($name: ident, $interface: ty,
+    (unsafe {
+        $name: ident,
+        $interface: ty,
         $create_shader: ident,
         $set_shader: ident,
         $set_shader_resource: ident,
         $set_constant_buffer: ident,
         $entry_point: expr,
         $target: expr
-    ) => {
+    }) => {
         pub enum $name {}
 
         impl ShaderType for $name {
             type ShaderInterface = $interface;
 
-            unsafe fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<*mut Self::ShaderInterface> {
-                let mut shader = std::ptr::null_mut();
-                device.as_ref().$create_shader(
-                    bytecode.as_ptr() as *const _,
-                    bytecode.len(),
-                    std::ptr::null_mut(),
-                    &mut shader,
-                ).result()?;
-                Ok(shader)
+            fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<NonNull<Self::ShaderInterface>> {
+                unsafe {
+                    get_output(|shader| {
+                        device.as_ref().$create_shader(
+                            bytecode.as_ptr() as *const _,
+                            bytecode.len(),
+                            std::ptr::null_mut(),
+                            shader,
+                        )
+                    })
+                }
             }
 
             fn set_shader(context: &Context, shader: &mut Self::ShaderInterface) {

@@ -8,7 +8,7 @@ use crate::prelude::*;
 use crate::error;
 use crate::graphics::render::{ConstantBuffer, Context, Device};
 use crate::graphics::resource::texture::Texture;
-use crate::util::os_vec;
+use crate::util::{get_output, os_vec};
 
 use std::ffi::CString;
 use std::ptr::{null, null_mut, NonNull};
@@ -23,10 +23,7 @@ use winapi::um::d3d11;
 pub trait ShaderType {
     type ShaderInterface: ops::Deref<Target = d3d11::ID3D11DeviceChild>;
 
-    /// # Safety
-    /// 
-    /// Inherits safety of concrete function
-    unsafe fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<*mut Self::ShaderInterface>;
+    fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<NonNull<Self::ShaderInterface>>;
 
     fn set_shader(context: &Context, shader: &mut Self::ShaderInterface);
     fn set_texture(context: &Context, texture: &mut Texture);
@@ -37,23 +34,27 @@ pub trait ShaderType {
     const TARGET: &'static str;
 }
 
-shader_generate!(Pixel, d3d11::ID3D11PixelShader,
+shader_generate!( unsafe {
+    Pixel,
+    d3d11::ID3D11PixelShader,
     CreatePixelShader,
     PSSetShader,
     PSSetShaderResources,
     PSSetConstantBuffers,
     "psmain",
     "ps_5_0"
-);
+});
 
-shader_generate!(Vertex, d3d11::ID3D11VertexShader,
+shader_generate!( unsafe {
+    Vertex,
+    d3d11::ID3D11VertexShader,
     CreateVertexShader,
     VSSetShader,
     VSSetShaderResources,
     VSSetConstantBuffers,
     "vsmain",
     "vs_5_0"
-);
+});
 
 pub struct Shader<T: ShaderType> {
     pub shader: NonNull<T::ShaderInterface>,
@@ -65,13 +66,10 @@ unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 
 impl<T: ShaderType> Shader<T> {
     pub fn new(device: &Device, location: &str) -> error::Result<(Shader<T>, Blob)> {
-        unsafe {
-            let bytecode = compile_shader(location, T::ENTRY_POINT, T::TARGET)?;
-            let shader = T::create_shader(device, &*bytecode)?;
-            let shader = NonNull::new(shader).ok_or(null_ptr_err!())?;
+        let bytecode = compile_shader(location, T::ENTRY_POINT, T::TARGET)?;
+        let shader = T::create_shader(device, &*bytecode)?;
 
-            Ok((Shader { shader }, bytecode))
-        }
+        Ok((Shader { shader }, bytecode))
     }
 }
 
