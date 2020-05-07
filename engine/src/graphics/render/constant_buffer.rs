@@ -1,9 +1,9 @@
 use super::context::Context;
 use super::Device;
 
-use crate::prelude::*;
 use crate::error;
 use crate::graphics::render::shader;
+use crate::util::get_output;
 
 use std::ffi::c_void;
 use std::ptr::{self, NonNull};
@@ -42,11 +42,9 @@ impl<C> ConstantBuffer<C> {
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.pSysMem = (&ConstantWrapper(constant)) as *const _ as *const c_void;
 
-            let mut buffer = ptr::null_mut();
-
-            device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
-
-            let buffer = NonNull::new(buffer).ok_or(null_ptr_err!())?;
+            let buffer = get_output(|ptr| {
+                device.as_ref().CreateBuffer(&buff_desc, &data, ptr)
+            })?;
 
             Ok(ConstantBuffer {
                 index,

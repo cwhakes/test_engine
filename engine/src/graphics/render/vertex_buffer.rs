@@ -1,10 +1,9 @@
-use crate::prelude::*;
-
 use crate::graphics::render::Device;
 use crate::error;
+use crate::util::get_output;
 use crate::vertex::{Vertex, SemanticIndexFix};
 
-use std::ptr::{self, NonNull};
+use std::ptr::NonNull;
 
 use winapi::um::d3d11;
 
@@ -35,28 +34,23 @@ impl<V: Vertex> VertexBuffer<V> {
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.pSysMem = vertices.as_ptr() as *const _;
 
-            let mut buffer = ptr::null_mut();
-
-            device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
-
-            let buffer = NonNull::new(buffer).ok_or(null_ptr_err!())?;
+            let buffer = get_output(|ptr| {
+                device.as_ref().CreateBuffer(&buff_desc, &data, ptr)
+            })?;
             
             let layout_desc: Vec<_> = V::desc(0)
                 .semantic_index_fix()
                 .collect();
 
-            let mut layout = std::ptr::null_mut();
-
-            device.as_ref().CreateInputLayout(
-                layout_desc.as_ptr(),
-                layout_desc.len() as u32,
-                bytecode.as_ptr() as *const _,
-                bytecode.len(),
-                &mut layout,
-            ).result()?;
-
-
-            let layout = NonNull::new(layout).ok_or(null_ptr_err!())?;
+            let layout = get_output(|ptr| {
+                device.as_ref().CreateInputLayout(
+                    layout_desc.as_ptr(),
+                    layout_desc.len() as u32,
+                    bytecode.as_ptr() as *const _,
+                    bytecode.len(),
+                    ptr,
+                )
+            })?;
 
             Ok(VertexBuffer {
                 len: vertices.len(),

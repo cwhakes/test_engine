@@ -2,6 +2,7 @@ use crate::prelude::*;
 
 use super::Device;
 use crate::error;
+use crate::util::get_output;
 use crate::window::Hwnd;
 
 use std::ptr::{self, NonNull};
@@ -107,16 +108,18 @@ struct BackBuffer(NonNull<d3d11::ID3D11RenderTargetView>);
 impl BackBuffer {
     fn new(swapchain: &SwapChain, device: &Device) -> error::Result<BackBuffer> {
         unsafe {
-            let mut buffer = ptr::null_mut();
-            swapchain.inner().GetBuffer(0, &d3d11::ID3D11Texture2D::uuidof(), &mut buffer).result()?;
-            let buffer = buffer as *mut d3d11::ID3D11Resource;
 
-            let mut rtv = ptr::null_mut();
-            device.as_ref().CreateRenderTargetView(buffer, ptr::null_mut(), &mut rtv).result()?;
-            if let Some(buffer) = buffer.as_ref() {
-                buffer.Release();
-            }
-            NonNull::new(rtv).map(BackBuffer).ok_or(null_ptr_err!())
+            let buffer = get_output(|ptr| {
+                swapchain.inner().GetBuffer(0, &d3d11::ID3D11Texture2D::uuidof(), ptr)
+            })?.cast::<d3d11::ID3D11Resource>();
+            
+            let rtv = get_output(|ptr| {
+                device.as_ref().CreateRenderTargetView(buffer.as_ptr(), ptr::null_mut(), ptr)
+            })?;
+
+            buffer.as_ref().Release();
+
+            Ok(BackBuffer(rtv))
         }
     }
 }
@@ -149,17 +152,18 @@ impl DepthBuffer {
             tex_desc.BindFlags = d3d11::D3D11_BIND_DEPTH_STENCIL;
             tex_desc.CPUAccessFlags = 0;
             tex_desc.MiscFlags = 0;
-    
-            let mut buffer = ptr::null_mut();
-            device.as_ref().CreateTexture2D(&tex_desc, ptr::null_mut(), &mut buffer).result()?;
-            let buffer = buffer as *mut d3d11::ID3D11Resource;
 
-            let mut dsv = ptr::null_mut();
-            device.as_ref().CreateDepthStencilView(buffer, ptr::null_mut(), &mut dsv).result()?;
-            if let Some(buffer) = buffer.as_ref() {
-                buffer.Release();
-            }
-            NonNull::new(dsv).map(DepthBuffer).ok_or(null_ptr_err!())
+            let buffer = get_output(|ptr| {
+                device.as_ref().CreateTexture2D(&tex_desc, ptr::null_mut(), ptr)
+            })?.cast::<d3d11::ID3D11Resource>();
+
+            let dsv = get_output(|ptr| {
+                device.as_ref().CreateDepthStencilView(buffer.as_ptr(), ptr::null_mut(), ptr)
+            })?;
+
+            buffer.as_ref().Release();
+
+            Ok(DepthBuffer(dsv))
         }
     }
 }

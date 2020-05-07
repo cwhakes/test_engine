@@ -1,9 +1,8 @@
-use crate::prelude::*;
-
 use super::{Resource, ResourceManager};
 
 use crate::error;
 use crate::graphics::render::Device;
+use crate::util::get_output;
 
 use std::path::Path;
 use std::ptr::{self, NonNull};
@@ -46,23 +45,23 @@ impl Resource for Texture {
             let buffer: Vec<u8> = image.into_raw();
             data.pSysMem = buffer.as_ptr() as *const _;
 
-            let mut texture = ptr::null_mut();
-            device.as_ref().CreateTexture2D(
-                &desc,
-                &data,
-                &mut texture,
-            ).result()?;
-            let texture = NonNull::new(texture).ok_or(null_ptr_err!())?;
+            let texture = get_output(|ptr| {
+                device.as_ref().CreateTexture2D(
+                    &desc,
+                    &data,
+                    ptr,
+                )
+            })?;
             
             drop(buffer);
 
-            let mut resource_view = ptr::null_mut();
-            device.as_ref().CreateShaderResourceView(
-                &**texture.as_ref() as *const d3d11::ID3D11Resource as *mut _,
-                ptr::null(),
-                &mut resource_view,
-            ).result()?;
-            let resource_view = NonNull::new(resource_view).ok_or(null_ptr_err!())?;
+            let resource_view = get_output(|ptr| {
+                device.as_ref().CreateShaderResourceView(
+                    &**texture.as_ref() as *const d3d11::ID3D11Resource as *mut _,
+                    ptr::null(),
+                    ptr,
+                )
+            })?;
 
             Ok( Texture(Arc::new(TextureInner {
                 texture,

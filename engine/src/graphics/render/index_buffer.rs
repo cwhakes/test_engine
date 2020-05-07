@@ -1,9 +1,8 @@
-use crate::prelude::*;
-
 use crate::error;
 use crate::graphics::render::Device;
+use crate::util::get_output;
 
-use std::ptr::{self, NonNull};
+use std::ptr::NonNull;
 
 use winapi::um::d3d11;
 
@@ -29,11 +28,9 @@ impl IndexBuffer {
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.pSysMem = indices.as_ptr() as *const _;
 
-            let mut buffer = ptr::null_mut();
-
-            device.as_ref().CreateBuffer(&buff_desc, &data, &mut buffer).result()?;
-
-            let buffer = NonNull::new(buffer).ok_or(null_ptr_err!())?;
+            let buffer = get_output(|ptr| {
+                device.as_ref().CreateBuffer(&buff_desc, &data, ptr)
+            })?;
 
             Ok(IndexBuffer {
                 len: indices.len(),
