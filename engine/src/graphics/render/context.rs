@@ -47,7 +47,7 @@ impl Context {
     }
 
     pub fn set_constant_buffer<S: ShaderType, C>(&self, buffer: &mut ConstantBuffer<C>) {
-        S::set_constant_buffer(self.as_ref(), buffer)
+        S::set_constant_buffer(self, buffer)
     }
 
     pub fn set_index_buffer(&self, index_buffer: &mut IndexBuffer) {
@@ -74,11 +74,11 @@ impl Context {
     }
 
     pub fn set_shader<S: ShaderType>(&self, shader: &mut Shader<S>) {
-        S::set_shader(self.as_ref(), shader.as_mut());
+        S::set_shader(self, shader.as_mut());
     }
 
     pub fn set_texture<S: ShaderType>(&self, texture: &mut Texture) {
-        S::set_texture(self.as_ref(), texture);
+        S::set_texture(self, texture);
     }
 
     pub fn draw_triangle_list(&self, vertices_len: usize, vertices_start: usize) {

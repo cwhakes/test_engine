@@ -1,13 +1,12 @@
 use super::{blob::Blob, compile_shader};
 
 use crate::error;
-use crate::graphics::render::{ConstantBuffer, Device};
+use crate::graphics::render::{ConstantBuffer, Context, Device};
 use crate::graphics::resource::texture::Texture;
 
-use std::ptr::{self, NonNull};
-use std::{convert, ffi, ops};
+use std::ptr::NonNull;
+use std::{convert, ops};
 
-use winapi::shared::basetsd::SIZE_T;
 use winapi::um::d3d11;
 
 /// Trait used to define new shaders.
@@ -19,17 +18,12 @@ pub trait ShaderType {
     /// # Safety
     /// 
     /// Inherits safety of concrete function
-    unsafe fn create_shader(
-        device: &d3d11::ID3D11Device,
-        bytecode: *const ffi::c_void,
-        bytecode_len: SIZE_T,
-        shader: *mut *mut Self::ShaderInterface,
-    );
+    unsafe fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<*mut Self::ShaderInterface>;
 
-    fn set_shader(context: &d3d11::ID3D11DeviceContext, shader: &mut Self::ShaderInterface);
-    fn set_texture(context: &d3d11::ID3D11DeviceContext, texture: &mut Texture);
+    fn set_shader(context: &Context, shader: &mut Self::ShaderInterface);
+    fn set_texture(context: &Context, texture: &mut Texture);
 
-    fn set_constant_buffer<C>(context: &d3d11::ID3D11DeviceContext, buffer: &mut ConstantBuffer<C>);
+    fn set_constant_buffer<C>(context: &Context, buffer: &mut ConstantBuffer<C>);
 
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;
@@ -46,16 +40,11 @@ unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 impl<T: ShaderType> Shader<T> {
     pub fn new(device: &Device, location: &str) -> error::Result<(Shader<T>, Blob)> {
         unsafe {
-            let blob = compile_shader(location, T::ENTRY_POINT, T::TARGET)?;
-
-            let bytecode = blob.as_ptr() as *const _;
-            let bytecode_len = blob.len();
-
-            let mut shader = ptr::null_mut();
-            T::create_shader(device.as_ref(), bytecode, bytecode_len, &mut shader);
+            let bytecode = compile_shader(location, T::ENTRY_POINT, T::TARGET)?;
+            let shader = T::create_shader(device, &*bytecode)?;
             let shader = NonNull::new(shader).ok_or(null_ptr_err!())?;
 
-            Ok((Shader { shader }, blob))
+            Ok((Shader { shader }, bytecode))
         }
     }
 }

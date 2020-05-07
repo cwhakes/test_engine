@@ -9,6 +9,7 @@ pub use shader::{Shader, ShaderType};
 
 use crate::prelude::*;
 use crate::error;
+use crate::graphics::render::{Context, Device};
 use crate::util::os_vec;
 
 use std::ffi::CString;
