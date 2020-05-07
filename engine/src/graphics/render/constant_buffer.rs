@@ -19,6 +19,7 @@ pub struct ConstantBuffer<C>
 where
     C: Sized,
 {
+    index: u32,
     buffer: NonNull<d3d11::ID3D11Buffer>,
     _phantom: std::marker::PhantomData<ConstantWrapper<C>>,
 }
@@ -29,7 +30,7 @@ unsafe impl<C> Sync for ConstantBuffer<C> where C: Sync {}
 
 impl<C> ConstantBuffer<C> {
     /// Constructs a new ConstantBuffer.
-    pub fn new(device: &Device, constant: C) -> error::Result<ConstantBuffer<C>> {
+    pub fn new(device: &Device, index: u32, constant: C) -> error::Result<ConstantBuffer<C>> {
         unsafe {
             let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
             buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
@@ -48,6 +49,7 @@ impl<C> ConstantBuffer<C> {
             let buffer = NonNull::new(buffer).ok_or(null_ptr_err!())?;
 
             Ok(ConstantBuffer {
+                index,
                 buffer,
                 _phantom: Default::default(),
             })
@@ -60,6 +62,8 @@ impl<C> ConstantBuffer<C> {
 
     pub fn update(&mut self, context: &Context, buffer: C) {
         unsafe {
+            let index = self.index;
+
             context.as_ref().UpdateSubresource(
                 &**self.buffer.as_ref() as *const _ as *mut _,
                 0,
@@ -69,8 +73,8 @@ impl<C> ConstantBuffer<C> {
                 0,
             );
 
-            context.set_constant_buffer::<shader::Vertex, _>(self);
-            context.set_constant_buffer::<shader::Pixel, _>(self);
+            context.set_constant_buffer::<shader::Vertex, _>(index, self);
+            context.set_constant_buffer::<shader::Pixel, _>(index, self);
         }
     }
 }

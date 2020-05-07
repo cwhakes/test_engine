@@ -14,11 +14,15 @@ struct PS_INPUT
 
 cbuffer constant: register(b0)
 {
-    row_major float4x4 m_world;
     row_major float4x4 m_view;
     row_major float4x4 m_proj;
     float4 m_light_dir;
     float4 m_camera_pos;
+};
+
+cbuffer constant1: register(b1)
+{
+    row_major float4x4 m_world;
 };
 
 float4 psmain( PS_INPUT input ) : SV_Target

@@ -33,8 +33,8 @@ macro_rules! shader_generate {
                 }
             }
 
-            fn set_constant_buffer<C>(context: &Context, buffer: &mut crate::graphics::render::ConstantBuffer<C>) {
-                unsafe { context.as_ref().$set_constant_buffer(0, 1, &buffer.buffer_ptr()) }
+            fn set_constant_buffer<C>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>) {
+                unsafe { context.as_ref().$set_constant_buffer(index, 1, &buffer.buffer_ptr()) }
             }
 
             const ENTRY_POINT: &'static str = $entry_point;

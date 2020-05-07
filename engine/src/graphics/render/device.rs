@@ -44,8 +44,8 @@ impl Device {
         }
     }
 
-    pub fn new_constant_buffer<C>(&self, constant: C) -> error::Result<ConstantBuffer<C>> {
-        ConstantBuffer::new(self, constant)
+    pub fn new_constant_buffer<C>(&self, index: u32, constant: C) -> error::Result<ConstantBuffer<C>> {
+        ConstantBuffer::new(self, index, constant)
     }
 
     pub fn new_index_buffer(&self, indices: &[u32]) -> error::Result<IndexBuffer> {

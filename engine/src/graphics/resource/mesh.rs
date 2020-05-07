@@ -2,6 +2,7 @@ use super::{Resource, ResourceManager};
 
 use crate::error;
 use crate::graphics::render::{Device, IndexBuffer, shader, VertexBuffer};
+use crate::math::Vector3d;
 use crate::vertex;
 
 use std::fs::File;
@@ -76,7 +77,8 @@ pub struct MeshVertex(vertex::Position, vertex::TexCoord, vertex::Normal);
 
 impl MeshVertex {
     fn from_index(object: &obj::Object, index: &obj::VTNIndex) -> MeshVertex {
-        let position = object.vertices[index.0].into();
+        let position: Vector3d = object.vertices[index.0].into();
+        let position = position.to_4d(1.0).into();
         let texture = if let Some(tex_index) = index.1 {
             object.tex_vertices[tex_index].into()
         } else {

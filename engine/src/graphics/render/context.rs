@@ -46,8 +46,8 @@ impl Context {
         }
     }
 
-    pub fn set_constant_buffer<S: ShaderType, C>(&self, buffer: &mut ConstantBuffer<C>) {
-        S::set_constant_buffer(self, buffer)
+    pub fn set_constant_buffer<S: ShaderType, C>(&self, index: u32, buffer: &mut ConstantBuffer<C>) {
+        S::set_constant_buffer(self, index, buffer)
     }
 
     pub fn set_index_buffer(&self, index_buffer: &mut IndexBuffer) {

@@ -64,7 +64,6 @@ impl World {
         let camera_pos = self.camera.get_position();
 
         Constant {
-            world,
             view,
             proj,
             light_dir,
@@ -75,10 +74,6 @@ impl World {
     pub fn set_screen_size(&mut self, (width, height): (u32, u32)) {
         self.screen_width = width as f32;
         self.screen_height = height as f32;
-    }
-
-    pub fn set_world_matrix(&mut self, world_matrix: Matrix4x4) {
-        self.world_matrix = world_matrix;
     }
 }
 

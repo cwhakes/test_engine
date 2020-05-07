@@ -18,7 +18,6 @@ lazy_static! {
 
 #[derive(Default, Debug)]
 pub struct Constant {
-    world: Matrix4x4,
     view: Matrix4x4,
     proj: Matrix4x4,
     light_dir: Vector4d,
@@ -32,6 +31,7 @@ pub struct AppWindow {
     vertex_shader: Shader<shader::Vertex>,
     pixel_shader: Shader<shader::Pixel>,
     constant_buffer: ConstantBuffer<Constant>,
+    constant_buffer1: ConstantBuffer<Matrix4x4>,
     wood_tex: Texture,
     teapot: Mesh,
     #[listener]
@@ -65,9 +65,11 @@ impl Application for AppWindow {
             .unwrap();
         let constant_buffer = render
             .device()
-            .new_constant_buffer(Constant {
-                ..Default::default()
-            })
+            .new_constant_buffer(0, Constant::default())
+            .unwrap();
+        let constant_buffer1 = render
+            .device()
+            .new_constant_buffer(1, Matrix4x4::identity())
             .unwrap();
         let wood_tex = graphics
             .get_texture_from_file("assets\\Textures\\brick.png".as_ref())
@@ -82,6 +84,7 @@ impl Application for AppWindow {
             vertex_shader,
             pixel_shader,
             constant_buffer,
+            constant_buffer1,
             wood_tex,
             teapot,
             variables: World::new(),
@@ -106,16 +109,14 @@ impl Application for AppWindow {
         context.set_texture::<shader::Pixel>(&mut self.wood_tex);
 
         self.variables.update();
-        
         let constant = self.variables.shader_constant();
         self.constant_buffer.update(context, constant);
+
+        self.constant_buffer1.update(context, Matrix4x4::translation([0.0, 0.0, 0.0]));
         context.draw_mesh(&self.teapot);
 
-        self.variables.set_world_matrix(Matrix4x4::translation([1.0, 0.0, 0.0]));
-        let constant = self.variables.shader_constant();
-        self.constant_buffer.update(context, constant);
+        self.constant_buffer1.update(context, Matrix4x4::translation([1.0, 0.0, 0.0]));
         context.draw_mesh(&self.teapot);
-        self.variables.set_world_matrix(Matrix4x4::translation([0.0, 0.0, 0.0]));
 
         self.swapchain.present(0);
     }

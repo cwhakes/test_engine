@@ -31,7 +31,7 @@ pub trait ShaderType {
     fn set_shader(context: &Context, shader: &mut Self::ShaderInterface);
     fn set_texture(context: &Context, texture: &mut Texture);
 
-    fn set_constant_buffer<C>(context: &Context, buffer: &mut ConstantBuffer<C>);
+    fn set_constant_buffer<C>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>);
 
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;

@@ -1,7 +1,7 @@
 #[macro_use]
 mod generate;
 
-use crate::math::{Vector2d, Vector3d};
+use crate::math::{Vector2d, Vector3d, Vector4d};
 
 /// Re-export used in proc macro
 pub use winapi::um::d3d11::D3D11_INPUT_ELEMENT_DESC;
@@ -23,7 +23,7 @@ pub trait Vertex {
 
 vertex_generate!(Color, Vector3d, b"COLOR\0", dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT);
 vertex_generate!(Normal, Vector3d, b"NORMAL\0", dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT);
-vertex_generate!(Position, Vector3d, b"POSITION\0", dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT);
+vertex_generate!(Position, Vector4d, b"POSITION\0", dxgiformat::DXGI_FORMAT_R32G32B32A32_FLOAT);
 vertex_generate!(TexCoord, Vector2d, b"TEXCOORD\0", dxgiformat::DXGI_FORMAT_R32G32_FLOAT);
 
 /// SemanticIndexes must be unique per SemanticName.
