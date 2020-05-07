@@ -1,12 +1,11 @@
+#[macro_use]
+mod generate;
+
 mod blob;
-mod pixel;
 mod shader;
-mod vertex;
 
 pub use blob::Blob;
-pub use pixel::Pixel;
 pub use shader::{Shader, ShaderType};
-pub use vertex::Vertex;
 
 use crate::prelude::*;
 use crate::error;
@@ -16,6 +15,25 @@ use std::ffi::CString;
 use std::ptr::{null, null_mut};
 
 use winapi::um::d3dcompiler::D3DCompileFromFile;
+use winapi::um::d3d11;
+
+shader_generate!(Pixel, d3d11::ID3D11PixelShader,
+    CreatePixelShader,
+    PSSetShader,
+    PSSetShaderResources,
+    PSSetConstantBuffers,
+    "psmain",
+    "ps_5_0"
+);
+
+shader_generate!(Vertex, d3d11::ID3D11VertexShader,
+    CreateVertexShader,
+    VSSetShader,
+    VSSetShaderResources,
+    VSSetConstantBuffers,
+    "vsmain",
+    "vs_5_0"
+);
 
 pub fn compile_shader(location: &str, entry_point: &str, target: &str) -> error::Result<Blob> {
     unsafe {
