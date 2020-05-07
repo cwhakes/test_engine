@@ -1,4 +1,4 @@
-use super::shaders::{Shader, ShaderType};
+use super::shader::{Shader, ShaderType};
 use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 
 use crate::error;

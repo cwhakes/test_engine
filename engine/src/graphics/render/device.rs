@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 use crate::error;
 use crate::vertex::Vertex;
-use crate::graphics::render::shaders::{Blob, Shader, ShaderType};
+use crate::graphics::render::shader::{Blob, Shader, ShaderType};
 use crate::graphics::render::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use crate::window::Hwnd;
 

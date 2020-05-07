@@ -3,7 +3,7 @@ use super::Device;
 
 use crate::prelude::*;
 use crate::error;
-use crate::graphics::render::shaders;
+use crate::graphics::render::shader;
 
 use std::ffi::c_void;
 use std::ptr::{self, NonNull};
@@ -69,8 +69,8 @@ impl<C> ConstantBuffer<C> {
                 0,
             );
 
-            context.set_constant_buffer::<shaders::Vertex, _>(self);
-            context.set_constant_buffer::<shaders::Pixel, _>(self);
+            context.set_constant_buffer::<shader::Vertex, _>(self);
+            context.set_constant_buffer::<shader::Pixel, _>(self);
         }
     }
 }

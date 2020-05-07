@@ -2,7 +2,7 @@ mod world;
 
 use world::World;
 
-use engine::graphics::render::shaders::{self, Shader};
+use engine::graphics::render::shader::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, SwapChain};
 use engine::graphics::resource::{mesh::Mesh, texture::Texture};
 use engine::graphics::GRAPHICS;
@@ -29,8 +29,8 @@ pub struct Constant {
 pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
-    vertex_shader: Shader<shaders::Vertex>,
-    pixel_shader: Shader<shaders::Pixel>,
+    vertex_shader: Shader<shader::Vertex>,
+    pixel_shader: Shader<shader::Pixel>,
     constant_buffer: ConstantBuffer<Constant>,
     wood_tex: Texture,
     teapot: Mesh,
@@ -57,11 +57,11 @@ impl Application for AppWindow {
         let swapchain = render.device_mut().new_swapchain(&hwnd).unwrap();
         let (vertex_shader, _) = render
             .device()
-            .new_shader::<shaders::Vertex>("vertex_shader.hlsl")
+            .new_shader::<shader::Vertex>("vertex_shader.hlsl")
             .unwrap();
         let (pixel_shader, _) = render
             .device()
-            .new_shader::<shaders::Pixel>("pixel_shader.hlsl")
+            .new_shader::<shader::Pixel>("pixel_shader.hlsl")
             .unwrap();
         let constant_buffer = render
             .device()
@@ -103,7 +103,7 @@ impl Application for AppWindow {
         context.set_viewport_size(width as f32, height as f32);
         context.set_shader(&mut self.vertex_shader);
         context.set_shader(&mut self.pixel_shader);
-        context.set_texture::<shaders::Pixel>(&mut self.wood_tex);
+        context.set_texture::<shader::Pixel>(&mut self.wood_tex);
 
         self.variables.update();
         

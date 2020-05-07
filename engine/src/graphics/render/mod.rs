@@ -2,7 +2,7 @@ mod constant_buffer;
 mod context;
 mod device;
 mod index_buffer;
-pub mod shaders;
+pub mod shader;
 mod swapchain;
 mod vertex_buffer;
 

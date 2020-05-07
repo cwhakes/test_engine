@@ -1,7 +1,7 @@
 use super::{Resource, ResourceManager};
 
 use crate::error;
-use crate::graphics::render::{Device, IndexBuffer, shaders, VertexBuffer};
+use crate::graphics::render::{Device, IndexBuffer, shader, VertexBuffer};
 use crate::vertex;
 
 use std::fs::File;
@@ -49,7 +49,7 @@ impl Resource for Mesh {
 
         if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
 
-        let vs = shaders::compile_shader("vertex_mesh_layout.hlsl", "vsmain", "vs_5_0")?;
+        let vs = shader::compile_shader("vertex_mesh_layout.hlsl", "vsmain", "vs_5_0")?;
         let vertex_buffer = device.new_vertex_buffer(&vertices, &vs)?;
         let index_buffer = device.new_index_buffer(&indices)?;
 

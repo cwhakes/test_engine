@@ -1,4 +1,4 @@
-use crate::graphics::render::shaders::Blob;
+use crate::graphics::render::shader::Blob;
 
 use std::{error, fmt, result};
 
