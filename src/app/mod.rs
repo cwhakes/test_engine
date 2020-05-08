@@ -22,8 +22,8 @@ pub struct AppWindow {
     swapchain: SwapChain,
     vertex_shader: Shader<shader::Vertex>,
     pixel_shader: Shader<shader::Pixel>,
-    constant_buffer: ConstantBuffer<Environment>,
-    constant_buffer1: ConstantBuffer<Matrix4x4>,
+    environment: ConstantBuffer<Environment>,
+    position: ConstantBuffer<Matrix4x4>,
     wood_tex: Texture,
     #[listener]
     variables: World,
@@ -54,11 +54,11 @@ impl Application for AppWindow {
             .device()
             .new_shader::<shader::Pixel, _>("pixel_shader.hlsl")
             .unwrap();
-        let constant_buffer = render
+        let environment = render
             .device()
             .new_constant_buffer(0, Environment::default())
             .unwrap();
-        let constant_buffer1 = render
+        let position = render
             .device()
             .new_constant_buffer(1, Matrix4x4::identity())
             .unwrap();
@@ -88,8 +88,8 @@ impl Application for AppWindow {
             swapchain,
             vertex_shader,
             pixel_shader,
-            constant_buffer,
-            constant_buffer1,
+            environment,
+            position,
             wood_tex,
             variables: world,
         };
@@ -113,11 +113,10 @@ impl Application for AppWindow {
         context.set_texture::<shader::Pixel>(&mut self.wood_tex);
 
         self.variables.update();
-        let constant = self.variables.environment();
-        self.constant_buffer.update(context, constant);
+        self.environment.update(context, self.variables.environment());
 
         for (pos, mesh) in self.variables.meshes() {
-            self.constant_buffer1.update(context, pos.clone());
+            self.position.update(context, pos.clone());
             context.draw_mesh(mesh);
         }
 
