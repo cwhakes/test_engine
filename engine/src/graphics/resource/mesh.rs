@@ -18,8 +18,8 @@ pub type MeshManager = ResourceManager<Mesh>;
 pub struct Mesh(Arc<Mutex<MeshInner>>);
 
 impl Resource for Mesh {
-    fn load_resource_from_file(device: &Device, path: &Path) -> error::Result<Self> {
-        let mut file = File::open(path)?;
+    fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
+        let mut file = File::open(path.as_ref())?;
         let mut string = String::new();
         file.read_to_string(&mut string)?;
         let obj_set = obj::parse(string)?;
@@ -50,7 +50,7 @@ impl Resource for Mesh {
 
         if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
 
-        let vs = shader::compile_shader("vertex_mesh_layout.hlsl", "vsmain", "vs_5_0")?;
+        let vs = shader::compile_shader_from_location("vertex_mesh_layout.hlsl", "vsmain", "vs_5_0")?;
         let vertex_buffer = device.new_vertex_buffer(&vertices, &vs)?;
         let index_buffer = device.new_index_buffer(&indices)?;
 

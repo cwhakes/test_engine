@@ -18,9 +18,9 @@ pub type TextureManager = ResourceManager<Texture>;
 pub struct Texture(Arc<TextureInner>);
 
 impl Resource for Texture {
-    fn load_resource_from_file(device: &Device, path: &Path) -> error::Result<Self> {
+    fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
         unsafe {
-            let image = Reader::open(path)?.decode()?.to_rgba();
+            let image = Reader::open(path.as_ref())?.decode()?.to_rgba();
 
             let mut sample_desc = dxgitype::DXGI_SAMPLE_DESC::default();
             sample_desc.Count = 1;

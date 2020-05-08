@@ -48,11 +48,11 @@ impl Application for AppWindow {
         let swapchain = render.device_mut().new_swapchain(&hwnd).unwrap();
         let (vertex_shader, _) = render
             .device()
-            .new_shader::<shader::Vertex>("vertex_shader.hlsl")
+            .new_shader::<shader::Vertex, _>("vertex_shader.hlsl")
             .unwrap();
         let (pixel_shader, _) = render
             .device()
-            .new_shader::<shader::Pixel>("pixel_shader.hlsl")
+            .new_shader::<shader::Pixel, _>("pixel_shader.hlsl")
             .unwrap();
         let constant_buffer = render
             .device()
@@ -63,10 +63,10 @@ impl Application for AppWindow {
             .new_constant_buffer(1, Matrix4x4::identity())
             .unwrap();
         let wood_tex = graphics
-            .get_texture_from_file("assets\\Textures\\brick.png".as_ref())
+            .get_texture_from_file("assets\\Textures\\brick.png")
             .unwrap();
         let teapot = graphics
-            .get_mesh_from_file("assets\\Meshes\\statue.obj".as_ref())
+            .get_mesh_from_file("assets\\Meshes\\statue.obj")
             .unwrap();
 
         let mut world = World::new();

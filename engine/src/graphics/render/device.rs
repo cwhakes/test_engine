@@ -6,6 +6,7 @@ use crate::graphics::render::shader::{Blob, Shader, ShaderType};
 use crate::graphics::render::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use crate::window::Hwnd;
 
+use std::path::Path;
 use std::ptr::{self, NonNull};
 
 use winapi::um::d3d11sdklayers::{ID3D11Debug, D3D11_RLDO_DETAIL};
@@ -52,7 +53,7 @@ impl Device {
         IndexBuffer::new(self, indices)
     }
 
-    pub fn new_shader<T: ShaderType>(&self, location: &str) -> error::Result<(Shader<T>, Blob)> {
+    pub fn new_shader<T: ShaderType, P: AsRef<Path>>(&self, location: P) -> error::Result<(Shader<T>, Blob)> {
         Shader::<T>::new(self, location)
     }
 

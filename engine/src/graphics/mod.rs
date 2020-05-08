@@ -29,11 +29,11 @@ impl Graphics {
         })
     }
 
-    pub fn get_texture_from_file(&mut self, path: &Path) -> error::Result<Texture> {
+    pub fn get_texture_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Texture> {
         self.texture_manager.get_resource_from_file(self.render.device(), path)
     }
 
-    pub fn get_mesh_from_file(&mut self, path: &Path) -> error::Result<Mesh> {
+    pub fn get_mesh_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Mesh> {
         self.mesh_manager.get_resource_from_file(self.render.device(), path)
     }
 }

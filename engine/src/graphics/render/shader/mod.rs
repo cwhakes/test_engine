@@ -11,6 +11,7 @@ use crate::graphics::resource::texture::Texture;
 use crate::util::{get_output, os_vec};
 
 use std::ffi::CString;
+use std::path::Path;
 use std::ptr::{null, null_mut, NonNull};
 use std::{convert, ops};
 
@@ -65,8 +66,8 @@ unsafe impl<T> Send for Shader<T> where T: ShaderType + Send {}
 unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 
 impl<T: ShaderType> Shader<T> {
-    pub fn new(device: &Device, location: &str) -> error::Result<(Shader<T>, Blob)> {
-        let bytecode = compile_shader(location, T::ENTRY_POINT, T::TARGET)?;
+    pub fn new(device: &Device, location: impl AsRef<Path>) -> error::Result<(Shader<T>, Blob)> {
+        let bytecode = compile_shader_from_location(location, T::ENTRY_POINT, T::TARGET)?;
         let shader = T::create_shader(device, &*bytecode)?;
 
         Ok((Shader { shader }, bytecode))
@@ -93,9 +94,9 @@ impl<T: ShaderType> ops::Drop for Shader<T> {
     }
 }
 
-pub fn compile_shader(location: &str, entry_point: &str, target: &str) -> error::Result<Blob> {
+pub fn compile_shader_from_location(location: impl AsRef<Path>, entry_point: &str, target: &str) -> error::Result<Blob> {
     unsafe {
-        let location = os_vec(location);
+        let location = os_vec(location.as_ref().to_str().ok_or(error::Custom("Bad Path".to_owned()))?);
         let entry_point = CString::new(entry_point)
             .map_err(|_| error::Custom("Bad Entry Point".to_owned()))?;
         let target = CString::new(target)
