@@ -5,14 +5,4 @@ struct VS_INPUT
     float3 normal: NORMAL0;
 };
 
-struct VS_OUTPUT
-{
-
-};
-
-VS_OUTPUT vsmain( VS_INPUT input )
-{   
-    VS_OUTPUT output = (VS_OUTPUT)0;
-
-    return output;
-}
+void vsmain( VS_INPUT input ) {}
