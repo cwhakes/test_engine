@@ -1,8 +1,7 @@
-use super::Constant;
-
 use engine::components::Camera;
+use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
-use engine::math::{Matrix4x4, Point};
+use engine::math::{Matrix4x4, Point, Vector4d};
 use engine::time::DeltaT;
 
 static SPEED: f32 = 0.5;
@@ -21,6 +20,16 @@ pub struct World {
     world_matrix: Matrix4x4,
     pub camera: Camera,
     pub light_source: Matrix4x4,
+
+    meshes: Vec<(Matrix4x4, Mesh)>,
+}
+
+#[derive(Default, Debug)]
+pub struct Environment {
+    view: Matrix4x4,
+    proj: Matrix4x4,
+    light_dir: Vector4d,
+    camera_pos: Vector4d,
 }
 
 impl World {
@@ -47,7 +56,7 @@ impl World {
 
     }
 
-    pub fn shader_constant(&self) -> Constant {
+    pub fn environment(&self) -> Environment {
         let mut world = self.world_matrix.clone();
         world *= Matrix4x4::scaling([self.scale_cube, self.scale_cube, self.scale_cube]);
 
@@ -63,7 +72,7 @@ impl World {
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
         let camera_pos = self.camera.get_position();
 
-        Constant {
+        Environment {
             view,
             proj,
             light_dir,
@@ -74,6 +83,14 @@ impl World {
     pub fn set_screen_size(&mut self, (width, height): (u32, u32)) {
         self.screen_width = width as f32;
         self.screen_height = height as f32;
+    }
+
+    pub fn add_mesh(&mut self, position: Matrix4x4, mesh: Mesh) {
+        self.meshes.push((position, mesh))
+    }
+
+    pub fn meshes(&self) -> impl Iterator<Item=&(Matrix4x4, Mesh)> {
+        self.meshes.iter()
     }
 }
 

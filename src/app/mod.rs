@@ -1,13 +1,13 @@
 mod world;
 
-use world::World;
+use world::{World, Environment};
 
 use engine::graphics::render::shader::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, SwapChain};
-use engine::graphics::resource::{mesh::Mesh, texture::Texture};
+use engine::graphics::resource::{texture::Texture};
 use engine::graphics::GRAPHICS;
 use engine::input::{self, INPUT};
-use engine::math::{Matrix4x4, Point, Vector4d};
+use engine::math::{Matrix4x4, Point};
 use engine::window::{Application, Hwnd, Window};
 
 use std::sync::Mutex;
@@ -16,24 +16,15 @@ lazy_static! {
     pub static ref WINDOW: Window<AppWindow> = Window::new();
 }
 
-#[derive(Default, Debug)]
-pub struct Constant {
-    view: Matrix4x4,
-    proj: Matrix4x4,
-    light_dir: Vector4d,
-    camera_pos: Vector4d,
-}
-
 #[derive(Listener)]
 pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
     vertex_shader: Shader<shader::Vertex>,
     pixel_shader: Shader<shader::Pixel>,
-    constant_buffer: ConstantBuffer<Constant>,
+    constant_buffer: ConstantBuffer<Environment>,
     constant_buffer1: ConstantBuffer<Matrix4x4>,
     wood_tex: Texture,
-    teapot: Mesh,
     #[listener]
     variables: World,
 }
@@ -65,7 +56,7 @@ impl Application for AppWindow {
             .unwrap();
         let constant_buffer = render
             .device()
-            .new_constant_buffer(0, Constant::default())
+            .new_constant_buffer(0, Environment::default())
             .unwrap();
         let constant_buffer1 = render
             .device()
@@ -78,6 +69,20 @@ impl Application for AppWindow {
             .get_mesh_from_file("assets\\Meshes\\statue.obj".as_ref())
             .unwrap();
 
+        let mut world = World::new();
+        world.add_mesh(
+            Matrix4x4::translation([0.0, 0.0, 0.0]),
+            teapot.clone(),
+        );
+        world.add_mesh(
+            Matrix4x4::translation([1.0, 0.0, 0.0]),
+            teapot.clone(),
+        );
+        world.add_mesh(
+            Matrix4x4::translation([-1.0, 0.0, 0.0]),
+            teapot.clone(),
+        );
+
         let mut app_window = AppWindow {
             hwnd,
             swapchain,
@@ -86,8 +91,7 @@ impl Application for AppWindow {
             constant_buffer,
             constant_buffer1,
             wood_tex,
-            teapot,
-            variables: World::new(),
+            variables: world,
         };
 
         app_window.variables.set_screen_size(app_window.hwnd.rect());
@@ -109,14 +113,13 @@ impl Application for AppWindow {
         context.set_texture::<shader::Pixel>(&mut self.wood_tex);
 
         self.variables.update();
-        let constant = self.variables.shader_constant();
+        let constant = self.variables.environment();
         self.constant_buffer.update(context, constant);
 
-        self.constant_buffer1.update(context, Matrix4x4::translation([0.0, 0.0, 0.0]));
-        context.draw_mesh(&self.teapot);
-
-        self.constant_buffer1.update(context, Matrix4x4::translation([1.0, 0.0, 0.0]));
-        context.draw_mesh(&self.teapot);
+        for (pos, mesh) in self.variables.meshes() {
+            self.constant_buffer1.update(context, pos.clone());
+            context.draw_mesh(mesh);
+        }
 
         self.swapchain.present(0);
     }
