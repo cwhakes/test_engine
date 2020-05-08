@@ -5,7 +5,7 @@ use std::{convert, ops};
 use wavefront_obj::obj;
 
 #[repr(C)]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Vector3d {
     pub x: f32,
     pub y: f32,
@@ -17,6 +17,25 @@ impl Vector3d {
         Vector3d { x, y, z }
     }
 
+    pub fn magnitude(&self) -> f32 {
+        let mag2 = self.x.powi(2) + self.y.powi(2) + self.z.powi(2);
+        mag2.sqrt()
+    }
+
+    pub fn normalize(self) -> Vector3d {
+        let mag = self.magnitude();
+        self / mag
+    }
+
+    pub fn to_4d(self, w: f32) -> Vector4d {
+        Vector4d {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+            w: w,
+        }
+    }
+
     pub fn lerp(&self, other: impl Into<Vector3d>, delta: f32) -> Vector3d  {
         let other = other.into();
         Vector3d {
@@ -26,12 +45,21 @@ impl Vector3d {
         }
     }
 
-    pub fn to_4d(&self, w: f32) -> Vector4d {
-        Vector4d {
-            x: self.x,
-            y: self.y,
-            z: self.z,
-            w: w,
+    pub fn dot(&self, rhs: impl Into<Vector3d>) -> Vector3d {
+        let rhs = rhs.into();
+        Vector3d {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+            z: self.z * rhs.z,
+        }
+    }
+
+    pub fn cross(&self, rhs: impl Into<Vector3d>) -> Vector3d {
+        let rhs = rhs.into();
+        Vector3d {
+            x: self.y * rhs.z - self.z * rhs.y,
+            y: self.z * rhs.x - self.x * rhs.z,
+            z: self.x * rhs.y - self.y * rhs.x,
         }
     }
 }
@@ -56,10 +84,11 @@ impl convert::From<obj::Vertex> for Vector3d {
     }
 }
 
-impl ops::Add<Vector3d> for Vector3d {
+impl<T: Into<Vector3d>> ops::Add<T> for Vector3d {
     type Output = Vector3d;
 
-    fn add(self, rhs: Vector3d) -> Self::Output{
+    fn add(self, rhs: T) -> Self::Output {
+        let rhs = rhs.into();
         Vector3d {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -68,14 +97,39 @@ impl ops::Add<Vector3d> for Vector3d {
     }
 }
 
+impl<T: Into<Vector3d>> ops::Sub<T> for Vector3d {
+    type Output = Vector3d;
+
+    fn sub(self, rhs: T) -> Self::Output {
+        let rhs = rhs.into();
+        Vector3d {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
 impl ops::Mul<f32> for Vector3d {
     type Output = Vector3d;
 
-    fn mul(self, rhs: f32) -> Self::Output{
+    fn mul(self, rhs: f32) -> Self::Output {
         Vector3d {
             x: self.x * rhs,
             y: self.y * rhs,
             z: self.z * rhs,
+        }
+    }
+}
+
+impl ops::Div<f32> for Vector3d {
+    type Output = Vector3d;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        Vector3d {
+            x: self.x / rhs,
+            y: self.y / rhs,
+            z: self.z / rhs,
         }
     }
 }

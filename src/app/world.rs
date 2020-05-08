@@ -36,10 +36,12 @@ impl World {
     pub fn new() -> World {
         let mut camera = Camera::default();
         camera.move_forward(-1.0);
+        let light_source = Matrix4x4::rotation_x(-std::f32::consts::PI / 6.0);
 
         World {
             scale_cube: 1.0,
             camera,
+            light_source,
             ..Default::default()
         }
     }

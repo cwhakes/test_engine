@@ -27,8 +27,8 @@ cbuffer constant1: register(b1)
 
 float4 psmain( PS_INPUT input ) : SV_Target
 {      
-    float3 tex = Texture.Sample(TextureSampler, input.tex_coord * 0.5);
-    //float3 tex = float3(1.0, 1.0, 1.0);
+    //float3 tex = Texture.Sample(TextureSampler, input.tex_coord * 0.5);
+    float3 tex = float3(1.0, 1.0, 1.0);
 
     float3 ka = 0.1 * tex;
     float3 ia = float3(1.0, 1.0, 1.0);
@@ -39,7 +39,7 @@ float4 psmain( PS_INPUT input ) : SV_Target
     float amount_diffuse_light = max(0.0, dot(m_light_dir.xyz, input.normal));
     float3 diffuse_light = kd * amount_diffuse_light * id;
 
-    float ks = 1.0;
+    float ks = 0.3;
     float is = float3(1.0, 1.0, 1.0);
     float3 reflected_light = reflect(m_light_dir, input.normal);
     float shininess = 30.0;
