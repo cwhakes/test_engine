@@ -50,7 +50,7 @@ impl Resource for Mesh {
 
         if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
 
-        let vs = shader::compile_shader_from_location("vertex_mesh_layout.hlsl", "vsmain", "vs_5_0")?;
+        let vs = shader::compile_shader(include_bytes!("vertex_mesh_layout.hlsl"), "vsmain", "vs_5_0")?;
         let vertex_buffer = device.new_vertex_buffer(&vertices, &vs)?;
         let index_buffer = device.new_index_buffer(&indices)?;
 
