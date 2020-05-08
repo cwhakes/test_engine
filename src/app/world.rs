@@ -63,7 +63,7 @@ impl World {
         let view = self.camera.get_view();
 
         let proj = Matrix4x4::perspective(
-            std::f32::consts::PI/4.0,
+            std::f32::consts::PI/2.0,
             self.screen_width / self.screen_height,
             0.01,
             100.0

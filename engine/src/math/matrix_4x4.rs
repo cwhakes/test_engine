@@ -7,6 +7,10 @@ use std::{convert, ops};
 pub struct Matrix4x4(pub [[f32; 4]; 4]);
 
 impl Matrix4x4 {
+    pub fn zero() -> Matrix4x4 {
+        Matrix4x4([[0.0; 4]; 4])
+    }
+
     pub fn identity() -> Matrix4x4 {
         Matrix4x4([
             [1.0, 0.0, 0.0, 0.0],
@@ -46,8 +50,8 @@ impl Matrix4x4 {
     }
 
     pub fn orthoganal(width: f32, height: f32, near_plane: f32, far_plane: f32) -> Matrix4x4 {
-        
-        let mut matrix = Matrix4x4::identity();
+        let mut matrix = Matrix4x4::zero();
+
         matrix.0[0][0] = 2.0 / width;
         matrix.0[1][1] = 2.0 / height;
         matrix.0[2][2] = 1.0 / ( far_plane - near_plane );
@@ -56,10 +60,10 @@ impl Matrix4x4 {
     }
 
     pub fn perspective(fov: f32, aspect: f32, znear: f32, zfar: f32) -> Matrix4x4 {
-        
         let yscale = 1.0 / (fov/2.0).tan();
         let xscale = yscale / aspect;
-        let mut matrix = Matrix4x4::identity();
+
+        let mut matrix = Matrix4x4::zero();
         matrix.0[0][0] = xscale;
         matrix.0[1][1] = yscale;
         matrix.0[2][2] = zfar / ( zfar - znear );
