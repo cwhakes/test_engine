@@ -8,14 +8,14 @@ use crate::prelude::*;
 use crate::error;
 use crate::graphics::render::{ConstantBuffer, Context, Device};
 use crate::graphics::resource::texture::Texture;
-use crate::util::{get_output, os_vec};
+use crate::util::get_output;
 
 use std::ffi::CString;
 use std::path::Path;
 use std::ptr::{null, null_mut, NonNull};
-use std::{convert, ops};
+use std::{convert, fs, ops};
 
-use winapi::um::d3dcompiler::D3DCompileFromFile;
+use winapi::um::d3dcompiler;
 use winapi::um::d3d11;
 
 /// Trait used to define new shaders.
@@ -95,8 +95,12 @@ impl<T: ShaderType> ops::Drop for Shader<T> {
 }
 
 pub fn compile_shader_from_location(location: impl AsRef<Path>, entry_point: &str, target: &str) -> error::Result<Blob> {
+    let uncompiled = fs::read(location)?;
+    compile_shader(&uncompiled, entry_point, target)
+}
+
+pub fn compile_shader(uncompiled: &[u8], entry_point: &str, target: &str) -> error::Result<Blob> {
     unsafe {
-        let location = os_vec(location.as_ref().to_str().ok_or(error::Custom("Bad Path".to_owned()))?);
         let entry_point = CString::new(entry_point)
             .map_err(|_| error::Custom("Bad Entry Point".to_owned()))?;
         let target = CString::new(target)
@@ -105,8 +109,10 @@ pub fn compile_shader_from_location(location: impl AsRef<Path>, entry_point: &st
         let mut blob = null_mut();
         let mut err_blob = null_mut();
 
-        let result = D3DCompileFromFile(
-            location.as_ptr(),
+        let result = d3dcompiler::D3DCompile(
+            uncompiled.as_ptr() as *const _,
+            uncompiled.len(),
+            null_mut(),
             null(),
             null_mut(),
             entry_point.as_ptr(),
