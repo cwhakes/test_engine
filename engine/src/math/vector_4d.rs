@@ -2,6 +2,8 @@ use super::Vector3d;
 
 use std::convert;
 
+use wavefront_obj::obj;
+
 #[repr(C)]
 #[derive(Clone, Debug, Default)]
 pub struct Vector4d {
@@ -37,6 +39,17 @@ impl convert::From<[f32; 4]> for Vector4d {
             y: array[1],
             z: array[2],
             w: array[3],
+        }
+    }
+}
+
+impl convert::From<obj::Vertex> for Vector4d {
+    fn from(vertex: obj::Vertex) -> Self {
+        Vector4d {
+            x: vertex.x as f32,
+            y: vertex.y as f32,
+            z: vertex.z as f32,
+            w: 1.0,
         }
     }
 }
