@@ -2,6 +2,7 @@ mod world;
 
 use world::{World, Environment, MeshInfo};
 
+use engine::graphics::color;
 use engine::graphics::render::shader::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, SwapChain};
 use engine::graphics::resource::{texture::Texture};
@@ -106,7 +107,7 @@ impl Application for AppWindow {
     fn on_update(&mut self) {
         let g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
-        context.clear_render_target_color(&mut self.swapchain, 0.2, 0.4, 0.8, 1.0);
+        context.clear_render_target_color(&mut self.swapchain, color::NICE_BLUE);
         let (width, height) = self.hwnd.rect();
         context.set_viewport_size(width as f32, height as f32);
         context.set_shader(&mut self.vertex_shader);
@@ -117,13 +118,11 @@ impl Application for AppWindow {
         self.environment.update(context, self.variables.environment());
 
         for (pos, mesh) in self.variables.meshes() {
-            let color;
+            let mut color = color::WHITE.into();
             let sphere = Sphere::new(pos.get_translation(), 0.5);
             if self.variables.camera.collides_with(&sphere) {
-                color = [1.0, 0.0, 0.0].into()
-            } else {
-                color = [1.0, 1.0, 1.0].into()
-            }
+                color = color::RED.into()
+            };
 
             self.position.update(context, MeshInfo {
                 position: pos.clone(),

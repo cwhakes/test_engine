@@ -4,7 +4,7 @@ use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use crate::error;
 use crate::graphics::resource::mesh::Mesh;
 use crate::graphics::resource::texture::Texture;
-use crate::graphics::vertex::Vertex;
+use crate::graphics::vertex::{Vertex, Color};
 
 use std::ptr::NonNull;
 
@@ -26,11 +26,12 @@ impl Context {
         Ok(Context(context))
     }
 
-    pub fn clear_render_target_color(&self, swapchain: &mut SwapChain, r: f32, g: f32, b: f32, a: f32) {
+    pub fn clear_render_target_color(&self, swapchain: &mut SwapChain, color: impl Into<Color>) {
+        let color = color.into();
         unsafe {
             if let Some(back_buffer) = swapchain.back_buffer_ptr() {
                 if let Some(depth_buffer) = swapchain.depth_buffer_mut() {
-                    self.as_ref().ClearRenderTargetView(back_buffer, &[r, g, b, a]);
+                    self.as_ref().ClearRenderTargetView(back_buffer, &[color.x, color.y, color.z, 1.0]);
                     self.as_ref().ClearDepthStencilView(
                         depth_buffer.as_mut(),
                         d3d11::D3D11_CLEAR_DEPTH | d3d11::D3D11_CLEAR_STENCIL,
