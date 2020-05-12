@@ -1,11 +1,39 @@
 use crate::math::Vector3d;
 
-pub trait Collision<Obj> {
-    fn collider(&self) -> Obj;
+/// Trait to define a collision type
+pub trait Collision {
+    type Collider;
+
+    fn collider(&self) -> Self::Collider;
 }
 
-pub trait CollidesWith<Obj, Oth>: Collision<Obj> {
-    fn collides_with<C: Collision<Oth>>(&self, other: &C) -> bool;
+/// Trait to import to see if a collision exists
+pub trait CollidesWith<Oth> {
+    fn collides_with(&self, other: &Oth) -> bool;
+}
+
+impl<A,  B> CollidesWith<B> for A where
+    A: Collision,
+    B: Collision,
+    <A as Collision>::Collider: CollidesWith2<<B as Collision>::Collider>,
+{
+    fn collides_with(&self, other: &B) -> bool {
+        let object = self.collider();
+        let other = other.collider();
+        object.collides_with(&other)
+    }
+}
+
+/// Trait to define on colliders. Can be replaced with CollidesWith once specialization is a thing.
+pub trait CollidesWith2<T> {
+    fn collides_with(&self, other: &T) -> bool;
+}
+
+impl CollidesWith2<Sphere> for Sphere {
+    fn collides_with(&self, other: &Sphere) -> bool {
+        let mag = (self.position.clone() - other.position.clone()).magnitude();
+        mag < (self.radius + other.radius)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -23,19 +51,11 @@ impl Sphere {
     }
 }
 
-impl Collision<Sphere> for Sphere {
-    fn collider(&self) -> Sphere {
+impl Collision for Sphere {
+    type Collider = Self;
+
+    fn collider(&self) -> Self {
         self.clone()
-    }
-}
-
-impl<T: Collision<Sphere>> CollidesWith<Sphere, Sphere> for T {
-    fn collides_with<C: Collision<Sphere>>(&self, other: &C) -> bool {
-        let obj = self.collider();
-        let oth = other.collider();
-
-        let mag = (obj.position.clone() - oth.position.clone()).magnitude();
-        mag < (obj.radius + oth.radius)
     }
 }
 

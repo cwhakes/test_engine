@@ -47,7 +47,9 @@ impl Camera {
     }
 }
 
-impl Collision<Sphere> for Camera {
+impl Collision for Camera {
+    type Collider = Sphere;
+
     fn collider(&self) -> Sphere {
         Sphere::new(
             self.matrix.get_translation(),
