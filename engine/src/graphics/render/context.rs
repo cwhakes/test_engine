@@ -22,11 +22,8 @@ impl Context {
     /// # Safety
     /// 
     /// `context` must point to a valid ID3D11DeviceContext
-    pub unsafe fn from_ptr(context: *mut d3d11::ID3D11DeviceContext) -> error::Result<Context> {
-        match NonNull::new(context) {
-            Some(inner) => Ok(Context(inner)),
-            None => Err(null_ptr_err!()),
-        }
+    pub unsafe fn from_nonnull(context: NonNull<d3d11::ID3D11DeviceContext>) -> error::Result<Context> {
+        Ok(Context(context))
     }
 
     pub fn clear_render_target_color(&self, swapchain: &mut SwapChain, r: f32, g: f32, b: f32, a: f32) {

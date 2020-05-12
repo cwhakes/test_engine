@@ -17,12 +17,23 @@ pub fn os_vec(text: &str) -> Vec<u16> {
         .collect()
 }
 
-pub fn get_output<T, F>(function: F) -> error::Result<NonNull<T>> where
-    F: FnOnce(&mut *mut T) -> winnt::HRESULT
+pub fn get_output<F, A>(function: F) -> error::Result<NonNull<A>> where
+    F: FnOnce(&mut *mut A) -> winnt::HRESULT
 {
     let mut ptr = ptr::null_mut();
     function(&mut ptr).result()?;
     NonNull::new(ptr).ok_or(null_ptr_err!())
+}
+
+pub fn get_output2<F, A, B>(function: F) -> error::Result<(NonNull<A>, NonNull<B>)> where
+    F: FnOnce(&mut *mut A, &mut *mut B) -> winnt::HRESULT
+{
+    let mut ptr_a = ptr::null_mut();
+    let mut ptr_b = ptr::null_mut();
+    function(&mut ptr_a, &mut ptr_b).result()?;
+    let a = NonNull::new(ptr_a).ok_or(null_ptr_err!())?;
+    let b = NonNull::new(ptr_b).ok_or(null_ptr_err!())?;
+    Ok((a, b))
 }
 
 /// A wrapper for the winapi function of the same name, used through the prelude
@@ -33,9 +44,9 @@ pub trait QueryInterface {
 impl QueryInterface for IUnknown {
     fn query_interface<I: Interface>(&self) -> error::Result<NonNull<I>> {
         unsafe {
-            let mut output = ptr::null_mut();
-            self.QueryInterface(&I::uuidof(), &mut output).result()?;
-            NonNull::new(output as *mut I).ok_or(null_ptr_err!())
+            get_output(|ptr| {
+                self.QueryInterface(&I::uuidof(), ptr)
+            }).map(NonNull::cast::<I>)
         }
     }
 }
@@ -48,9 +59,9 @@ pub trait GetParent {
 impl GetParent for IDXGIObject {
     fn get_parent<I: Interface>(&self) -> error::Result<NonNull<I>> {
         unsafe {
-            let mut output = ptr::null_mut();
-            self.GetParent(&I::uuidof(), &mut output).result()?;
-            NonNull::new(output as *mut I).ok_or(null_ptr_err!())
+            get_output(|ptr| {
+                self.GetParent(&I::uuidof(), ptr)
+            }).map(NonNull::cast::<I>)
         }
     }
 }

@@ -4,16 +4,17 @@ use crate::error;
 use crate::vertex::Vertex;
 use crate::graphics::render::shader::{Blob, Shader, ShaderType};
 use crate::graphics::render::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
+use crate::util::get_output;
 use crate::window::Hwnd;
 
 use std::path::Path;
-use std::ptr::{self, NonNull};
+use std::ptr::NonNull;
 
 use winapi::um::d3d11sdklayers::{ID3D11Debug, D3D11_RLDO_DETAIL};
 use winapi::shared::dxgi;
-use winapi::um::d3d11::{ID3D11Device};
+use winapi::um::d3d11;
 
-pub struct Device(NonNull<ID3D11Device>);
+pub struct Device(NonNull<d3d11::ID3D11Device>);
 
 //TODO FIXME verify we can do this
 unsafe impl Send for Device {}
@@ -23,11 +24,8 @@ impl Device {
     /// # Safety
     /// 
     /// `device` must point to a valid ID3D11Device
-    pub unsafe fn from_ptr(device: *mut ID3D11Device) -> error::Result<Device> {
-        match NonNull::new(device) {
-            Some(inner) => Ok(Device(inner)),
-            None => Err(null_ptr_err!()),
-        }
+    pub unsafe fn from_nonnull(device: NonNull<d3d11::ID3D11Device>) -> error::Result<Device> {
+        Ok(Device(device))
     }
 
     pub fn new_swapchain(&mut self, hwnd: &Hwnd) -> error::Result<SwapChain> {
@@ -37,11 +35,12 @@ impl Device {
             let dxgi_factory = dxgi_adapter.as_ref().get_parent::<dxgi::IDXGIFactory>()?;
             
             let mut desc = SwapChain::get_desc(hwnd);
-            let mut swapchain_ptr = ptr::null_mut();
 
-            dxgi_factory.as_ref().CreateSwapChain(&**self.as_mut() as *const _ as *mut _, &mut desc, &mut swapchain_ptr).result()?;
+            let swapchain = get_output(|ptr| {
+                dxgi_factory.as_ref().CreateSwapChain(&**self.as_mut() as *const _ as *mut _, &mut desc, ptr)
+            })?;
 
-            SwapChain::new(swapchain_ptr, self)
+            SwapChain::new(swapchain, self)
         }
     }
 
@@ -70,14 +69,14 @@ impl Device {
     }
 }
 
-impl AsRef<ID3D11Device> for Device {
-    fn as_ref(&self) -> &ID3D11Device {
+impl AsRef<d3d11::ID3D11Device> for Device {
+    fn as_ref(&self) -> &d3d11::ID3D11Device {
         unsafe { self.0.as_ref() }
     }
 }
 
-impl AsMut<ID3D11Device> for Device {
-    fn as_mut(&mut self) -> &mut ID3D11Device {
+impl AsMut<d3d11::ID3D11Device> for Device {
+    fn as_mut(&mut self) -> &mut d3d11::ID3D11Device {
         unsafe { self.0.as_mut() }
     }
 }

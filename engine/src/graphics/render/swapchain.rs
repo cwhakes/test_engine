@@ -46,9 +46,8 @@ impl SwapChain {
     /// # Safety
     /// 
     /// `swapchain` must point to a valid IDXGISwapChain
-    pub unsafe fn new(swapchain: *mut IDXGISwapChain, device: &Device) -> error::Result<SwapChain> {
-        let inner = NonNull::new(swapchain).ok_or(null_ptr_err!())?;
-
+    pub unsafe fn new(swapchain: NonNull<IDXGISwapChain>, device: &Device) -> error::Result<SwapChain> {
+        let inner = swapchain;
         let mut swapchain = SwapChain { inner, back_buffer: None, depth_buffer: None };
         let back_buffer = BackBuffer::new(&swapchain, device)?;
         swapchain.back_buffer = Some(back_buffer);

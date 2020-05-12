@@ -13,9 +13,8 @@ pub use index_buffer::IndexBuffer;
 pub use swapchain::SwapChain;
 pub use vertex_buffer::VertexBuffer;
 
-use crate::prelude::*;
-
 use crate::error;
+use crate::util::get_output2;
 
 use std::ptr::null_mut;
 use winapi::um::{d3d11, d3dcommon};
@@ -39,36 +38,36 @@ const FEATURE_LEVELS: [d3dcommon::D3D_FEATURE_LEVEL; 1] = [
 impl Render {
     pub fn new() -> error::Result<Render> {
         unsafe {
-            let mut device = null_mut();
             let mut feature_level = Default::default();
-            let mut context = null_mut();
             //Default to error
             let mut result = Err(error::Custom("No driver types specified".to_string()));
 
             for &driver_type in DRIVER_TYPES.iter() {
-                result = d3d11::D3D11CreateDevice(
-                    null_mut(),
-                    driver_type,
-                    null_mut(),
-                    d3d11::D3D11_CREATE_DEVICE_DEBUG,
-                    FEATURE_LEVELS.as_ptr(),
-                    FEATURE_LEVELS.len() as u32,
-                    d3d11::D3D11_SDK_VERSION,
-                    &mut device,
-                    &mut feature_level,
-                    &mut context,
-                ).result();
+                result = get_output2(|ptr1, ptr2| {
+                    d3d11::D3D11CreateDevice(
+                        null_mut(),
+                        driver_type,
+                        null_mut(),
+                        d3d11::D3D11_CREATE_DEVICE_DEBUG,
+                        FEATURE_LEVELS.as_ptr(),
+                        FEATURE_LEVELS.len() as u32,
+                        d3d11::D3D11_SDK_VERSION,
+                        ptr1,
+                        &mut feature_level,
+                        ptr2,
+                    )
+                });
 
                 if result.is_ok() {
                     break;
                 }
             }
-            result?;
+            let (device, context) = result?;
 
             Ok(Render {
-                device: Device::from_ptr(device)?,
+                device: Device::from_nonnull(device)?,
                 _feature_level: feature_level,
-                context: Context::from_ptr(context)?,
+                context: Context::from_nonnull(context)?,
             })
         }
     }
