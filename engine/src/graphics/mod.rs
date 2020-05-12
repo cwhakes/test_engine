@@ -1,5 +1,6 @@
 pub mod render;
 pub mod resource;
+pub mod vertex;
 
 use render::Render;
 use resource::mesh::{Mesh, MeshManager};

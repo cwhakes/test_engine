@@ -4,7 +4,7 @@ use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use crate::error;
 use crate::graphics::resource::mesh::Mesh;
 use crate::graphics::resource::texture::Texture;
-use crate::vertex::Vertex;
+use crate::graphics::vertex::Vertex;
 
 use std::ptr::NonNull;
 

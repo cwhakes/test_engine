@@ -1,7 +1,7 @@
 use crate::graphics::render::Device;
+use crate::graphics::vertex::{Vertex, SemanticIndexFix};
 use crate::error;
 use crate::util::get_output;
-use crate::vertex::{Vertex, SemanticIndexFix};
 
 use std::ptr::NonNull;
 

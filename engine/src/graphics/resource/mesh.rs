@@ -2,8 +2,8 @@ use super::{Resource, ResourceManager};
 
 use crate::error;
 use crate::graphics::render::{Device, IndexBuffer, shader, VertexBuffer};
+use crate::graphics::vertex;
 use crate::math::Vector3d;
-use crate::vertex;
 
 use std::fs::File;
 use std::io::Read;

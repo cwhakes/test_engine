@@ -17,8 +17,8 @@ pub fn derive_vertex(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
     let chain = desc_chain(&input.data);
 
     let expanded = quote! {
-        impl #impl_generics engine::vertex::Vertex for #name #ty_generics #where_clause {
-            fn desc(offset: usize) -> Box<dyn Iterator<Item = engine::vertex::D3D11_INPUT_ELEMENT_DESC>> {
+        impl #impl_generics engine::graphics::vertex::Vertex for #name #ty_generics #where_clause {
+            fn desc(offset: usize) -> Box<dyn Iterator<Item = engine::graphics::vertex::D3D11_INPUT_ELEMENT_DESC>> {
                 #chain
             }
         }
@@ -30,7 +30,7 @@ pub fn derive_vertex(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 fn add_trait_bounds(mut generics: Generics) -> Generics {
     for param in &mut generics.params {
         if let GenericParam::Type(ref mut type_param) = *param {
-            type_param.bounds.push(parse_quote!(engine::vertex::Vertex));
+            type_param.bounds.push(parse_quote!(engine::graphics::vertex::Vertex));
         }
     }
     generics

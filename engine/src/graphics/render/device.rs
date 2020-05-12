@@ -1,9 +1,9 @@
 use crate::prelude::*;
 
 use crate::error;
-use crate::vertex::Vertex;
 use crate::graphics::render::shader::{Blob, Shader, ShaderType};
 use crate::graphics::render::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
+use crate::graphics::vertex::Vertex;
 use crate::util::get_output;
 use crate::window::Hwnd;
 
