@@ -1,6 +1,6 @@
 mod world;
 
-use world::{World, Environment};
+use world::{World, Environment, MeshInfo};
 
 use engine::graphics::render::shader::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, SwapChain};
@@ -8,6 +8,7 @@ use engine::graphics::resource::{texture::Texture};
 use engine::graphics::GRAPHICS;
 use engine::input::{self, INPUT};
 use engine::math::{Matrix4x4, Point};
+use engine::physics::collision::{Collision, Sphere};
 use engine::window::{Application, Hwnd, Window};
 
 use std::sync::Mutex;
@@ -23,7 +24,7 @@ pub struct AppWindow {
     vertex_shader: Shader<shader::Vertex>,
     pixel_shader: Shader<shader::Pixel>,
     environment: ConstantBuffer<Environment>,
-    position: ConstantBuffer<Matrix4x4>,
+    position: ConstantBuffer<MeshInfo>,
     wood_tex: Texture,
     #[listener]
     variables: World,
@@ -60,7 +61,7 @@ impl Application for AppWindow {
             .unwrap();
         let position = render
             .device()
-            .new_constant_buffer(1, Matrix4x4::identity())
+            .new_constant_buffer(1, MeshInfo::default())
             .unwrap();
         let wood_tex = graphics
             .get_texture_from_file("assets\\Textures\\brick.png")
@@ -116,7 +117,18 @@ impl Application for AppWindow {
         self.environment.update(context, self.variables.environment());
 
         for (pos, mesh) in self.variables.meshes() {
-            self.position.update(context, pos.clone());
+            let color;
+            let sphere = Sphere::new(pos.get_translation(), 0.5);
+            if self.variables.camera.collides_with(&sphere) {
+                color = [1.0, 0.0, 0.0].into()
+            } else {
+                color = [1.0, 1.0, 1.0].into()
+            }
+
+            self.position.update(context, MeshInfo {
+                position: pos.clone(),
+                color,
+            });
             context.draw_mesh(mesh);
         }
 

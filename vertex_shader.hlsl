@@ -24,6 +24,7 @@ cbuffer constant: register(b0)
 cbuffer constant1: register(b1)
 {
     row_major float4x4 m_world;
+    float3 color;
 };
 
 VS_OUTPUT vsmain( VS_INPUT input )

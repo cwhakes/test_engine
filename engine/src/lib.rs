@@ -12,6 +12,7 @@ pub mod components;
 pub mod graphics;
 pub mod input;
 pub mod math;
+pub mod physics;
 pub mod time;
 pub mod util;
 pub mod window;

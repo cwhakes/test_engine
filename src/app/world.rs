@@ -1,7 +1,7 @@
 use engine::components::Camera;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
-use engine::math::{Matrix4x4, Point, Vector4d};
+use engine::math::{Matrix4x4, Point, Vector3d, Vector4d};
 use engine::time::DeltaT;
 
 static SPEED: f32 = 0.5;
@@ -30,6 +30,12 @@ pub struct Environment {
     proj: Matrix4x4,
     light_dir: Vector4d,
     camera_pos: Vector4d,
+}
+
+#[derive(Default, Debug)]
+pub struct MeshInfo {
+    pub position: Matrix4x4,
+    pub color: Vector3d,
 }
 
 impl World {
