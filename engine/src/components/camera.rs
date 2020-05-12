@@ -48,11 +48,10 @@ impl Camera {
 }
 
 impl Collision<Sphere> for Camera {
-    fn collides_with(&self, other: &Sphere) -> bool {
-        let sphere = Sphere::new(
+    fn collider(&self) -> Sphere {
+        Sphere::new(
             self.matrix.get_translation(),
             Self::COLLISION_RADIUS,
-        );
-        sphere.collides_with(other)
+        )
     }
 }
