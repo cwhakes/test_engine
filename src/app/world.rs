@@ -12,11 +12,11 @@ pub struct World {
     screen_height: f32,
 
     delta_t: DeltaT,
-    pub rot_x: f32,
-    pub rot_y: f32,
+    //pub rot_x: f32,
+    //pub rot_y: f32,
     pub scale_cube: f32,
-    pub forward: f32,
-    pub rightward: f32,
+    //pub forward: f32,
+    //pub rightward: f32,
     world_matrix: Matrix4x4,
     pub camera: Camera,
     pub light_source: Matrix4x4,
@@ -57,16 +57,18 @@ impl World {
         
         self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
 
-        self.camera
-            .set_rotation(self.rot_x, self.rot_y)
-            .move_forward(SPEED * self.forward * self.delta_t.get())
-            .move_rightward(SPEED * self.rightward * self.delta_t.get());
+        // self.camera
+        //     .set_rotation(self.rot_x, self.rot_y)
+        //     .move_forward(SPEED * self.forward * self.delta_t.get())
+        //     .move_rightward(SPEED * self.rightward * self.delta_t.get());
+
+        self.camera.update(self.delta_t.get());
 
     }
 
     pub fn environment(&self) -> Environment {
         let mut world = self.world_matrix.clone();
-        world *= Matrix4x4::scaling([self.scale_cube, self.scale_cube, self.scale_cube]);
+        world *= Matrix4x4::scaling(self.scale_cube);
 
         let view = self.camera.get_view();
 
@@ -78,7 +80,7 @@ impl World {
         );
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
-        let camera_pos = self.camera.get_position();
+        let camera_pos = self.camera.get_location();
 
         Environment {
             view,
@@ -110,22 +112,21 @@ impl Listener for World {
     fn on_key_down(&mut self, key: usize) {
         let key = key as u8;
         match key {
-            b'W' => self.forward = 1.0,
-            b'S' => self.forward = -1.0,
-            b'A' => self.rightward = -1.0,
-            b'D' => self.rightward = 1.0,
+            b'W' => {self.camera.moving_forward(SPEED);}
+            b'S' => {self.camera.moving_forward(-SPEED);}
+            b'A' => {self.camera.moving_rightward(-SPEED);}
+            b'D' => {self.camera.moving_rightward(SPEED);}
             _ => {}
         }
     }
     fn on_key_up(&mut self, _key: usize) {
-        self.forward = 0.0;
-        self.rightward = 0.0;
+        self.camera.reset_velocity();
     }
     fn on_mouse_move(&mut self, pos: Point) {
         let (width, height) = (self.screen_width as i32, self.screen_height as i32);
 
-        self.rot_x += (pos.y - height / 2) as f32 * 0.002;
-        self.rot_y += (pos.x - width / 2) as f32 * 0.002;
+        self.camera.tilt( (pos.y - height / 2) as f32 * 0.002);
+        self.camera.pan( (pos.x - width / 2) as f32 * 0.002);
 
         input::set_cursor_position((width / 2, height / 2));
     }

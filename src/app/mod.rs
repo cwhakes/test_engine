@@ -80,10 +80,10 @@ impl Application for AppWindow {
             Matrix4x4::translation([1.0, 0.0, 0.0]),
             teapot.clone(),
         );
-        world.add_mesh(
-            Matrix4x4::translation([-1.0, 0.0, 0.0]),
-            teapot.clone(),
-        );
+        // world.add_mesh(
+        //     Matrix4x4::translation([-1.0, 0.0, 0.0]),
+        //     teapot.clone(),
+        // );
 
         let mut app_window = AppWindow {
             hwnd,

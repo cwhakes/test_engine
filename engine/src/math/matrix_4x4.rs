@@ -40,7 +40,15 @@ impl Matrix4x4 {
         self.0[3][2] += vec.z;
     }
 
-    pub fn scaling(vec: impl Into<Vector3d>) -> Matrix4x4 {
+    pub fn scaling(scale: f32) -> Matrix4x4 {
+        let mut matrix = Matrix4x4::identity();
+        matrix.0[0][0] = scale;
+        matrix.0[1][1] = scale;
+        matrix.0[2][2] = scale;
+        matrix
+    }
+
+    pub fn scaling3(vec: impl Into<Vector3d>) -> Matrix4x4 {
         let mut matrix = Matrix4x4::identity();
         let vec = vec.into();
         matrix.0[0][0] = vec.x;
@@ -97,6 +105,25 @@ impl Matrix4x4 {
         matrix.0[1][0] = -angle.sin();
         matrix.0[1][1] = angle.cos();
         matrix
+    }
+
+    /// https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+    pub fn rotation_vec(angle: impl Into<Vector3d>) -> Matrix4x4 {
+        let angle = angle.into();
+        let mag = angle.magnitude();
+
+        let angle = if mag > 0.0 {
+            angle.normalize().to_4d(0.0)
+        } else {
+            [0.0, 0.0, 0.0, 0.0].into()
+        };
+
+        let cross = angle.cross_matrix();
+        let outer = angle.clone().outer(angle.clone());
+
+        Matrix4x4::scaling(mag.cos()) +
+            cross * (mag.sin()) +
+            outer * (1.0 - mag.cos())
     }
 
     pub fn inverse(&self) -> Option<Matrix4x4> {
@@ -189,6 +216,44 @@ impl convert::From<[[f32; 4]; 4]> for Matrix4x4 {
 impl Default for Matrix4x4 {
     fn default() -> Self {
         Matrix4x4::identity()
+    }
+}
+
+impl ops::Add<Matrix4x4> for Matrix4x4 {
+    type Output = Matrix4x4;
+
+    fn add(mut self, rhs: Matrix4x4) -> Self::Output {
+        self += rhs;
+        self
+    }
+}
+
+impl ops::AddAssign<Matrix4x4> for Matrix4x4 {
+    fn add_assign(&mut self, rhs: Matrix4x4) {
+        for i in 0..4 {
+            for j in 0..4 {
+                self.0[i][j] += rhs.0[i][j];
+            }
+        }
+    }
+}
+
+impl ops::Mul<f32> for Matrix4x4 {
+    type Output = Matrix4x4;
+
+    fn mul(mut self, rhs: f32) -> Self::Output {
+        self *= rhs;
+        self
+    }
+}
+
+impl ops::MulAssign<f32> for Matrix4x4 {
+    fn mul_assign(&mut self, rhs: f32) {
+        for i in 0..4 {
+            for j in 0..4 {
+                self.0[i][j] *= rhs;
+            }
+        }
     }
 }
 

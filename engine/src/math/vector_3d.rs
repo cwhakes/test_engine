@@ -45,13 +45,11 @@ impl Vector3d {
         }
     }
 
-    pub fn dot(&self, rhs: impl Into<Vector3d>) -> Vector3d {
+    pub fn dot(&self, rhs: impl Into<Vector3d>) -> f32 {
         let rhs = rhs.into();
-        Vector3d {
-            x: self.x * rhs.x,
-            y: self.y * rhs.y,
-            z: self.z * rhs.z,
-        }
+        self.x * rhs.x +
+            self.y * rhs.y +
+            self.z * rhs.z
     }
 
     pub fn cross(&self, rhs: impl Into<Vector3d>) -> Vector3d {
@@ -87,26 +85,36 @@ impl convert::From<obj::Vertex> for Vector3d {
 impl<T: Into<Vector3d>> ops::Add<T> for Vector3d {
     type Output = Vector3d;
 
-    fn add(self, rhs: T) -> Self::Output {
+    fn add(mut self, rhs: T) -> Self::Output {
+        self += rhs;
+        self
+    }
+}
+
+impl<T: Into<Vector3d>> ops::AddAssign<T> for Vector3d {
+    fn add_assign(&mut self, rhs: T) {
         let rhs = rhs.into();
-        Vector3d {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-            z: self.z + rhs.z,
-        }
+        self.x += rhs.x;
+        self.y += rhs.y;
+        self.z += rhs.z;
     }
 }
 
 impl<T: Into<Vector3d>> ops::Sub<T> for Vector3d {
     type Output = Vector3d;
 
-    fn sub(self, rhs: T) -> Self::Output {
+    fn sub(mut self, rhs: T) -> Self::Output {
+        self -= rhs;
+        self
+    }
+}
+
+impl<T: Into<Vector3d>> ops::SubAssign<T> for Vector3d {
+    fn sub_assign(&mut self, rhs: T) {
         let rhs = rhs.into();
-        Vector3d {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-            z: self.z - rhs.z,
-        }
+        self.x -= rhs.x;
+        self.y -= rhs.y;
+        self.z -= rhs.z;
     }
 }
 

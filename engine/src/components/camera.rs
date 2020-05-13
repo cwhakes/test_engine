@@ -1,48 +1,53 @@
 use crate::math::{Matrix4x4, Vector4d};
 use crate::physics::collision::{Collision, Sphere};
+use crate::physics::position::Position;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Camera {
-    matrix: Matrix4x4,
+    position: Position,
 }
 
 impl Camera {
     const COLLISION_RADIUS: f32 = 0.1;
 
-    pub fn get_position(&self) -> Vector4d {
-        self.matrix.get_translation().to_4d(1.0)
+    pub fn update(&mut self, delta_t: f32) {
+        self.position.update(delta_t);
+    }
+
+    pub fn get_location(&self) -> Vector4d {
+        self.position.get_location().to_4d(1.0)
     }
 
     pub fn get_view(&self) -> Matrix4x4 {
-        self.matrix.inverse().unwrap()
+        self.position.get_matrix().inverse().unwrap()
     }
 
-    pub fn set_rotation(&mut self, rot_x: f32, rot_y: f32) -> &mut Self {
+    pub fn move_forward(&mut self, distance: f32) {
+        self.position.move_forward(distance);
+    }
 
-        let mut world_cam = Matrix4x4::identity();
-        world_cam *= Matrix4x4::rotation_x(rot_x);
-        world_cam *= Matrix4x4::rotation_y(rot_y);
-        world_cam.set_translation(self.matrix.get_translation());
-        self.matrix = world_cam;
-
+    pub fn pan(&mut self, delta_angle: f32) -> &mut Self {
+        self.position.pan(delta_angle);
         self
     }
 
-    pub fn move_forward(&mut self, distance: f32) -> &mut Self {
-
-        let new_pos = self.matrix.get_translation()
-            + self.matrix.get_direction_z() * distance;
-
-        self.matrix.set_translation(new_pos);
+    pub fn tilt(&mut self, delta_angle: f32) -> &mut Self {
+        self.position.tilt(delta_angle);
         self
     }
 
-    pub fn move_rightward(&mut self, distance: f32) -> &mut Self {
+    pub fn moving_forward(&mut self, velocity: f32) -> &mut Self {
+        self.position.set_forward_velocity(velocity);
+        self
+    }
 
-        let new_pos = self.matrix.get_translation()
-            + self.matrix.get_direction_x() * distance;
+    pub fn moving_rightward(&mut self, velocity: f32) -> &mut Self {
+        self.position.set_rightward_velocity(velocity);
+        self
+    }
 
-        self.matrix.set_translation(new_pos);
+    pub fn reset_velocity(&mut self) -> &mut Self {
+        self.position.set_velocity([0.0, 0.0, 0.0]);
         self
     }
 }
@@ -52,7 +57,7 @@ impl Collision for Camera {
 
     fn collider(&self) -> Sphere {
         Sphere::new(
-            self.matrix.get_translation(),
+            self.position.get_location(),
             Self::COLLISION_RADIUS,
         )
     }
