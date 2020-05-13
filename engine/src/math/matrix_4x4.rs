@@ -126,6 +126,14 @@ impl Matrix4x4 {
             outer * (1.0 - mag.cos())
     }
 
+    pub fn rotate_in_place(&mut self, rotation_matrix: Matrix4x4) -> &mut Self {
+        let translation = self.get_translation();
+        self.set_translation([0.0, 0.0, 0.0]);
+        *self *= rotation_matrix;
+        self.set_translation(translation);
+        self
+    }
+
     pub fn inverse(&self) -> Option<Matrix4x4> {
         let mut out = Matrix4x4::default();
         let mut vec = <[Vector4d; 3]>::default();

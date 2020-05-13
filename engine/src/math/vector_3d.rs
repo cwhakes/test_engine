@@ -13,6 +13,10 @@ pub struct Vector3d {
 }
 
 impl Vector3d {
+    pub const RIGHT: Vector3d = Vector3d { x: 1.0, y: 0.0, z: 0.0 };
+    pub const UP: Vector3d = Vector3d { x: 0.0, y: 0.0, z: 1.0 };
+    pub const FORWARD: Vector3d = Vector3d { x: 0.0, y: 0.0, z: 1.0 };
+
     pub fn new(x: f32, y: f32, z: f32) -> Vector3d {
         Vector3d { x, y, z }
     }
@@ -34,6 +38,19 @@ impl Vector3d {
             z: self.z,
             w: w,
         }
+    }
+
+    pub fn set_component(&mut self, new_component: impl Into<Vector3d>) {
+        let new_component = new_component.into();
+        let new_mag = new_component.magnitude();
+        if new_mag <= 0.0 {
+            return;
+        };
+
+        let direction = new_component.clone().normalize();
+        let old_mag = self.clone().dot(direction.clone());
+        *self -= direction * old_mag;
+        *self += new_component;
     }
 
     pub fn lerp(&self, other: impl Into<Vector3d>, delta: f32) -> Vector3d  {
