@@ -1,3 +1,7 @@
+mod partial_max_min;
+
+pub use partial_max_min::PartialMaxMin;
+
 use crate::error::{self, HResultToResult};
 
 use std::ffi::OsStr;

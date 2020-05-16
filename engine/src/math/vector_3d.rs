@@ -5,7 +5,7 @@ use std::{convert, ops};
 use wavefront_obj::obj;
 
 #[repr(C)]
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vector3d {
     pub x: f32,
     pub y: f32,
@@ -13,6 +13,7 @@ pub struct Vector3d {
 }
 
 impl Vector3d {
+    pub const ORIGIN: Vector3d = Vector3d { x: 0.0, y: 0.0, z: 0.0 };
     pub const RIGHT: Vector3d = Vector3d { x: 1.0, y: 0.0, z: 0.0 };
     pub const UP: Vector3d = Vector3d { x: 0.0, y: 0.0, z: 1.0 };
     pub const FORWARD: Vector3d = Vector3d { x: 0.0, y: 0.0, z: 1.0 };
@@ -21,9 +22,12 @@ impl Vector3d {
         Vector3d { x, y, z }
     }
 
-    pub fn magnitude(&self) -> f32 {
-        let mag2 = self.x.powi(2) + self.y.powi(2) + self.z.powi(2);
-        mag2.sqrt()
+    pub fn magnitude(self) -> f32 {
+        self.magnitude_squared().sqrt()
+    }
+
+    pub fn magnitude_squared(self) -> f32 {
+        self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
     }
 
     pub fn normalize(self) -> Vector3d {
@@ -53,7 +57,7 @@ impl Vector3d {
         *self += new_component;
     }
 
-    pub fn lerp(&self, other: impl Into<Vector3d>, delta: f32) -> Vector3d  {
+    pub fn lerp(self, other: impl Into<Vector3d>, delta: f32) -> Vector3d  {
         let other = other.into();
         Vector3d {
             x: self.x * (1.0 - delta) + other.x * delta,
@@ -62,20 +66,71 @@ impl Vector3d {
         }
     }
 
-    pub fn dot(&self, rhs: impl Into<Vector3d>) -> f32 {
+    pub fn dot(self, rhs: impl Into<Vector3d>) -> f32 {
         let rhs = rhs.into();
         self.x * rhs.x +
             self.y * rhs.y +
             self.z * rhs.z
     }
 
-    pub fn cross(&self, rhs: impl Into<Vector3d>) -> Vector3d {
+    pub fn cross(self, rhs: impl Into<Vector3d>) -> Vector3d {
         let rhs = rhs.into();
         Vector3d {
             x: self.y * rhs.z - self.z * rhs.y,
             y: self.z * rhs.x - self.x * rhs.z,
             z: self.x * rhs.y - self.y * rhs.x,
         }
+    }
+
+    pub fn distance_to_line(self, line: (Vector3d, Vector3d)) -> f32 {
+        let line_length = (line.1 - line.0).magnitude();
+        assert!(line_length > 0.0);
+        let ray0 = line.0 - self;
+        let ray1 = line.1 - self;
+        let area = ray0.cross(ray1).magnitude();
+        area / line_length
+    }
+
+    /// Returns fraction of the distance between two points closest to self.
+    /// Is outside the segment if less than 0 or greater than 1.
+    /// Use with `lerp()` to find a point.
+    pub fn projection_along_line(self, line: (Vector3d, Vector3d)) -> f32 {
+        let len2 = (line.0 - line.1).magnitude_squared();
+        (self - line.0).dot(line.1 - line.0) / len2
+    }
+
+    pub fn closest_point_on_plane(self, plane: (Vector3d, Vector3d, Vector3d)) -> Vector3d {
+        let normal = (plane.1 - plane.0).cross(plane.2 - plane.0).normalize();
+        let distance = (plane.0 - self).dot(normal.clone());
+        let projection = (plane.0 - self) - (normal * distance);
+        plane.0 + projection
+    }
+
+    pub fn projection_along_plane(self, plane: (Vector3d, Vector3d, Vector3d)) -> (f32, f32) {
+        // Get location of right triangle base along 0>1 vector
+        let base_u = (plane.2).projection_along_line((plane.0.clone(), plane.1.clone()));
+        let base = plane.0.lerp(plane.1, base_u);
+        // Projection along a line perependicular to 0>1 vector and equal to the height of the triangle.
+        // This is equal to the independent projection along 0>2
+        let v = self.projection_along_line((base, plane.2));
+        // Remove the independent projection
+        let adjusted_point = self - ((plane.2 - plane.0) * v);
+        // Find the second projection
+        let u = adjusted_point.projection_along_line((plane.0, plane.1));
+        (u, v)
+    }
+
+    pub fn contained_by(&self, tetrahedron: (Vector3d, Vector3d, Vector3d, Vector3d)) -> bool {
+        let t = tetrahedron;
+        let p0 = (t.1 - t.0).cross(t.2 - t.0);
+        let p1 = (t.2 - t.0).cross(t.3 - t.0);
+        let p2 = (t.3 - t.0).cross(t.1 - t.0);
+        let p3 = (t.3 - t.1).cross(t.2 - t.1);
+
+        0.0 <= (*self - t.0).dot(p0) &&
+        0.0 <= (*self - t.0).dot(p1) &&
+        0.0 <= (*self - t.0).dot(p2) &&
+        0.0 <= (*self - t.1).dot(p3)
     }
 }
 
@@ -156,5 +211,44 @@ impl ops::Div<f32> for Vector3d {
             y: self.y / rhs,
             z: self.z / rhs,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use rand::{self, prelude::*};
+
+    #[test]
+    fn closest_points() {
+        let mut rng = rand::thread_rng();
+
+        let origin = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
+        let p1 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
+        let p2 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
+
+        let proj = origin.projection_along_line((p1.clone(), p2.clone()));
+        let point = p1.lerp(p2.clone(), proj);
+        let distance = (point - origin).magnitude();
+        
+        let same_distance = origin.distance_to_line((p1.clone(), p2.clone()));
+
+        assert!((distance - same_distance).abs() < 0.001);
+    }
+
+    #[test]
+    fn closest_points_uv() {
+        let mut rng = rand::thread_rng();
+
+        let origin = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
+        let p1 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
+        let p2 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
+        let p3 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
+
+        let (u0, v0) = origin.projection_along_plane((p1, p2, p3));
+        let (v1, u1) = origin.projection_along_plane((p1, p3, p2));
+
+        assert!((u1 - u0).abs() < 0.001);
+        assert!((v1 - v0).abs() < 0.001);
     }
 }

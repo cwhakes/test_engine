@@ -75,8 +75,7 @@ impl Position {
     }
 
     pub fn tilt(&mut self, angle: f32) -> &mut Self {
-        let rigtward_direction = self.position.get_direction_x().normalize();
-        let delta_angle = rigtward_direction * angle;
+        let delta_angle = self.right() * angle;
         
         self.position.rotate_in_place(Matrix4x4::rotation_vec(delta_angle));
 

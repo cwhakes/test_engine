@@ -287,7 +287,7 @@ mod test {
 
         assert_eq!(
             Matrix4x4::identity(),
-            Matrix4x4::identity().invert().unwrap(),
+            Matrix4x4::identity().inverse().unwrap(),
         );
     }
 }
