@@ -120,17 +120,30 @@ impl Vector3d {
         (u, v)
     }
 
-    pub fn contained_by(&self, tetrahedron: (Vector3d, Vector3d, Vector3d, Vector3d)) -> bool {
+    pub fn on_line(&self, line: (Vector3d, Vector3d)) -> bool {
+        0.005 > (*self - line.0).cross(line.1 - line.0).magnitude_squared() &&
+        (*self - line.0).magnitude_squared() <= (line.1 - line.0).magnitude_squared()
+    }
+
+    pub fn on_plane(&self, plane: (Vector3d, Vector3d, Vector3d)) -> bool {
+        let (u, v) = self.projection_along_plane(plane.clone());
+        0.0 <= u && u <= 1.0 &&
+        0.0 <= v && v <= 1.0 &&
+        u + v <= 1.0 &&
+        0.005 > (plane.1 - plane.0).cross(plane.2 - plane.0).dot(*self - plane.0).abs()
+    }
+
+    pub fn contained_by_tet(&self, tetrahedron: (Vector3d, Vector3d, Vector3d, Vector3d)) -> bool {
         let t = tetrahedron;
         let p0 = (t.1 - t.0).cross(t.2 - t.0);
         let p1 = (t.2 - t.0).cross(t.3 - t.0);
         let p2 = (t.3 - t.0).cross(t.1 - t.0);
         let p3 = (t.3 - t.1).cross(t.2 - t.1);
 
-        0.0 <= (*self - t.0).dot(p0) &&
-        0.0 <= (*self - t.0).dot(p1) &&
-        0.0 <= (*self - t.0).dot(p2) &&
-        0.0 <= (*self - t.1).dot(p3)
+        let sign = (*self - t.0).dot(p0).signum();
+        sign == (*self - t.0).dot(p1).signum() &&
+        sign == (*self - t.0).dot(p2).signum() &&
+        sign == (*self - t.1).dot(p3).signum()
     }
 }
 
@@ -187,6 +200,18 @@ impl<T: Into<Vector3d>> ops::SubAssign<T> for Vector3d {
         self.x -= rhs.x;
         self.y -= rhs.y;
         self.z -= rhs.z;
+    }
+}
+
+impl ops::Neg for Vector3d {
+    type Output = Self;
+
+    fn neg(self) -> Self {
+        Vector3d {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
     }
 }
 
@@ -250,5 +275,17 @@ mod test {
 
         assert!((u1 - u0).abs() < 0.001);
         assert!((v1 - v0).abs() < 0.001);
+    }
+
+    #[test]
+    fn contains_origin() {
+        let origin = Vector3d::ORIGIN;
+        let p1 = [1.0, 0.0, 0.0].into();
+        let p2 = [0.0, 1.0, 0.0].into();
+        let p4 = [-0.5, -0.5, 0.5].into();
+        let p3 = [-0.5, -0.5, -0.5].into();
+
+        assert!(origin.contained_by_tet((p1, p2, p3, p4)));
+        assert!(origin.contained_by_tet((p1, p2, p4, p3)));
     }
 }

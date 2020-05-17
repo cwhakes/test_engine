@@ -1,5 +1,5 @@
 use crate::math::{Matrix4x4, Vector4d};
-use crate::physics::collision::{Collision, Sphere};
+use crate::physics::collision2::{InheritedCollider, Sphere};
 use crate::physics::position::Position;
 
 #[derive(Default, Debug)]
@@ -52,7 +52,7 @@ impl Camera {
     }
 }
 
-impl Collision for Camera {
+impl InheritedCollider for Camera {
     type Collider = Sphere;
 
     fn collider(&self) -> Sphere {

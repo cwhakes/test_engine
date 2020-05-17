@@ -3,7 +3,7 @@ use crate::math::Vector3d;
 
 use Simplex::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Simplex {
     Null([Vector3d; 0]),
     Point([Vector3d; 1]),
@@ -13,15 +13,20 @@ pub enum Simplex {
 }
 
 impl Simplex {
-    pub fn add_point(self, new_point: impl Into<Vector3d>) -> Self {
+    pub fn new() -> Self {
+        Null([])
+    }
+
+    pub fn add_point(&mut self, new_point: impl Into<Vector3d>) -> &mut Self {
         let new_point = new_point.into();
-        match self {
+        *self = match self {
             Null([]) => Point([new_point]),
-            Point([a]) => Line([a, new_point]),
-            Line([a, b]) => Triangle([a, b, new_point]),
-            Triangle([a, b, c]) => Tetrahedron([a, b, c, new_point]),
+            Point([a]) => Line([*a, new_point]),
+            Line([a, b]) => Triangle([*a, *b, new_point]),
+            Triangle([a, b, c]) => Tetrahedron([*a, *b, *c, new_point]),
             Tetrahedron(_) => unimplemented!(),
-        }
+        };
+        self
     }
 
     pub fn subsimplexes(&self) -> SubSimplexes {
@@ -51,7 +56,7 @@ impl Simplex {
                 } else { None }
             }
             Tetrahedron([a, b, c, d]) => {
-                if Vector3d::ORIGIN.contained_by((a, b, c, d)) {
+                if Vector3d::ORIGIN.contained_by_tet((a, b, c, d)) {
                     Some(Vector3d::ORIGIN)
                 } else { None }
             }
@@ -68,6 +73,16 @@ impl Simplex {
         self.subsimplexes()
             .flat_map(|s| s.nearest_simplex())
             .partial_min_by_key(|(_, v)| v.magnitude_squared())
+    }
+
+    pub fn contains_origin(&self) -> bool {
+        match self.clone() {
+            Point([a]) => a.magnitude_squared() < 0.001,
+            Line([a, b]) => Vector3d::ORIGIN.on_line((a, b)),
+            Triangle([a, b, c]) => Vector3d::ORIGIN.on_plane((a, b, c)),
+            Tetrahedron([a, b, c, d]) => Vector3d::ORIGIN.contained_by_tet((a, b, c, d)),
+            _ => false
+        }
     }
 }
 
@@ -114,5 +129,43 @@ impl<T: Into<Vector3d>> From<T> for Simplex {
     fn from(point: T) -> Self {
         let point = point.into();
         Point([point])
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn line_closest() {
+        let mut simplex = Simplex::new();
+        simplex.add_point([1.0, 1.0, 0.0]);
+        simplex.add_point([-1.0, 1.0, 0.0]);
+
+        let (new_simplex, close_point) = simplex.nearest_simplex().unwrap();
+        assert_eq!(new_simplex, simplex);
+        assert_eq!(close_point, [0.0, 1.0, 0.0].into());
+    }
+
+    #[test]
+    fn line_closest_point() {
+        let mut simplex = Simplex::new();
+        simplex.add_point([1.0, 1.0, 0.0]);
+        simplex.add_point([0.5, 1.0, 0.0]);
+
+        let (new_simplex, close_point) = simplex.nearest_simplex().unwrap();
+        assert_eq!(new_simplex, [0.5, 1.0, 0.0].into());
+        assert_eq!(close_point, [0.5, 1.0, 0.0].into());
+    }
+
+    #[test]
+    fn line_closest_point2() {
+        let mut simplex = Simplex::new();
+        simplex.add_point([0.5, 1.0, 0.0]);
+        simplex.add_point([1.0, 1.0, 0.0]);
+
+        let (new_simplex, close_point) = simplex.nearest_simplex().unwrap();
+        assert_eq!(new_simplex, [0.5, 1.0, 0.0].into());
+        assert_eq!(close_point, [0.5, 1.0, 0.0].into());
     }
 }

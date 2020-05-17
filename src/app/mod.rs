@@ -9,7 +9,7 @@ use engine::graphics::resource::{texture::Texture};
 use engine::graphics::GRAPHICS;
 use engine::input::{self, INPUT};
 use engine::math::{Matrix4x4, Point};
-use engine::physics::collision::{CollidesWith, Sphere};
+use engine::physics::collision2::{ConvexCollision, Sphere};
 use engine::window::{Application, Hwnd, Window};
 
 use std::sync::Mutex;
