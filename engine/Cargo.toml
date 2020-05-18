@@ -5,10 +5,13 @@ authors = ["Will Hakes <info@cwilliamhakes.com>"]
 edition = "2018"
 
 [dependencies]
-image = "0.23.3"
+image = { version = "0.23.3", default-features = false, features = [
+    "jpeg",
+    "png",
+    "bmp"
+] }
 lazy_static = "1.4.0"
-rand = "0.7.3"
-vertex_derive = { path = "../vertex_derive" }
+vertex_derive = { path = "./macros/vertex_derive" }
 wavefront_obj = "7.0.0"
 winapi = { version = "0.3.8", features = [
     "d3d11",
@@ -21,3 +24,6 @@ winapi = { version = "0.3.8", features = [
     "winerror",
     "winuser"
 ] }
+
+[dev-dependencies]
+rand = "0.7.3"

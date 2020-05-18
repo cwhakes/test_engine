@@ -54,13 +54,9 @@ impl World {
 
     pub fn update(&mut self) {
         self.delta_t.update();
+        println!("FPS: {}", 1.0/self.delta_t.get());
         
         self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
-
-        // self.camera
-        //     .set_rotation(self.rot_x, self.rot_y)
-        //     .move_forward(SPEED * self.forward * self.delta_t.get())
-        //     .move_rightward(SPEED * self.rightward * self.delta_t.get());
 
         self.camera.update(self.delta_t.get());
 

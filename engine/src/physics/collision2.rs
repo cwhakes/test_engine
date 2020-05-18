@@ -10,11 +10,8 @@ pub trait ConvexCollision: ConvexCollider {
         let mut dir = Vector3d::ORIGIN - point;
 
         for _ in 0..500 {
-            dbg!(&simplex);
             point = self.support(dir) - other.support(-dir);
             if dir.dot(point) < 0.0 {
-                dbg!((dir, point));
-                dbg!(simplex);
                 return false;
             }
             simplex.add_point(point);
@@ -22,11 +19,10 @@ pub trait ConvexCollision: ConvexCollider {
             simplex = new_simplex;
             dir = Vector3d::ORIGIN - closest_point;
             if simplex.contains_origin() {
-                dbg!(simplex);
                 return true;
             }
         }
-        // panic!("Infinite loop");
+        println!("Warning: Infinite loop");
         return false;
     }
 }
