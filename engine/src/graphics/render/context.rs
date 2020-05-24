@@ -1,4 +1,4 @@
-use super::shader::{Shader, ShaderType};
+use super::shader::{self, Shader, ShaderType};
 use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 
 use crate::error;
@@ -14,9 +14,8 @@ use winapi::um::d3dcommon;
 
 pub struct Context(NonNull<d3d11::ID3D11DeviceContext>);
 
-//TODO FIXME verify we can do this
+// https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-render-multi-thread-intro
 unsafe impl Send for Context {}
-unsafe impl Sync for Context {}
 
 impl Context {
     /// # Safety
@@ -107,6 +106,22 @@ impl Context {
     }
 
     pub fn draw_mesh(&self, mesh: &Mesh) {
+        self.set_vertex_buffer(&mut mesh.inner().vertex_buffer);
+        self.set_index_buffer(&mut mesh.inner().index_buffer);
+        self.draw_indexed_triangle_list(mesh.inner().index_buffer.len(), 0, 0);
+    }
+
+    pub fn draw_mesh_and_texture(
+        &self,
+        mesh: &Mesh,
+        texture: &mut Texture,
+        vertex_shader: &mut Shader<shader::Vertex>,
+        pixel_shader: &mut Shader<shader::Pixel>,
+    ) {
+        self.set_shader(vertex_shader);
+        self.set_shader(pixel_shader);
+        self.set_texture::<shader::Pixel>(texture);
+        
         self.set_vertex_buffer(&mut mesh.inner().vertex_buffer);
         self.set_index_buffer(&mut mesh.inner().index_buffer);
         self.draw_indexed_triangle_list(mesh.inner().index_buffer.len(), 0, 0);

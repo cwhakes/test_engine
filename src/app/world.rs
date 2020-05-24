@@ -4,7 +4,7 @@ use engine::input::{self, Listener};
 use engine::math::{Matrix4x4, Point, Vector3d, Vector4d};
 use engine::time::DeltaT;
 
-static SPEED: f32 = 0.5;
+static SPEED: f32 = 5.0;
 
 #[derive(Default)]
 pub struct World {
@@ -12,16 +12,13 @@ pub struct World {
     screen_height: f32,
 
     delta_t: DeltaT,
-    //pub rot_x: f32,
-    //pub rot_y: f32,
     pub scale_cube: f32,
-    //pub forward: f32,
-    //pub rightward: f32,
     world_matrix: Matrix4x4,
     pub camera: Camera,
     pub light_source: Matrix4x4,
 
     meshes: Vec<(Matrix4x4, Mesh)>,
+    sky_mesh: Option<Mesh>,
 }
 
 #[derive(Default, Debug)]
@@ -34,7 +31,6 @@ pub struct Environment {
 
 #[derive(Default, Debug)]
 pub struct MeshInfo {
-    pub position: Matrix4x4,
     pub color: Vector3d,
 }
 
@@ -54,7 +50,6 @@ impl World {
 
     pub fn update(&mut self) {
         self.delta_t.update();
-        println!("FPS: {}", 1.0/self.delta_t.get());
         
         self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
 
@@ -67,13 +62,7 @@ impl World {
         world *= Matrix4x4::scaling(self.scale_cube);
 
         let view = self.camera.get_view();
-
-        let proj = Matrix4x4::perspective(
-            std::f32::consts::PI/2.0,
-            self.screen_width / self.screen_height,
-            0.01,
-            100.0
-        );
+        let proj = self.camera.get_proj(self.screen_width / self.screen_height);
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
         let camera_pos = self.camera.get_location();
@@ -95,8 +84,21 @@ impl World {
         self.meshes.push((position, mesh))
     }
 
-    pub fn meshes(&self) -> impl Iterator<Item=&(Matrix4x4, Mesh)> {
-        self.meshes.iter()
+    pub fn meshes(&self) -> impl Iterator<Item=(Matrix4x4, Mesh)> {
+        self.meshes.clone().into_iter()
+    }
+
+    pub fn add_sky_mesh(&mut self, sky_mesh: Mesh) {
+        self.sky_mesh = Some(sky_mesh)
+    }
+
+    pub fn sky_mesh(&self) -> Option<(Matrix4x4, Mesh)> {
+        if let Some(mesh) = self.sky_mesh.clone() {
+            Some((
+                self.camera.get_skysphere(),
+                mesh,
+            ))
+        } else { None }
     }
 }
 

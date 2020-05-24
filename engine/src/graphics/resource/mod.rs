@@ -3,6 +3,8 @@ pub mod mesh;
 pub mod texture;
 
 pub use manager::ResourceManager;
+pub use mesh::Mesh;
+pub use texture::Texture;
 
 use crate::error;
 use crate::graphics::render::Device;

@@ -5,7 +5,7 @@ use world::{World, Environment, MeshInfo};
 use engine::graphics::color;
 use engine::graphics::render::shader::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, SwapChain};
-use engine::graphics::resource::{texture::Texture};
+use engine::graphics::resource::Texture;
 use engine::graphics::GRAPHICS;
 use engine::input::{self, INPUT};
 use engine::math::{Matrix4x4, Point};
@@ -22,11 +22,14 @@ lazy_static! {
 pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
-    vertex_shader: Shader<shader::Vertex>,
-    pixel_shader: Shader<shader::Pixel>,
+    vs: Shader<shader::Vertex>,
+    ps: Shader<shader::Pixel>,
+    sky_ps: Shader<shader::Pixel>,
     environment: ConstantBuffer<Environment>,
-    position: ConstantBuffer<MeshInfo>,
+    position: ConstantBuffer<Matrix4x4>,
+    color: ConstantBuffer<MeshInfo>,
     wood_tex: Texture,
+    sky_tex: Texture,
     #[listener]
     variables: World,
 }
@@ -56,19 +59,33 @@ impl Application for AppWindow {
             .device()
             .new_shader::<shader::Pixel, _>("pixel_shader.hlsl")
             .unwrap();
+        let (skybox_shader, _) = render
+            .device()
+            .new_shader::<shader::Pixel, _>("skybox_shader.hlsl")
+            .unwrap();
         let environment = render
             .device()
             .new_constant_buffer(0, Environment::default())
             .unwrap();
         let position = render
             .device()
-            .new_constant_buffer(1, MeshInfo::default())
+            .new_constant_buffer(1, Matrix4x4::default())
+            .unwrap();
+        let color = render
+            .device()
+            .new_constant_buffer(2, MeshInfo::default())
             .unwrap();
         let wood_tex = graphics
             .get_texture_from_file("assets\\Textures\\brick.png")
             .unwrap();
+        let sky_tex = graphics
+            .get_texture_from_file("assets\\Textures\\sky.jpg")
+            .unwrap();
         let teapot = graphics
-            .get_mesh_from_file("assets\\Meshes\\statue.obj")
+            .get_mesh_from_file("assets\\Meshes\\suzanne.obj")
+            .unwrap();
+        let sky_mesh = graphics
+            .get_mesh_from_file("assets\\Meshes\\sphere.obj")
             .unwrap();
 
         let mut world = World::new();
@@ -84,15 +101,19 @@ impl Application for AppWindow {
         //     Matrix4x4::translation([-1.0, 0.0, 0.0]),
         //     teapot.clone(),
         // );
+        world.add_sky_mesh(sky_mesh);
 
         let mut app_window = AppWindow {
             hwnd,
             swapchain,
-            vertex_shader,
-            pixel_shader,
+            vs: vertex_shader,
+            ps: pixel_shader,
+            sky_ps: skybox_shader,
             environment,
             position,
+            color,
             wood_tex,
+            sky_tex,
             variables: world,
         };
 
@@ -105,18 +126,17 @@ impl Application for AppWindow {
     }
 
     fn on_update(&mut self) {
-        let g = GRAPHICS.lock().unwrap();
+        let mut g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
         context.clear_render_target_color(&mut self.swapchain, color::NICE_BLUE);
         let (width, height) = self.hwnd.rect();
         context.set_viewport_size(width as f32, height as f32);
-        context.set_shader(&mut self.vertex_shader);
-        context.set_shader(&mut self.pixel_shader);
-        context.set_texture::<shader::Pixel>(&mut self.wood_tex);
 
         self.variables.update();
         self.environment.update(context, self.variables.environment());
 
+        g.render.set_back_face_culling();
+        let context = g.render.immediate_context();
         for (pos, mesh) in self.variables.meshes() {
             let mut color = color::WHITE.into();
             let sphere = Sphere::new(pos.get_translation(), 0.5);
@@ -124,11 +144,21 @@ impl Application for AppWindow {
                 color = color::RED.into()
             };
 
-            self.position.update(context, MeshInfo {
-                position: pos.clone(),
+            self.color.update(context, MeshInfo {
                 color,
             });
-            context.draw_mesh(mesh);
+
+            self.position.update(context, pos);
+
+            context.draw_mesh_and_texture(&mesh, &mut self.wood_tex, &mut self.vs, &mut self.ps);
+        }
+
+        if let Some((pos, mesh)) = self.variables.sky_mesh() {
+            g.render.set_front_face_culling();
+            let context = g.render.immediate_context();
+            self.position.update(context, pos);
+            //self.position.update(context, Matrix4x4::scaling(10.0));
+            context.draw_mesh_and_texture(&mesh, &mut self.sky_tex, &mut self.vs, &mut self.sky_ps);
         }
 
         self.swapchain.present(0);

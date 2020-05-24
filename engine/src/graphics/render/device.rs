@@ -16,7 +16,7 @@ use winapi::um::d3d11;
 
 pub struct Device(NonNull<d3d11::ID3D11Device>);
 
-//TODO FIXME verify we can do this
+// https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-render-multi-thread-intro
 unsafe impl Send for Device {}
 unsafe impl Sync for Device {}
 

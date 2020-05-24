@@ -3,6 +3,7 @@ mod context;
 mod device;
 mod index_buffer;
 pub mod shader;
+mod raster_state;
 mod swapchain;
 mod vertex_buffer;
 
@@ -10,6 +11,7 @@ pub use constant_buffer::ConstantBuffer;
 pub use context::Context;
 pub use device::Device;
 pub use index_buffer::IndexBuffer;
+use raster_state::RasterState;
 pub use swapchain::SwapChain;
 pub use vertex_buffer::VertexBuffer;
 
@@ -23,6 +25,8 @@ pub struct Render {
     device: Device,
     _feature_level: d3dcommon::D3D_FEATURE_LEVEL,
     context: Context,
+    raster_front: RasterState,
+    raster_back: RasterState,
 }
 
 const DRIVER_TYPES: [d3dcommon::D3D_DRIVER_TYPE; 3] = [
@@ -63,11 +67,16 @@ impl Render {
                 }
             }
             let (device, context) = result?;
+            let device = Device::from_nonnull(device)?;
+            let raster_front = RasterState::new_front(&device)?;
+            let raster_back = RasterState::new_back(&device)?;
 
             Ok(Render {
-                device: Device::from_nonnull(device)?,
+                device,
                 _feature_level: feature_level,
                 context: Context::from_nonnull(context)?,
+                raster_front,
+                raster_back,
             })
         }
     }
@@ -82,5 +91,17 @@ impl Render {
 
     pub fn immediate_context(&self) -> &Context {
         &self.context
+    }
+
+    pub fn set_front_face_culling(&mut self) {
+        unsafe {
+            self.context.as_ref().RSSetState(self.raster_front.as_mut());
+        }
+    }
+
+    pub fn set_back_face_culling(&mut self) {
+        unsafe {
+            self.context.as_ref().RSSetState(self.raster_back.as_mut());
+        }
     }
 }

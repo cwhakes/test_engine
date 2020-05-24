@@ -24,6 +24,10 @@ cbuffer constant: register(b0)
 cbuffer constant1: register(b1)
 {
     row_major float4x4 m_world;
+};
+
+cbuffer constant1: register(b2)
+{
     float3 color;
 };
 
