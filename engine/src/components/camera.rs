@@ -74,7 +74,7 @@ impl Default for Camera {
     fn default() -> Self {
         Camera {
             position: Position::default(),
-            fov: std::f32::consts::PI/2.0,
+            fov: std::f32::consts::PI/4.0,
             front_plate: 0.01,
             back_plate: 100.0,
         }
