@@ -12,7 +12,7 @@ pub use context::Context;
 pub use device::Device;
 pub use index_buffer::IndexBuffer;
 use raster_state::RasterState;
-pub use swapchain::SwapChain;
+pub use swapchain::{SwapChain, WindowState};
 pub use vertex_buffer::VertexBuffer;
 
 use crate::error;

@@ -7,14 +7,17 @@ use crate::window::Hwnd;
 
 use std::ptr::{self, NonNull};
 
-use winapi::shared::dxgi::{IDXGISwapChain, DXGI_SWAP_CHAIN_DESC};
+use winapi::shared::dxgi;
 use winapi::shared::dxgiformat;
 use winapi::shared::dxgitype;
+use winapi::shared::minwindef;
 use winapi::um::d3d11;
+use winapi::um::wingdi;
+use winapi::um::winuser;
 use winapi::Interface;
 
 pub struct SwapChain {
-    inner: NonNull<IDXGISwapChain>,
+    inner: NonNull<dxgi::IDXGISwapChain>,
     back_buffer: Option<BackBuffer>,
     depth_buffer: Option<DepthBuffer>,
 }
@@ -24,21 +27,34 @@ unsafe impl Send for SwapChain {}
 unsafe impl Sync for SwapChain {}
 
 impl SwapChain {
-    pub fn get_desc(hwnd: &Hwnd) -> DXGI_SWAP_CHAIN_DESC {
+    pub fn get_desc(hwnd: &Hwnd) -> dxgi::DXGI_SWAP_CHAIN_DESC {
         let (width, height) = hwnd.rect();
 
-        let mut desc = DXGI_SWAP_CHAIN_DESC::default();
+        let mut desc = dxgi::DXGI_SWAP_CHAIN_DESC::default();
         desc.BufferCount = 1;
         desc.BufferDesc.Width = width;
         desc.BufferDesc.Height = height;
         desc.BufferDesc.Format = dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.BufferDesc.RefreshRate.Numerator = 60;
-        desc.BufferDesc.RefreshRate.Denominator = 1;
         desc.BufferUsage = dxgitype::DXGI_USAGE_RENDER_TARGET_OUTPUT;
         desc.OutputWindow = *hwnd.inner();
         desc.SampleDesc.Count = 1;
         desc.SampleDesc.Quality = 0;
-        desc.Windowed = winapi::shared::minwindef::TRUE;
+        desc.Flags = dxgi::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+        desc.Windowed = minwindef::TRUE;
+
+        // unsafe {
+        //     let mut dev_mode = wingdi::DEVMODEW::default();
+
+        //     winuser::EnumDisplaySettingsW(
+        //         ptr::null_mut(),
+        //         winuser::ENUM_CURRENT_SETTINGS,
+        //         &mut dev_mode);
+
+        //     let refresh_rate = dev_mode.dmDisplayFrequency;
+            
+        //     desc.BufferDesc.RefreshRate.Numerator = refresh_rate;
+        //     desc.BufferDesc.RefreshRate.Denominator = 1;
+        // }
 
         desc
     }
@@ -46,7 +62,7 @@ impl SwapChain {
     /// # Safety
     /// 
     /// `swapchain` must point to a valid IDXGISwapChain
-    pub unsafe fn new(swapchain: NonNull<IDXGISwapChain>, device: &Device) -> error::Result<SwapChain> {
+    pub unsafe fn new(swapchain: NonNull<dxgi::IDXGISwapChain>, device: &Device) -> error::Result<SwapChain> {
         let inner = swapchain;
         let mut swapchain = SwapChain { inner, back_buffer: None, depth_buffer: None };
         let back_buffer = BackBuffer::new(&swapchain, device)?;
@@ -57,7 +73,7 @@ impl SwapChain {
         Ok(swapchain)
     }
 
-    fn inner(&self) -> &IDXGISwapChain {
+    fn inner(&self) -> &dxgi::IDXGISwapChain {
         unsafe { self.inner.as_ref() }
     }
 
@@ -76,7 +92,44 @@ impl SwapChain {
     pub fn resize(&mut self, device: &Device) -> error::Result<()> {
         unsafe {
             self.back_buffer.take();
-            self.depth_buffer().take();
+            self.depth_buffer.take();
+
+            self.inner().ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0).result()?;
+
+            self.back_buffer = Some(BackBuffer::new(self, device)?);
+            self.depth_buffer = Some(DepthBuffer::new(self, device)?);
+
+            Ok(())
+        }
+    }
+
+    pub fn set_windowed_state(&mut self, device: &Device, state: WindowState) -> error::Result<()> {
+        
+        unsafe {
+            //self.back_buffer.take();
+            //self.depth_buffer.take();
+
+            //self.inner().ResizeBuffers(1, 0, 0, dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM, 0).result()?;
+
+            let output = get_output(|ptr| {
+                self.inner().GetContainingOutput(ptr)
+            })?;
+
+            match state {
+                WindowState::Windowed => self.inner().SetFullscreenState(minwindef::FALSE, ptr::null_mut()).result().unwrap(),
+                WindowState::Fullscreen => {
+                    let inner = self.inner();
+                    //let null = ptr::null_mut();
+                    dbg!("heya");
+                    let out = inner.SetFullscreenState(minwindef::TRUE, output.as_ptr());
+                    println!("Output: {:?}", out);
+                    out.result().unwrap()
+                },
+            };
+            dbg!("heyc");
+
+            self.back_buffer.take();
+            self.depth_buffer.take();
 
             self.inner().ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0).result()?;
 
@@ -136,7 +189,7 @@ pub struct DepthBuffer(NonNull<d3d11::ID3D11DepthStencilView>);
 impl DepthBuffer {
     fn new(swapchain: &SwapChain, device: &Device) -> error::Result<DepthBuffer> {
         unsafe {
-            let mut sc_desc = DXGI_SWAP_CHAIN_DESC::default();
+            let mut sc_desc = dxgi::DXGI_SWAP_CHAIN_DESC::default();
             swapchain.inner.as_ref().GetDesc(&mut sc_desc);
     
             let mut tex_desc = d3d11::D3D11_TEXTURE2D_DESC::default();
@@ -188,5 +241,26 @@ impl Drop for DepthBuffer {
         unsafe {
             self.0.as_ref().Release();
         }
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum WindowState {
+    Windowed,
+    Fullscreen,
+}
+
+impl WindowState {
+    pub fn toggle(&mut self) {
+        match self {
+            WindowState::Windowed => *self = WindowState::Fullscreen,
+            WindowState::Fullscreen => *self = WindowState::Windowed,
+        }
+    }
+}
+
+impl Default for WindowState {
+    fn default() -> Self {
+        WindowState::Windowed
     }
 }

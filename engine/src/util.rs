@@ -12,6 +12,7 @@ use winapi::Interface;
 use winapi::shared::dxgi::IDXGIObject;
 use winapi::um::unknwnbase::IUnknown;
 use winapi::um::winnt;
+use winapi::um::winuser;
 
 /// Make a wide-encoded string for use with some APIs.
 pub fn os_vec(text: &str) -> Vec<u16> {
@@ -38,6 +39,12 @@ pub fn get_output2<F, A, B>(function: F) -> error::Result<(NonNull<A>, NonNull<B
     let a = NonNull::new(ptr_a).ok_or(null_ptr_err!())?;
     let b = NonNull::new(ptr_b).ok_or(null_ptr_err!())?;
     Ok((a, b))
+}
+
+pub fn kill_window_focus() {
+    unsafe {
+        winuser::SetFocus(ptr::null_mut());
+    }
 }
 
 /// A wrapper for the winapi function of the same name, used through the prelude

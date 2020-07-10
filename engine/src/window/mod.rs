@@ -36,6 +36,7 @@ pub trait Application: Send + Sync {
 
 pub struct Window<A: Application> {
     pub running: AtomicBool,
+    pub moving: AtomicBool,
     pub application: Mutex<Option<A>>,
 }
 
@@ -43,6 +44,7 @@ impl<A: Application> Window<A> {
     pub fn new() -> Window<A> {
         Window {
             running: AtomicBool::new(false),
+            moving: AtomicBool::new(false),
             application: Mutex::new(None) ,
         }
     }
@@ -135,26 +137,52 @@ impl<A: Application> Window<A> {
     {
         match msg {
             winuser::WM_CREATE => {
+                println!("WM_CREATE");
                 let hwnd = Hwnd::new(hwnd);
                 A::on_create(hwnd);
                 A::me().running.store(true, Ordering::Relaxed);
                 0
             }
             winuser::WM_SETFOCUS => {
+                println!("WM_SETFOCUS");
                 A::on_focus(&A::me().application);
                 0
             }
             winuser::WM_KILLFOCUS => {
+                println!("WM_KILLFOCUS");
                 A::on_kill_focus(&A::me().application);
                 0
             }
-            winuser::WM_SIZE => {
-                if let Some(window) = &mut *A::me().application.lock().unwrap() {
+            winuser::WM_SIZE | winuser::WM_SIZING => {
+                println!("WM_SIZE");
+                let mut guard = match A::me().application.try_lock() {
+                    Ok(guard) => guard,
+                    Err(std::sync::TryLockError::WouldBlock) => return 0,
+                    Err(std::sync::TryLockError::Poisoned(_)) => panic!("Poison error"),
+                };
+
+                if let Some(window) = &mut *guard {
                     window.on_resize();
+                    window.on_update();
+                }
+                0
+            }
+            winuser::WM_MOVE => {
+                println!("WM_MOVE");
+
+                let mut guard = match A::me().application.try_lock() {
+                    Ok(guard) => guard,
+                    Err(std::sync::TryLockError::WouldBlock) => return 0,
+                    Err(std::sync::TryLockError::Poisoned(_)) => panic!("Poison error"),
+                };
+
+                if let Some(window) = &mut *guard {
+                    window.on_update();
                 }
                 0
             }
             winuser::WM_DESTROY => {
+                println!("WM_DESTROY");
                 A::me().running.store(false, Ordering::Relaxed);
                 if let Some(window) = &mut *A::me().application.lock().unwrap() {
                     window.on_destroy();

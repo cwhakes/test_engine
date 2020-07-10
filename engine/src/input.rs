@@ -72,6 +72,7 @@ pub struct Input {
     keys_state: [u8; 256],
     old_keys_state: [u8; 256],
     old_mouse_pos: Point,
+    pub original_mouse_pos: Option<Point>,
 }
 
 impl Input {
@@ -118,7 +119,7 @@ impl Input {
             }
             self.old_keys_state = self.keys_state;
 
-            let new_mouse_pos = get_mouse_pos();
+            let new_mouse_pos = get_cursor_position();
             if new_mouse_pos != self.old_mouse_pos {
                 self.hashmap.values().for_each(|lis| {
                     lis.lock().unwrap().on_mouse_move(new_mouse_pos)
@@ -135,12 +136,13 @@ impl Default for Input {
             hashmap: Default::default(),
             keys_state: [0; 256],
             old_keys_state: [0; 256],
-            old_mouse_pos: get_mouse_pos(),
+            old_mouse_pos: get_cursor_position(),
+            original_mouse_pos: Default::default(),
         }
     }
 }
 
-fn get_mouse_pos() -> Point {
+fn get_cursor_position() -> Point {
     let mut point = windef::POINT::default();
     unsafe { winuser::GetCursorPos(&mut point); }
     point.into()

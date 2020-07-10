@@ -1,9 +1,11 @@
 extern crate proc_macro;
 
+use std::collections::HashMap;
+
 use proc_macro2::TokenStream;
-use quote::{quote, quote_spanned};
+use quote::{quote, quote_spanned, ToTokens};
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, Data, DeriveInput, Field, Fields};
+use syn::{parse_macro_input, Attribute, Data, DeriveInput, Field, Fields, Meta, NestedMeta};
 
 #[proc_macro_derive(Listener, attributes(listener))]
 pub fn derive_listener(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -19,11 +21,19 @@ pub fn derive_listener(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
     let on_left_mouse_up = make_method(&input.data, on_left_mouse_up);
     let on_right_mouse_up = make_method(&input.data, on_right_mouse_up);
 
+    let parent = find_parent_fns(&input.attrs);
+    let on_key_up_parent = parent.get("on_key_up").map(|stream| {
+        quote!{ self.#stream(key); }
+    }).unwrap_or(TokenStream::new());
+
     let expanded = quote! {
         impl engine::input::Listener for #name {
             fn name(&self) -> String {#name_string.to_string()}
             fn on_key_down(&mut self, key: usize) { #on_key_down }
-            fn on_key_up(&mut self, key: usize) { #on_key_up }
+            fn on_key_up(&mut self, key: usize) {
+                #on_key_up_parent
+                #on_key_up
+            }
         
             fn on_mouse_move(&mut self, pos: Point) { #on_mouse_move }
             fn on_left_mouse_down(&mut self) { #on_left_mouse_down }
@@ -114,4 +124,30 @@ fn make_method_inner<'a, F>(iter: impl Iterator<Item=&'a Field>, function: F) ->
     quote! {
         #(#recurse)*
     }
+}
+
+fn find_parent_fns<'a>(attributes: impl IntoIterator<Item=&'a Attribute>) -> HashMap<String, TokenStream> {
+    let mut map = HashMap::new();
+    for attribute in attributes.into_iter() {
+        if attribute.path.is_ident("listener") {
+            match attribute.parse_meta().unwrap() {
+                Meta::Path(_) => continue,
+                Meta::List(list) => {
+                    for nested_meta in list.nested.iter() {
+                        match nested_meta {
+                            NestedMeta::Meta(Meta::Path(path)) => {
+                                map.insert(
+                                    path.segments.last().unwrap().ident.to_string(),
+                                    path.to_token_stream(),
+                                );
+                            }
+                            _ => continue,
+                        }
+                    }
+                },
+                Meta::NameValue(_) => continue,
+            }
+        }
+    }
+    map
 }

@@ -1,4 +1,5 @@
 use engine::components::Camera;
+use engine::graphics::GRAPHICS;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
 use engine::math::{Matrix4x4, Point, Vector3d, Vector4d};
@@ -11,6 +12,8 @@ pub struct World {
     screen_width: f32,
     screen_height: f32,
 
+    play_state: PlayState,
+
     delta_t: DeltaT,
     pub scale_cube: f32,
     world_matrix: Matrix4x4,
@@ -19,6 +22,33 @@ pub struct World {
 
     meshes: Vec<(Matrix4x4, Mesh)>,
     sky_mesh: Option<Mesh>,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+enum PlayState {
+    Playing,
+    NotPlaying,
+}
+
+impl PlayState {
+    fn toggle(&mut self) {
+        match self {
+            PlayState::Playing => {
+                input::show_cursor(true);
+                *self = PlayState::NotPlaying;
+            }
+            PlayState::NotPlaying => {
+                input::show_cursor(false);
+                *self = PlayState::Playing;
+            }
+        }
+    }
+}
+
+impl Default for PlayState {
+    fn default() -> Self {
+        PlayState::NotPlaying
+    }
 }
 
 #[derive(Default, Debug)]
@@ -117,16 +147,25 @@ impl Listener for World {
             _ => {}
         }
     }
-    fn on_key_up(&mut self, _key: usize) {
+    fn on_key_up(&mut self, key: usize) {
         self.camera.reset_velocity();
+
+        let key = key as u8;
+        match key {
+            b'G' => {self.play_state.toggle();}
+            _ => {}
+        }
     }
     fn on_mouse_move(&mut self, pos: Point) {
-        let (width, height) = (self.screen_width as i32, self.screen_height as i32);
+        if self.play_state == PlayState::Playing {
 
-        self.camera.tilt( (pos.y - height / 2) as f32 * 0.002);
-        self.camera.pan( (pos.x - width / 2) as f32 * 0.002);
+            let (width, height) = (self.screen_width as i32, self.screen_height as i32);
 
-        input::set_cursor_position((width / 2, height / 2));
+            self.camera.tilt( (pos.y - height / 2) as f32 * 0.002);
+            self.camera.pan( (pos.x - width / 2) as f32 * 0.002);
+
+            input::set_cursor_position((width / 2, height / 2));
+        }
     }
     fn on_left_mouse_down(&mut self) {
         self.scale_cube = 0.5

@@ -4,7 +4,7 @@ use world::{World, Environment, MeshInfo};
 
 use engine::graphics::color;
 use engine::graphics::render::shader::{self, Shader};
-use engine::graphics::render::{ConstantBuffer, SwapChain};
+use engine::graphics::render::{ConstantBuffer, SwapChain, WindowState};
 use engine::graphics::resource::Texture;
 use engine::graphics::GRAPHICS;
 use engine::input::{self, INPUT};
@@ -12,6 +12,7 @@ use engine::math::{Matrix4x4, Point};
 use engine::physics::collision2::{ConvexCollision, Sphere};
 use engine::window::{Application, Hwnd, Window};
 
+use std::ops;
 use std::sync::Mutex;
 
 lazy_static! {
@@ -19,9 +20,11 @@ lazy_static! {
 }
 
 #[derive(Listener)]
+#[listener(on_key_up)]
 pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
+    window_state: WindowState,
     vs: Shader<shader::Vertex>,
     ps: Shader<shader::Pixel>,
     sky_ps: Shader<shader::Pixel>,
@@ -105,7 +108,8 @@ impl Application for AppWindow {
 
         let mut app_window = AppWindow {
             hwnd,
-            swapchain,
+            swapchain: swapchain,
+            window_state: WindowState::default(),
             vs: vertex_shader,
             ps: pixel_shader,
             sky_ps: skybox_shader,
@@ -120,8 +124,6 @@ impl Application for AppWindow {
         app_window.variables.set_screen_size(app_window.hwnd.rect());
 
         WINDOW.set_application(app_window);
-        INPUT.lock().unwrap().add_listener(WINDOW.listener());
-        input::show_cursor(false);
         graphics.render.device().debug().unwrap();
     }
 
@@ -169,18 +171,83 @@ impl Application for AppWindow {
     }
 
     fn on_focus(window: &'static Mutex<Option<AppWindow>>) {
-        INPUT.lock().unwrap().add_listener(window);
 
-        //TODO: Stop first move
+        INPUT.lock().unwrap().add_listener(window);
     }
 
     fn on_kill_focus(window: &'static Mutex<Option<AppWindow>>) {
-        INPUT.lock().unwrap().remove_listener(window)
+        INPUT.lock().unwrap().remove_listener(window);
     }
 
     fn on_resize(&mut self) {
         self.variables.set_screen_size(self.hwnd.rect());
         let graphics = GRAPHICS.lock().unwrap();
         self.swapchain.resize(graphics.render.device()).unwrap();
+    }
+}
+
+struct SwapChainWrapper {
+    swapchain: SwapChain,
+    window_state: WindowState,
+}
+
+impl SwapChainWrapper {
+    fn new(swapchain: SwapChain) -> SwapChainWrapper {
+        SwapChainWrapper {
+            swapchain,
+            window_state: Default::default(),
+        }
+    }
+}
+
+impl ops::Deref for SwapChainWrapper {
+    type Target = SwapChain;
+
+    fn deref(&self) -> &Self::Target {
+        &self.swapchain
+    }
+}
+
+impl ops::DerefMut for SwapChainWrapper {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.swapchain
+    }
+}
+
+/*impl input::Listener for SwapChainWrapper {
+    fn name(&self) -> String {
+        "swapchain".to_owned()
+    }
+
+    fn on_key_up(&mut self, key: usize) {
+        let key = key as u8;
+        match key {
+            b'F' => {
+                self.window_state.toggle();
+                self.swapchain.set_windowed_state(
+                    GRAPHICS.lock().unwrap().render.device(),
+                    self.window_state
+                ).unwrap();
+            }
+            _ => {}
+        }
+    }
+}*/
+
+impl AppWindow {
+    fn on_key_up(&mut self, key: usize) {
+        let key = key as u8;
+        match key {
+            b'F' => {
+                self.window_state.toggle();
+                let state = self.window_state.clone();
+                self.swapchain.set_windowed_state(
+                    GRAPHICS.lock().unwrap().render.device(),
+                    state,
+                ).unwrap();
+            }
+            _ => {}
+        }
+        self.on_resize()
     }
 }
