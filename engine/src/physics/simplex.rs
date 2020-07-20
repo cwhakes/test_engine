@@ -41,13 +41,13 @@ impl Simplex {
             Null(_) => None,
             Point([a]) => Some(a),
             Line([a, b]) => {
-                let proj = Vector3d::ORIGIN.projection_along_line((a, b));
+                let proj = Vector3d::ORIGIN.projection_along_1d([a, b]);
                 if 0.0 < proj && proj < 1.0 {
                     Some(a.lerp(b, proj))
                 } else { None }
             }
             Triangle([a, b, c]) => {
-                let (u, v) = Vector3d::ORIGIN.projection_along_plane((a, b, c));
+                let (u, v) = Vector3d::ORIGIN.projection_along_2d([a, b, c]);
                 if 0.0 < u && u < 1.0 &&
                     0.0 < v && v < 1.0 &&
                     u + v < 1.0
@@ -55,8 +55,8 @@ impl Simplex {
                     Some(a.lerp(b, u).lerp(c, v))
                 } else { None }
             }
-            Tetrahedron([a, b, c, d]) => {
-                if Vector3d::ORIGIN.contained_by_tet((a, b, c, d)) {
+            Tetrahedron(volume) => {
+                if Vector3d::ORIGIN.contained_by_3d(volume) {
                     Some(Vector3d::ORIGIN)
                 } else { None }
             }
@@ -78,9 +78,9 @@ impl Simplex {
     pub fn contains_origin(&self) -> bool {
         match self.clone() {
             Point([a]) => a.magnitude_squared() < 0.001,
-            Line([a, b]) => Vector3d::ORIGIN.on_line((a, b)),
-            Triangle([a, b, c]) => Vector3d::ORIGIN.on_plane((a, b, c)),
-            Tetrahedron([a, b, c, d]) => Vector3d::ORIGIN.contained_by_tet((a, b, c, d)),
+            Line(line) => Vector3d::ORIGIN.bounded_by_1d(line),
+            Triangle(plane) => Vector3d::ORIGIN.bounded_by_2d(plane),
+            Tetrahedron(volume) => Vector3d::ORIGIN.contained_by_3d(volume),
             _ => false
         }
     }

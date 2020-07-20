@@ -7,12 +7,11 @@ use engine::graphics::render::shader::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, SwapChain, WindowState};
 use engine::graphics::resource::Texture;
 use engine::graphics::GRAPHICS;
-use engine::input::{self, INPUT};
+use engine::input::INPUT;
 use engine::math::{Matrix4x4, Point};
-use engine::physics::collision2::{ConvexCollision, Sphere};
+use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::window::{Application, Hwnd, Window};
 
-use std::ops;
 use std::sync::Mutex;
 
 lazy_static! {
@@ -85,7 +84,7 @@ impl Application for AppWindow {
             .get_texture_from_file("assets\\Textures\\sky.jpg")
             .unwrap();
         let teapot = graphics
-            .get_mesh_from_file("assets\\Meshes\\suzanne.obj")
+            .get_mesh_from_file("assets\\Meshes\\statue.obj")
             .unwrap();
         let sky_mesh = graphics
             .get_mesh_from_file("assets\\Meshes\\sphere.obj")
@@ -142,7 +141,7 @@ impl Application for AppWindow {
         for (pos, mesh) in self.variables.meshes() {
             let mut color = color::WHITE.into();
             let sphere = Sphere::new(pos.get_translation(), 0.5);
-            if self.variables.camera.collides_with(&sphere) {
+            if GjkEngine.collision_between(&self.variables.camera, &sphere) {
                 color = color::RED.into()
             };
 
@@ -185,54 +184,6 @@ impl Application for AppWindow {
         self.swapchain.resize(graphics.render.device()).unwrap();
     }
 }
-
-struct SwapChainWrapper {
-    swapchain: SwapChain,
-    window_state: WindowState,
-}
-
-impl SwapChainWrapper {
-    fn new(swapchain: SwapChain) -> SwapChainWrapper {
-        SwapChainWrapper {
-            swapchain,
-            window_state: Default::default(),
-        }
-    }
-}
-
-impl ops::Deref for SwapChainWrapper {
-    type Target = SwapChain;
-
-    fn deref(&self) -> &Self::Target {
-        &self.swapchain
-    }
-}
-
-impl ops::DerefMut for SwapChainWrapper {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.swapchain
-    }
-}
-
-/*impl input::Listener for SwapChainWrapper {
-    fn name(&self) -> String {
-        "swapchain".to_owned()
-    }
-
-    fn on_key_up(&mut self, key: usize) {
-        let key = key as u8;
-        match key {
-            b'F' => {
-                self.window_state.toggle();
-                self.swapchain.set_windowed_state(
-                    GRAPHICS.lock().unwrap().render.device(),
-                    self.window_state
-                ).unwrap();
-            }
-            _ => {}
-        }
-    }
-}*/
 
 impl AppWindow {
     fn on_key_up(&mut self, key: usize) {

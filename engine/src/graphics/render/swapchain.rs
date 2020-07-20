@@ -12,8 +12,6 @@ use winapi::shared::dxgiformat;
 use winapi::shared::dxgitype;
 use winapi::shared::minwindef;
 use winapi::um::d3d11;
-use winapi::um::wingdi;
-use winapi::um::winuser;
 use winapi::Interface;
 
 pub struct SwapChain {
@@ -120,13 +118,10 @@ impl SwapChain {
                 WindowState::Fullscreen => {
                     let inner = self.inner();
                     //let null = ptr::null_mut();
-                    dbg!("heya");
                     let out = inner.SetFullscreenState(minwindef::TRUE, output.as_ptr());
-                    println!("Output: {:?}", out);
                     out.result().unwrap()
                 },
             };
-            dbg!("heyc");
 
             self.back_buffer.take();
             self.depth_buffer.take();

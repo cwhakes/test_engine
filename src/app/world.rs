@@ -1,5 +1,4 @@
 use engine::components::Camera;
-use engine::graphics::GRAPHICS;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
 use engine::math::{Matrix4x4, Point, Vector3d, Vector4d};

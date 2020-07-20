@@ -1,5 +1,5 @@
 use crate::math::{Matrix4x4, Vector4d};
-use crate::physics::collision2::{InheritedCollider, Sphere};
+use crate::physics::collision3::{InheritedCollider, Sphere};
 use crate::physics::position::Position;
 
 #[derive(Debug)]

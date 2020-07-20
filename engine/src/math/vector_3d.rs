@@ -2,6 +2,7 @@ use super::Vector4d;
 
 use std::{convert, ops};
 
+use float_cmp::approx_eq;
 use wavefront_obj::obj;
 
 #[repr(C)]
@@ -94,9 +95,9 @@ impl Vector3d {
     /// Returns fraction of the distance between two points closest to self.
     /// Is outside the segment if less than 0 or greater than 1.
     /// Use with `lerp()` to find a point.
-    pub fn projection_along_line(self, line: (Vector3d, Vector3d)) -> f32 {
-        let len2 = (line.0 - line.1).magnitude_squared();
-        (self - line.0).dot(line.1 - line.0) / len2
+    pub fn projection_along_1d(self, line: [Vector3d; 2]) -> f32 {
+        let len2 = (line[0] - line[1]).magnitude_squared();
+        (self - line[0]).dot(line[1] - line[0]) / len2
     }
 
     pub fn closest_point_on_plane(self, plane: (Vector3d, Vector3d, Vector3d)) -> Vector3d {
@@ -106,44 +107,49 @@ impl Vector3d {
         plane.0 + projection
     }
 
-    pub fn projection_along_plane(self, plane: (Vector3d, Vector3d, Vector3d)) -> (f32, f32) {
+    pub fn projection_along_2d(self, plane: [Vector3d; 3]) -> (f32, f32) {
         // Get location of right triangle base along 0>1 vector
-        let base_u = (plane.2).projection_along_line((plane.0.clone(), plane.1.clone()));
-        let base = plane.0.lerp(plane.1, base_u);
+        let base_u = (plane[2]).projection_along_1d([plane[0], plane[1]]);
+        let base = plane[0].lerp(plane[1], base_u);
         // Projection along a line perependicular to 0>1 vector and equal to the height of the triangle.
         // This is equal to the independent projection along 0>2
-        let v = self.projection_along_line((base, plane.2));
+        let v = self.projection_along_1d([base, plane[2]]);
         // Remove the independent projection
-        let adjusted_point = self - ((plane.2 - plane.0) * v);
+        let adjusted_point = self - ((plane[2] - plane[0]) * v);
         // Find the second projection
-        let u = adjusted_point.projection_along_line((plane.0, plane.1));
+        let u = adjusted_point.projection_along_1d([plane[0], plane[1]]);
         (u, v)
     }
 
-    pub fn on_line(&self, line: (Vector3d, Vector3d)) -> bool {
-        0.005 > (*self - line.0).cross(line.1 - line.0).magnitude_squared() &&
-        (*self - line.0).magnitude_squared() <= (line.1 - line.0).magnitude_squared()
+    pub fn bounded_by_1d(self, line: [Vector3d; 2]) -> bool {
+        let area2_of_tri = (self - line[0]).cross(line[1] - line[0]).magnitude_squared();
+        let proj = self.projection_along_1d(line);
+
+        approx_eq!( f32, 0.0, area2_of_tri ) &&
+            0.0 <= proj && proj <= 1.0
     }
 
-    pub fn on_plane(&self, plane: (Vector3d, Vector3d, Vector3d)) -> bool {
-        let (u, v) = self.projection_along_plane(plane.clone());
+    pub fn bounded_by_2d(&self, plane: [Vector3d; 3]) -> bool {
+        let volume_of_cube = (plane[1] - plane[0]).cross(plane[1] - plane[0]).dot(*self - plane[0]).abs();
+        let (u, v) = self.projection_along_2d(plane);
+
         0.0 <= u && u <= 1.0 &&
-        0.0 <= v && v <= 1.0 &&
-        u + v <= 1.0 &&
-        0.005 > (plane.1 - plane.0).cross(plane.2 - plane.0).dot(*self - plane.0).abs()
+            0.0 <= v && v <= 1.0 &&
+            u + v <= 1.0 &&
+            approx_eq!(f32, 0.0, volume_of_cube)
     }
 
-    pub fn contained_by_tet(&self, tetrahedron: (Vector3d, Vector3d, Vector3d, Vector3d)) -> bool {
+    pub fn contained_by_3d(&self, tetrahedron: [Vector3d; 4]) -> bool {
         let t = tetrahedron;
-        let p0 = (t.1 - t.0).cross(t.2 - t.0);
-        let p1 = (t.2 - t.0).cross(t.3 - t.0);
-        let p2 = (t.3 - t.0).cross(t.1 - t.0);
-        let p3 = (t.3 - t.1).cross(t.2 - t.1);
+        let p0 = (t[1] - t[0]).cross(t[2] - t[0]);
+        let p1 = (t[2] - t[0]).cross(t[3] - t[0]);
+        let p2 = (t[3] - t[0]).cross(t[1] - t[0]);
+        let p3 = (t[3] - t[1]).cross(t[2] - t[1]);
 
-        let sign = (*self - t.0).dot(p0).signum();
-        sign == (*self - t.0).dot(p1).signum() &&
-        sign == (*self - t.0).dot(p2).signum() &&
-        sign == (*self - t.1).dot(p3).signum()
+        let sign = (*self - t[0]).dot(p0).signum();
+        sign == (*self - t[0]).dot(p1).signum() &&
+        sign == (*self - t[0]).dot(p2).signum() &&
+        sign == (*self - t[1]).dot(p3).signum()
     }
 }
 
@@ -252,7 +258,7 @@ mod test {
         let p1 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
         let p2 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
 
-        let proj = origin.projection_along_line((p1.clone(), p2.clone()));
+        let proj = origin.projection_along_1d([p1, p2]);
         let point = p1.lerp(p2.clone(), proj);
         let distance = (point - origin).magnitude();
         
@@ -270,8 +276,8 @@ mod test {
         let p2 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
         let p3 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
 
-        let (u0, v0) = origin.projection_along_plane((p1, p2, p3));
-        let (v1, u1) = origin.projection_along_plane((p1, p3, p2));
+        let (u0, v0) = origin.projection_along_2d([p1, p2, p3]);
+        let (v1, u1) = origin.projection_along_2d([p1, p3, p2]);
 
         assert!((u1 - u0).abs() < 0.001);
         assert!((v1 - v0).abs() < 0.001);
@@ -285,7 +291,18 @@ mod test {
         let p4 = [-0.5, -0.5, 0.5].into();
         let p3 = [-0.5, -0.5, -0.5].into();
 
-        assert!(origin.contained_by_tet((p1, p2, p3, p4)));
-        assert!(origin.contained_by_tet((p1, p2, p4, p3)));
+        assert!(origin.contained_by_3d([p1, p2, p3, p4]));
+        assert!(origin.contained_by_3d([p1, p2, p4, p3]));
+    }
+
+    #[test]
+    fn test_projection_along_1d() {
+        let origin = Vector3d::ORIGIN;
+        let p1 = [10.0, 0.0, 0.0].into();
+        let p2: Vector3d = [5.0, 5.0, 0.0].into();
+
+        let proj = dbg!(p2.projection_along_1d([origin, p1]));
+
+        assert!( approx_eq!(f32, 0.5, proj));
     }
 }

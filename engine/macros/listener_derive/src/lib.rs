@@ -130,23 +130,19 @@ fn find_parent_fns<'a>(attributes: impl IntoIterator<Item=&'a Attribute>) -> Has
     let mut map = HashMap::new();
     for attribute in attributes.into_iter() {
         if attribute.path.is_ident("listener") {
-            match attribute.parse_meta().unwrap() {
-                Meta::Path(_) => continue,
-                Meta::List(list) => {
-                    for nested_meta in list.nested.iter() {
-                        match nested_meta {
-                            NestedMeta::Meta(Meta::Path(path)) => {
-                                map.insert(
-                                    path.segments.last().unwrap().ident.to_string(),
-                                    path.to_token_stream(),
-                                );
-                            }
-                            _ => continue,
+            if let Meta::List(list) = attribute.parse_meta().unwrap() {
+                for nested_meta in list.nested.iter() {
+                    match nested_meta {
+                        NestedMeta::Meta(Meta::Path(path)) => {
+                            map.insert(
+                                path.segments.last().unwrap().ident.to_string(),
+                                path.to_token_stream(),
+                            );
                         }
+                        _ => unimplemented!(),
                     }
-                },
-                Meta::NameValue(_) => continue,
-            }
+                }
+            } else { panic!("Incorrect listener calling convention") }
         }
     }
     map

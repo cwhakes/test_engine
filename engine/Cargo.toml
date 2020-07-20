@@ -5,6 +5,7 @@ authors = ["Will Hakes <info@cwilliamhakes.com>"]
 edition = "2018"
 
 [dependencies]
+float-cmp = "0.8.0"
 image = { version = "0.23.3", default-features = false, features = [
     "jpeg",
     "png",
