@@ -2,6 +2,7 @@ mod world;
 
 use world::{World, Environment, MeshInfo};
 
+use engine::error::Result;
 use engine::graphics::color;
 use engine::graphics::render::shader::{self, Shader};
 use engine::graphics::render::{ConstantBuffer, SwapChain, WindowState};
@@ -30,7 +31,7 @@ pub struct AppWindow {
     environment: ConstantBuffer<Environment>,
     position: ConstantBuffer<Matrix4x4>,
     color: ConstantBuffer<MeshInfo>,
-    wood_tex: Texture,
+    earth_tex: [Texture; 3],
     sky_tex: Texture,
     #[listener]
     variables: World,
@@ -49,56 +50,47 @@ impl Application for AppWindow {
         &mut self.hwnd
     }
 
-    fn on_create(hwnd: Hwnd) {
+    fn on_create(hwnd: Hwnd) -> Result<()> {
         let mut graphics = GRAPHICS.lock().unwrap();
         let render = &mut graphics.render;
         let swapchain = render.device_mut().new_swapchain(&hwnd).unwrap();
         let (vertex_shader, _) = render
             .device()
-            .new_shader::<shader::Vertex, _>("vertex_shader.hlsl")
-            .unwrap();
+            .new_shader::<shader::Vertex, _>("vertex_shader.hlsl")?;
         let (pixel_shader, _) = render
             .device()
-            .new_shader::<shader::Pixel, _>("pixel_shader.hlsl")
-            .unwrap();
+            .new_shader::<shader::Pixel, _>("pixel_shader2.hlsl")?;
         let (skybox_shader, _) = render
             .device()
-            .new_shader::<shader::Pixel, _>("skybox_shader.hlsl")
-            .unwrap();
+            .new_shader::<shader::Pixel, _>("skybox_shader.hlsl")?;
         let environment = render
             .device()
-            .new_constant_buffer(0, Environment::default())
-            .unwrap();
+            .new_constant_buffer(0, Environment::default())?;
         let position = render
             .device()
-            .new_constant_buffer(1, Matrix4x4::default())
-            .unwrap();
+            .new_constant_buffer(1, Matrix4x4::default())?;
         let color = render
             .device()
-            .new_constant_buffer(2, MeshInfo::default())
-            .unwrap();
-        let wood_tex = graphics
-            .get_texture_from_file("assets\\Textures\\brick.png")
-            .unwrap();
-        let sky_tex = graphics
-            .get_texture_from_file("assets\\Textures\\sky.jpg")
-            .unwrap();
+            .new_constant_buffer(2, MeshInfo::default())?;
+            
+        let earth_color_tex = graphics.get_texture_from_file("assets\\Textures\\earth_color.jpg")?;
+        let earth_spec_tex = graphics.get_texture_from_file("assets\\Textures\\earth_spec.jpg")?;
+        let earth_cloud_tex = graphics.get_texture_from_file("assets\\Textures\\clouds.jpg")?;
+        let sky_tex = graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?;
         let teapot = graphics
-            .get_mesh_from_file("assets\\Meshes\\statue.obj")
-            .unwrap();
+            .get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
         let sky_mesh = graphics
-            .get_mesh_from_file("assets\\Meshes\\sphere.obj")
-            .unwrap();
+            .get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 
         let mut world = World::new();
         world.add_mesh(
             Matrix4x4::translation([0.0, 0.0, 0.0]),
             teapot.clone(),
         );
-        world.add_mesh(
-            Matrix4x4::translation([1.0, 0.0, 0.0]),
-            teapot.clone(),
-        );
+        // world.add_mesh(
+        //     Matrix4x4::translation([1.0, 0.0, 0.0]),
+        //     teapot.clone(),
+        // );
         // world.add_mesh(
         //     Matrix4x4::translation([-1.0, 0.0, 0.0]),
         //     teapot.clone(),
@@ -115,7 +107,7 @@ impl Application for AppWindow {
             environment,
             position,
             color,
-            wood_tex,
+            earth_tex: [earth_color_tex, earth_spec_tex, earth_cloud_tex],
             sky_tex,
             variables: world,
         };
@@ -123,7 +115,9 @@ impl Application for AppWindow {
         app_window.variables.set_screen_size(app_window.hwnd.rect());
 
         WINDOW.set_application(app_window);
-        graphics.render.device().debug().unwrap();
+        graphics.render.device().debug()?;
+
+        Ok(())
     }
 
     fn on_update(&mut self) {
@@ -151,7 +145,7 @@ impl Application for AppWindow {
 
             self.position.update(context, pos);
 
-            context.draw_mesh_and_texture(&mesh, &mut self.wood_tex, &mut self.vs, &mut self.ps);
+            context.draw_mesh_and_texture(&mesh, &mut self.earth_tex, &mut self.vs, &mut self.ps);
         }
 
         if let Some((pos, mesh)) = self.variables.sky_mesh() {
@@ -159,7 +153,7 @@ impl Application for AppWindow {
             let context = g.render.immediate_context();
             self.position.update(context, pos);
             //self.position.update(context, Matrix4x4::scaling(10.0));
-            context.draw_mesh_and_texture(&mesh, &mut self.sky_tex, &mut self.vs, &mut self.sky_ps);
+            context.draw_mesh_and_texture(&mesh, std::slice::from_mut(&mut self.sky_tex), &mut self.vs, &mut self.sky_ps);
         }
 
         self.swapchain.present(0);

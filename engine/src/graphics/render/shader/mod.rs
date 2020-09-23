@@ -27,7 +27,7 @@ pub trait ShaderType {
     fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<NonNull<Self::ShaderInterface>>;
 
     fn set_shader(context: &Context, shader: &mut Self::ShaderInterface);
-    fn set_texture(context: &Context, texture: &mut Texture);
+    fn set_textures(context: &Context, textures: &mut [Texture]);
 
     fn set_constant_buffer<C>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>);
 
@@ -41,6 +41,7 @@ shader_generate!( unsafe {
     CreatePixelShader,
     PSSetShader,
     PSSetShaderResources,
+    PSSetSamplers,
     PSSetConstantBuffers,
     "psmain",
     "ps_5_0"
@@ -52,6 +53,7 @@ shader_generate!( unsafe {
     CreateVertexShader,
     VSSetShader,
     VSSetShaderResources,
+    VSSetSamplers,
     VSSetConstantBuffers,
     "vsmain",
     "vs_5_0"

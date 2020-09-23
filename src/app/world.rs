@@ -19,6 +19,8 @@ pub struct World {
     pub camera: Camera,
     pub light_source: Matrix4x4,
 
+    cloud_offset: f32,
+
     meshes: Vec<(Matrix4x4, Mesh)>,
     sky_mesh: Option<Mesh>,
 }
@@ -56,6 +58,8 @@ pub struct Environment {
     proj: Matrix4x4,
     light_dir: Vector4d,
     camera_pos: Vector4d,
+    
+    cloud_offset: f32,
 }
 
 #[derive(Default, Debug)]
@@ -81,6 +85,7 @@ impl World {
         self.delta_t.update();
         
         self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
+        self.cloud_offset += 0.01 * self.delta_t.get();
 
         self.camera.update(self.delta_t.get());
 
@@ -101,6 +106,8 @@ impl World {
             proj,
             light_dir,
             camera_pos,
+
+            cloud_offset: self.cloud_offset,
         }
     }
 

@@ -5,6 +5,7 @@ macro_rules! shader_generate {
         $create_shader: ident,
         $set_shader: ident,
         $set_shader_resource: ident,
+        $set_sampler: ident,
         $set_constant_buffer: ident,
         $entry_point: expr,
         $target: expr
@@ -31,9 +32,16 @@ macro_rules! shader_generate {
                 unsafe { context.as_ref().$set_shader(shader, std::ptr::null(), 0) }
             }
 
-            fn set_texture(context: &Context, texture: &mut crate::graphics::resource::texture::Texture) {
+            fn set_textures(context: &Context, textures: &mut [crate::graphics::resource::texture::Texture]) {
                 unsafe {
-                    context.as_ref().$set_shader_resource(0, 1, &texture.resource_view_ptr());
+                    let texture_pointers: Vec<_> = textures.iter_mut()
+                        .map(|tex| tex.resource_view_ptr())
+                        .collect();
+                    let sampler_pointers: Vec<_> = textures.iter_mut()
+                        .map(|tex| tex.sampler_state_ptr())
+                        .collect();
+                    context.as_ref().$set_shader_resource(0, texture_pointers.len() as u32, texture_pointers.as_ptr());
+                    context.as_ref().$set_sampler(0, sampler_pointers.len() as u32, sampler_pointers.as_ptr());
                 }
             }
 

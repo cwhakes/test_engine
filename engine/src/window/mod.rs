@@ -2,6 +2,7 @@ mod hwnd;
 
 pub use hwnd::Hwnd;
 
+use crate::error::Result;
 use crate::input::INPUT;
 use crate::util::os_vec;
 
@@ -26,7 +27,7 @@ pub trait Application: Send + Sync {
     fn hwnd(&self) -> &Hwnd;
     fn hwnd_mut(&mut self) -> &mut Hwnd;
 
-    fn on_create(_hwnd: Hwnd) where Self: Sized {}
+    fn on_create(_hwnd: Hwnd) -> Result<()> where Self: Sized {Ok(())}
     fn on_update(&mut self) {}
     fn on_destroy(&mut self) {}
     fn on_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
@@ -139,7 +140,7 @@ impl<A: Application> Window<A> {
             winuser::WM_CREATE => {
                 println!("WM_CREATE");
                 let hwnd = Hwnd::new(hwnd);
-                A::on_create(hwnd);
+                A::on_create(hwnd).unwrap();
                 A::me().running.store(true, Ordering::Relaxed);
                 0
             }

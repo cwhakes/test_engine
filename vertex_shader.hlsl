@@ -19,6 +19,7 @@ cbuffer constant: register(b0)
     row_major float4x4 m_proj;
     float4 m_light_dir;
     float4 m_camera_pos;
+    float cloud_offset;
 };
 
 cbuffer constant1: register(b1)

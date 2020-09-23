@@ -55,6 +55,21 @@ impl Resource for Texture {
             
             drop(buffer);
 
+            let mut sampler_desc = d3d11::D3D11_SAMPLER_DESC::default();
+            sampler_desc.AddressU = d3d11::D3D11_TEXTURE_ADDRESS_WRAP;
+            sampler_desc.AddressV = d3d11::D3D11_TEXTURE_ADDRESS_WRAP;
+            sampler_desc.AddressW = d3d11::D3D11_TEXTURE_ADDRESS_WRAP;
+            sampler_desc.Filter = d3d11::D3D11_FILTER_ANISOTROPIC;
+            sampler_desc.MinLOD = 0.0;
+            sampler_desc.MaxLOD = 1.0;
+
+            let sampler_state = get_output(|ptr| {
+                device.as_ref().CreateSamplerState(
+                    &sampler_desc,
+                    ptr,
+                )
+            })?;
+
             let resource_view = get_output(|ptr| {
                 device.as_ref().CreateShaderResourceView(
                     &**texture.as_ref() as *const d3d11::ID3D11Resource as *mut _,
@@ -65,6 +80,7 @@ impl Resource for Texture {
 
             Ok( Texture(Arc::new(TextureInner {
                 texture,
+                sampler_state,
                 resource_view,
             })))
         }
@@ -72,6 +88,11 @@ impl Resource for Texture {
 }
 
 impl Texture {
+    pub fn sampler_state_ptr(&mut self) -> *mut d3d11::ID3D11SamplerState {
+        //TODO Fix Shared Mutability
+        self.0.as_ref().sampler_state.as_ptr()
+    }
+
     pub fn resource_view_ptr(&mut self) -> *mut d3d11::ID3D11ShaderResourceView {
         //TODO Fix Shared Mutability
         self.0.as_ref().resource_view.as_ptr()
@@ -88,6 +109,7 @@ impl AsRef<d3d11::ID3D11Texture2D> for Texture {
 
 struct TextureInner {
     texture: NonNull<d3d11::ID3D11Texture2D>,
+    sampler_state: NonNull<d3d11::ID3D11SamplerState>,
     resource_view: NonNull<d3d11::ID3D11ShaderResourceView>,
 }
 
@@ -99,6 +121,7 @@ impl Drop for TextureInner {
     fn drop(&mut self) {
         unsafe {
             self.texture.as_ref().Release();
+            self.sampler_state.as_ref().Release();
             self.resource_view.as_ref().Release();
         }
     }

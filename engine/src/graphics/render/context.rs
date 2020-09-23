@@ -74,8 +74,8 @@ impl Context {
         S::set_shader(self, shader.as_mut());
     }
 
-    pub fn set_texture<S: ShaderType>(&self, texture: &mut Texture) {
-        S::set_texture(self, texture);
+    pub fn set_textures<S: ShaderType>(&self, textures: &mut [Texture]) {
+        S::set_textures(self, textures);
     }
 
     pub fn draw_triangle_list(&self, vertices_len: usize, vertices_start: usize) {
@@ -114,13 +114,13 @@ impl Context {
     pub fn draw_mesh_and_texture(
         &self,
         mesh: &Mesh,
-        texture: &mut Texture,
+        textures: &mut [Texture],
         vertex_shader: &mut Shader<shader::Vertex>,
         pixel_shader: &mut Shader<shader::Pixel>,
     ) {
         self.set_shader(vertex_shader);
         self.set_shader(pixel_shader);
-        self.set_texture::<shader::Pixel>(texture);
+        self.set_textures::<shader::Pixel>(textures);
         
         self.set_vertex_buffer(&mut mesh.inner().vertex_buffer);
         self.set_index_buffer(&mut mesh.inner().index_buffer);
