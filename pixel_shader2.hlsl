@@ -10,6 +10,10 @@ sampler EarthSpecSampler: register(s1);
 Texture2D Clouds: register(t2);
 sampler CloudsSampler: register(s2);
 
+Texture2D EarthNight: register(t3);
+sampler EarthNightSampler: register(s3);
+
+
 struct PS_INPUT
 {
     float4 pos: SV_POSITION;
@@ -43,20 +47,29 @@ float4 psmain( PS_INPUT input ) : SV_Target
     float4 earth_color = EarthColor.Sample(EarthColorSampler, 1.0 - input.tex_coord);
     float4 earth_spec = EarthSpec.Sample(EarthSpecSampler, 1.0 - input.tex_coord);
     float4 clouds = Clouds.Sample(CloudsSampler, 1.0 - input.tex_coord + float2(cloud_offset,0));
+    float4 earth_night = EarthNight.Sample(EarthNightSampler, 1.0 - input.tex_coord);
 
     float3 ka = 1.5;
     float3 ia = float3(0.09, 0.082, 0.082);
     ia *= earth_color.rgb + clouds.rgb;
     float3 ambient_light = ka * ia;
 
-    float3 kd = 0.7 * tex;
-    float3 id = float3(1.0, 1.0, 1.0);
-    id *= earth_color.rgb + clouds.rgb;
-    float amount_diffuse_light = max(0.0, dot(m_light_dir.xyz, input.normal));
-    float3 diffuse_light = kd * amount_diffuse_light * id;
+    float3 kd = tex;
+
+    float3 id_day = float3(1.0, 1.0, 1.0);
+    id_day *= (earth_color.rgb + clouds.rgb);
+
+    float3 id_night = float3(1.0, 1.0, 1.0);
+    id_night *= (earth_night.rgb + clouds.rgb * 0.03);
+
+    float amount_diffuse_light = dot(m_light_dir.xyz, input.normal);
+
+    float3 id = lerp(id_night, id_day, (amount_diffuse_light + 1.0) / 2.0);
+    
+    float3 diffuse_light = kd * id;
 
     float ks = earth_spec.r + clouds.r;
-    float is = float3(0.1, 0.1, 0.1);
+    float is = float3(0.3, 0.3, 0.3);
     float3 reflected_light = reflect(m_light_dir, input.normal);
     float shininess = 10.0;
     float3 amount_specular_light = pow(max(0.0, dot(reflected_light, input.cam_dir)), shininess);

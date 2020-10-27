@@ -19,9 +19,11 @@ pub struct Texture(Arc<TextureInner>);
 
 impl Resource for Texture {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
+        
         unsafe {
-            let image = Reader::open(path.as_ref())?.decode()?.to_rgba();
-
+            let foo = Reader::open(path.as_ref())?;
+            let bar = foo.decode()?;
+            let image = bar.to_rgba();
             let mut sample_desc = dxgitype::DXGI_SAMPLE_DESC::default();
             sample_desc.Count = 1;
             sample_desc.Quality = 0;
@@ -37,7 +39,6 @@ impl Resource for Texture {
             desc.BindFlags = d3d11::D3D11_BIND_SHADER_RESOURCE;
             desc.CPUAccessFlags = 0;
             desc.MiscFlags = 0;
-            
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.SysMemPitch = image.sample_layout().height_stride.max(
                 image.sample_layout().width_stride
@@ -52,7 +53,7 @@ impl Resource for Texture {
                     ptr,
                 )
             })?;
-            
+
             drop(buffer);
 
             let mut sampler_desc = d3d11::D3D11_SAMPLER_DESC::default();
@@ -69,7 +70,7 @@ impl Resource for Texture {
                     ptr,
                 )
             })?;
-
+            
             let resource_view = get_output(|ptr| {
                 device.as_ref().CreateShaderResourceView(
                     &**texture.as_ref() as *const d3d11::ID3D11Resource as *mut _,

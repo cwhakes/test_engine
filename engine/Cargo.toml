@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 float-cmp = "0.8.0"
-image = { version = "0.23.3", default-features = false, features = [
+image = { version = "0.23.10", default-features = false, features = [
     "jpeg",
     "png",
     "bmp"

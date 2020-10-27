@@ -31,7 +31,7 @@ pub struct AppWindow {
     environment: ConstantBuffer<Environment>,
     position: ConstantBuffer<Matrix4x4>,
     color: ConstantBuffer<MeshInfo>,
-    earth_tex: [Texture; 3],
+    earth_tex: [Texture; 4],
     sky_tex: Texture,
     #[listener]
     variables: World,
@@ -76,6 +76,7 @@ impl Application for AppWindow {
         let earth_color_tex = graphics.get_texture_from_file("assets\\Textures\\earth_color.jpg")?;
         let earth_spec_tex = graphics.get_texture_from_file("assets\\Textures\\earth_spec.jpg")?;
         let earth_cloud_tex = graphics.get_texture_from_file("assets\\Textures\\clouds.jpg")?;
+        let earth_night_text = graphics.get_texture_from_file("assets\\Textures\\earth_night.jpg")?;
         let sky_tex = graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?;
         let teapot = graphics
             .get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
@@ -107,7 +108,7 @@ impl Application for AppWindow {
             environment,
             position,
             color,
-            earth_tex: [earth_color_tex, earth_spec_tex, earth_cloud_tex],
+            earth_tex: [earth_color_tex, earth_spec_tex, earth_cloud_tex, earth_night_text],
             sky_tex,
             variables: world,
         };

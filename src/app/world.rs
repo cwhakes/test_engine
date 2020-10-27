@@ -70,8 +70,9 @@ pub struct MeshInfo {
 impl World {
     pub fn new() -> World {
         let mut camera = Camera::default();
-        camera.move_forward(-1.0);
-        let light_source = Matrix4x4::rotation_x(-std::f32::consts::PI / 6.0);
+        camera.move_forward(-2.0);
+        //let light_source = Matrix4x4::rotation_x(-std::f32::consts::PI / 6.0);
+        let light_source = Matrix4x4::identity();
 
         World {
             scale_cube: 1.0,
@@ -84,7 +85,7 @@ impl World {
     pub fn update(&mut self) {
         self.delta_t.update();
         
-        self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
+        self.light_source *= Matrix4x4::rotation_y(0.1 * self.delta_t.get());
         self.cloud_offset += 0.01 * self.delta_t.get();
 
         self.camera.update(self.delta_t.get());
