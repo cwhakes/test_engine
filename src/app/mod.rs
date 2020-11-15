@@ -1,6 +1,7 @@
 mod world;
 
-use world::{World, Environment, MeshInfo};
+use world::{World, MeshInfo};
+use crate::shaders::point_light::{self, Environment};
 
 use engine::error::Result;
 use engine::graphics::color;
@@ -31,7 +32,7 @@ pub struct AppWindow {
     environment: ConstantBuffer<Environment>,
     position: ConstantBuffer<Matrix4x4>,
     color: ConstantBuffer<MeshInfo>,
-    earth_tex: [Texture; 4],
+    wall_tex: [Texture; 1],
     sky_tex: Texture,
     #[listener]
     variables: World,
@@ -52,34 +53,26 @@ impl Application for AppWindow {
 
     fn on_create(hwnd: Hwnd) -> Result<()> {
         let mut graphics = GRAPHICS.lock().unwrap();
-        let render = &mut graphics.render;
-        let swapchain = render.device_mut().new_swapchain(&hwnd).unwrap();
-        let (vertex_shader, _) = render
-            .device()
-            .new_shader::<shader::Vertex, _>("vertex_shader.hlsl")?;
-        let (pixel_shader, _) = render
-            .device()
-            .new_shader::<shader::Pixel, _>("pixel_shader2.hlsl")?;
-        let (skybox_shader, _) = render
-            .device()
-            .new_shader::<shader::Pixel, _>("skybox_shader.hlsl")?;
-        let environment = render
-            .device()
+        let device = &mut graphics.render.device_mut();
+        let swapchain = device.new_swapchain(&hwnd).unwrap();
+        let (vertex_shader, _) = device
+            .new_shader::<shader::Vertex, _>(point_light::VERTEX_SHADER_PATH)?;
+        let (pixel_shader, _) = device
+            .new_shader::<shader::Pixel, _>(point_light::PIXEL_SHADER_PATH)?;
+        let (skybox_shader, _) = device
+            .new_shader::<shader::Pixel, _>("shaders\\skybox_shader.hlsl")?;
+        let environment = device
             .new_constant_buffer(0, Environment::default())?;
-        let position = render
-            .device()
+        let position = device
             .new_constant_buffer(1, Matrix4x4::default())?;
-        let color = render
-            .device()
+        let color = device
             .new_constant_buffer(2, MeshInfo::default())?;
             
-        let earth_color_tex = graphics.get_texture_from_file("assets\\Textures\\earth_color.jpg")?;
-        let earth_spec_tex = graphics.get_texture_from_file("assets\\Textures\\earth_spec.jpg")?;
-        let earth_cloud_tex = graphics.get_texture_from_file("assets\\Textures\\clouds.jpg")?;
-        let earth_night_text = graphics.get_texture_from_file("assets\\Textures\\earth_night.jpg")?;
+        let wall_tex = graphics.get_texture_from_file("assets\\Textures\\wall.jpg")?;
+
         let sky_tex = graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?;
         let teapot = graphics
-            .get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
+            .get_mesh_from_file("assets\\Meshes\\scene.obj")?;
         let sky_mesh = graphics
             .get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 
@@ -108,7 +101,7 @@ impl Application for AppWindow {
             environment,
             position,
             color,
-            earth_tex: [earth_color_tex, earth_spec_tex, earth_cloud_tex, earth_night_text],
+            wall_tex: [wall_tex],
             sky_tex,
             variables: world,
         };
@@ -146,7 +139,7 @@ impl Application for AppWindow {
 
             self.position.update(context, pos);
 
-            context.draw_mesh_and_texture(&mesh, &mut self.earth_tex, &mut self.vs, &mut self.ps);
+            context.draw_mesh_and_texture(&mesh, &mut self.wall_tex, &mut self.vs, &mut self.ps);
         }
 
         if let Some((pos, mesh)) = self.variables.sky_mesh() {

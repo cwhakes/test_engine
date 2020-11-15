@@ -65,6 +65,15 @@ impl Position {
         self
     }
 
+    pub fn move_up(&mut self, distance: f32) -> &mut Self {
+
+        let new_pos = self.position.get_translation()
+            + self.position.get_direction_y() * distance;
+
+        self.position.set_translation(new_pos);
+        self
+    }
+
     pub fn pan(&mut self, angle: f32) -> &mut Self {
         let upward_direction: Vector3d = [0.0, 1.0, 0.0].into();
         let delta_angle = upward_direction * angle;

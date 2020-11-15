@@ -69,7 +69,7 @@ float4 psmain( PS_INPUT input ) : SV_Target
     float3 diffuse_light = kd * id;
 
     float ks = earth_spec.r + clouds.r;
-    float is = float3(0.3, 0.3, 0.3);
+    float3 is = float3(0.3, 0.3, 0.3);
     float3 reflected_light = reflect(m_light_dir, input.normal);
     float shininess = 10.0;
     float3 amount_specular_light = pow(max(0.0, dot(reflected_light, input.cam_dir)), shininess);

@@ -3,7 +3,7 @@ use std::{convert, ops};
 use wavefront_obj::obj;
 
 #[repr(C)]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Vector2d {
     pub x: f32,
     pub y: f32,

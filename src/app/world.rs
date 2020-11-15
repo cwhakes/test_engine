@@ -1,8 +1,10 @@
 use engine::components::Camera;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
-use engine::math::{Matrix4x4, Point, Vector3d, Vector4d};
+use engine::math::{Matrix4x4, Point, Vector3d};
 use engine::time::DeltaT;
+
+use crate::shaders::point_light::Environment;
 
 static SPEED: f32 = 5.0;
 
@@ -19,10 +21,12 @@ pub struct World {
     pub camera: Camera,
     pub light_source: Matrix4x4,
 
-    cloud_offset: f32,
+    time: f32,
 
     meshes: Vec<(Matrix4x4, Mesh)>,
     sky_mesh: Option<Mesh>,
+
+    light_rad: f32,
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -53,16 +57,6 @@ impl Default for PlayState {
 }
 
 #[derive(Default, Debug)]
-pub struct Environment {
-    view: Matrix4x4,
-    proj: Matrix4x4,
-    light_dir: Vector4d,
-    camera_pos: Vector4d,
-    
-    cloud_offset: f32,
-}
-
-#[derive(Default, Debug)]
 pub struct MeshInfo {
     pub color: Vector3d,
 }
@@ -71,13 +65,15 @@ impl World {
     pub fn new() -> World {
         let mut camera = Camera::default();
         camera.move_forward(-2.0);
+        camera.move_up(1.0);
         //let light_source = Matrix4x4::rotation_x(-std::f32::consts::PI / 6.0);
-        let light_source = Matrix4x4::identity();
+        let light_source = Matrix4x4::translation([0.0, 1.0, 2.0]);
 
         World {
             scale_cube: 1.0,
             camera,
             light_source,
+            light_rad: 4.0,
             ..Default::default()
         }
     }
@@ -85,8 +81,8 @@ impl World {
     pub fn update(&mut self) {
         self.delta_t.update();
         
-        self.light_source *= Matrix4x4::rotation_y(0.1 * self.delta_t.get());
-        self.cloud_offset += 0.01 * self.delta_t.get();
+        self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
+        self.time += self.delta_t.get();
 
         self.camera.update(self.delta_t.get());
 
@@ -101,14 +97,20 @@ impl World {
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
         let camera_pos = self.camera.get_location();
+        let light_pos = self.light_source.get_translation().to_4d(1.0);
+
 
         Environment {
             view,
             proj,
             light_dir,
             camera_pos,
+            light_pos,
 
-            cloud_offset: self.cloud_offset,
+            time: self.time,
+            light_rad: self.light_rad,
+
+            ..Environment::new()
         }
     }
 
@@ -151,6 +153,8 @@ impl Listener for World {
             b'S' => {self.camera.moving_forward(-SPEED);}
             b'A' => {self.camera.moving_rightward(-SPEED);}
             b'D' => {self.camera.moving_rightward(SPEED);}
+            b'O' => {self.light_rad -= 5.0 * self.delta_t.get();}
+            b'P' => {self.light_rad += 5.0 * self.delta_t.get();}
             _ => {}
         }
     }

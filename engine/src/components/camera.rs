@@ -44,6 +44,10 @@ impl Camera {
         self.position.move_forward(distance);
     }
 
+    pub fn move_up(&mut self, distance: f32) {
+        self.position.move_up(distance);
+    }
+
     pub fn pan(&mut self, delta_angle: f32) -> &mut Self {
         self.position.pan(delta_angle);
         self
