@@ -2,7 +2,6 @@ use super::context::Context;
 use super::Device;
 
 use crate::error;
-use crate::graphics::render::shader;
 use crate::util::get_output;
 
 use std::any::{Any, TypeId};
@@ -14,7 +13,6 @@ use winapi::um::d3d11;
 /// Used to communicate a single value with shaders.
 /// Call `set_constant_buffer` on context to use.
 pub struct ConstantBuffer<C: ?Sized> {
-    index: u32,
     buffer: NonNull<d3d11::ID3D11Buffer>,
     _phantom: std::marker::PhantomData<C>,
 }
@@ -25,7 +23,7 @@ unsafe impl<C: ?Sized> Sync for ConstantBuffer<C> where C: Sync {}
 
 impl<C: ?Sized> ConstantBuffer<C> {
     /// Constructs a new ConstantBuffer.
-    pub fn new(device: &Device, index: u32, constant: &mut C) -> error::Result<ConstantBuffer<C>> {
+    pub fn new(device: &Device, constant: &mut C) -> error::Result<ConstantBuffer<C>> {
         unsafe {
             let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
             buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
@@ -43,7 +41,6 @@ impl<C: ?Sized> ConstantBuffer<C> {
             })?;
 
             Ok(ConstantBuffer {
-                index,
                 buffer,
                 _phantom: Default::default(),
             })
@@ -56,8 +53,6 @@ impl<C: ?Sized> ConstantBuffer<C> {
 
     pub fn update(&mut self, context: &Context, constant: &mut C) {
         unsafe {
-            let index = self.index;
-
             context.as_ref().UpdateSubresource(
                 &**self.buffer.as_ref() as *const _ as *mut _,
                 0,
@@ -66,9 +61,6 @@ impl<C: ?Sized> ConstantBuffer<C> {
                 0,
                 0,
             );
-
-            context.set_constant_buffer::<shader::Vertex, _>(index, self);
-            context.set_constant_buffer::<shader::Pixel, _>(index, self);
         }
     }
 }

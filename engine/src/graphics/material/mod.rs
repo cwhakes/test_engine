@@ -11,20 +11,21 @@ pub struct Material {
     pub ps: Shader<shader::Pixel>,
     pub const_buffs : Vec<Option<(ConstantBuffer<dyn Any + Send + Sync>, TypeId)>>,
     pub textures: Vec<Option<Texture>>,
+    pub cull_mode: CullMode,
 }
 
 impl Material {
-    pub fn new(device: &Device, vs: impl AsRef<Path>, ps: impl AsRef<Path>) -> Result<Self> {
+    pub fn new(device: &Device, vs: impl AsRef<Path>, ps: impl AsRef<Path>, cull_mode: CullMode) -> Result<Self> {
 
-        let (vertex_shader, _) = device
-            .new_shader::<shader::Vertex, _>(vs)?;
-        let (pixel_shader, _) = device
-            .new_shader::<shader::Pixel, _>(ps)?;
+        let (vertex_shader, _) = device.new_shader::<shader::Vertex, _>(vs)?;
+        let (pixel_shader, _) = device.new_shader::<shader::Pixel, _>(ps)?;
+
         Ok(Material {
             vs: vertex_shader,
             ps: pixel_shader,
             const_buffs: Vec::new(),
             textures: Vec::new(),
+            cull_mode,
         })
     }
 
@@ -48,15 +49,22 @@ impl Material {
                 let error = &*format!("Type Error: {:?} != {:?}", TypeId::of::<A>(), type_id);
                 return Err(error.into())
             }
-            const_buff.update(render.immediate_context(), data);
+            let context = render.immediate_context();
+            const_buff.update(context, data);
+            //context.set_constant_buffer(idx as u32, &mut const_buff);
             self.const_buffs[idx] = Some((const_buff, type_id))
 
         } else {
-            let const_buff = render.device().new_constant_buffer(idx as u32, data as &mut (dyn Any + Send + Sync))?;
+            let const_buff = render.device().new_constant_buffer(data as &mut (dyn Any + Send + Sync))?;
             let type_id = TypeId::of::<A>();
             self.const_buffs[idx] = Some((const_buff, type_id));
         };
 
         Ok(())
     }
+}
+
+pub enum CullMode {
+    Front,
+    Back,
 }

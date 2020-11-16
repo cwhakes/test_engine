@@ -16,6 +16,8 @@ pub use swapchain::{SwapChain, WindowState};
 pub use vertex_buffer::VertexBuffer;
 
 use crate::error;
+use crate::graphics::resource::Mesh;
+use crate::graphics::material::{CullMode, Material};
 use crate::util::get_output2;
 
 use std::ptr::null_mut;
@@ -91,6 +93,33 @@ impl Render {
 
     pub fn immediate_context(&self) -> &Context {
         &self.context
+    }
+
+    pub fn set_material(&mut self, material: &mut Material) {
+        for (idx, const_buff) in material.const_buffs.iter_mut().enumerate() {
+            if let Some((const_buff, _)) = const_buff {
+                self.context.set_constant_buffer(idx as u32, const_buff);
+            }
+        }
+
+        match material.cull_mode {
+            CullMode::Front => self.set_front_face_culling(),
+            CullMode::Back => self.set_back_face_culling(),
+        };
+
+        self.context.set_shader(&mut material.vs);
+        self.context.set_shader(&mut material.ps);
+        self.context.set_textures::<shader::Pixel>(&mut *material.textures);
+
+    }
+
+    pub fn draw_mesh_and_material(
+        &mut self,
+        mesh: &Mesh,
+        material: &mut Material,
+    ) {
+        self.set_material(material);
+        self.context.draw_mesh(mesh);
     }
 
     pub fn set_front_face_culling(&mut self) {

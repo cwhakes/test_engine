@@ -44,8 +44,9 @@ impl Context {
         }
     }
 
-    pub fn set_constant_buffer<S: ShaderType, C: ?Sized>(&self, index: u32, buffer: &mut ConstantBuffer<C>) {
-        S::set_constant_buffer(self, index, buffer)
+    pub fn set_constant_buffer<C: ?Sized>(&self, index: u32, buffer: &mut ConstantBuffer<C>) {
+        shader::Vertex::set_constant_buffer(self, index, buffer);
+        shader::Pixel::set_constant_buffer(self, index, buffer);
     }
 
     pub fn set_index_buffer(&self, index_buffer: &mut IndexBuffer) {
@@ -78,6 +79,7 @@ impl Context {
     pub fn set_textures<S: ShaderType>(&self, textures: &mut [Option<Texture>]) {
         S::set_textures(self, textures);
     }
+
 
     pub fn draw_triangle_list(&self, vertices_len: usize, vertices_start: usize) {
         unsafe {
@@ -127,6 +129,7 @@ impl Context {
         self.set_index_buffer(&mut mesh.inner().index_buffer);
         self.draw_indexed_triangle_list(mesh.inner().index_buffer.len(), 0, 0);
     }
+
 
     pub fn set_viewport_size(&self, width: f32, height: f32) {
         unsafe {

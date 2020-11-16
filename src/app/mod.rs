@@ -5,10 +5,8 @@ use crate::shaders::point_light::{self, Environment};
 
 use engine::error::Result;
 use engine::graphics::color;
-use engine::graphics::render::shader::{self, Shader};
-use engine::graphics::render::{ConstantBuffer, SwapChain, WindowState};
-use engine::graphics::material::Material;
-use engine::graphics::resource::Texture;
+use engine::graphics::render::{SwapChain, WindowState};
+use engine::graphics::material::{CullMode, Material};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
 use engine::math::{Matrix4x4, Point};
@@ -28,8 +26,7 @@ pub struct AppWindow {
     swapchain: SwapChain,
     window_state: WindowState,
     material: Material,
-    sky_ps: Shader<shader::Pixel>,
-    sky_tex: Option<Texture>,
+    sky_material: Material,
     #[listener]
     variables: World,
 }
@@ -51,24 +48,22 @@ impl Application for AppWindow {
         let mut graphics = GRAPHICS.lock().unwrap();
         let device = &mut graphics.render.device_mut();
         let swapchain = device.new_swapchain(&hwnd).unwrap();
-        let mut material = Material::new(device, point_light::VERTEX_SHADER_PATH, point_light::PIXEL_SHADER_PATH)?;
+
+        let mut material = device.new_material(point_light::VERTEX_SHADER_PATH, point_light::PIXEL_SHADER_PATH, CullMode::Back)?;
+        let mut sky_material = device.new_material(point_light::VERTEX_SHADER_PATH, "shaders\\skybox_shader.hlsl", CullMode::Front)?;
 
         material.set_data(&graphics.render, 0, &mut Environment::default())?;
         material.set_data(&graphics.render, 1, &mut Matrix4x4::default())?;
         material.set_data(&graphics.render, 2, &mut MeshInfo::default())?;
 
-        let device = &mut graphics.render.device_mut();
-
-        let (skybox_shader, _) = device
-            .new_shader::<shader::Pixel, _>("shaders\\skybox_shader.hlsl")?;
+        sky_material.set_data(&graphics.render, 0, &mut Environment::default())?;
+        sky_material.set_data(&graphics.render, 1, &mut Matrix4x4::default())?;
         
         material.add_texture(&graphics.get_texture_from_file("assets\\Textures\\wall.jpg")?);
-
-        let sky_tex = Some(graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
-        let teapot = graphics
-            .get_mesh_from_file("assets\\Meshes\\scene.obj")?;
-        let sky_mesh = graphics
-            .get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
+        sky_material.add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
+        
+        let teapot = graphics.get_mesh_from_file("assets\\Meshes\\scene.obj")?;
+        let sky_mesh = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 
         let mut world = World::new();
         world.add_mesh(
@@ -82,8 +77,7 @@ impl Application for AppWindow {
             swapchain: swapchain,
             window_state: WindowState::default(),
             material,
-            sky_ps: skybox_shader,
-            sky_tex,
+            sky_material,
             variables: world,
         };
 
@@ -103,10 +97,10 @@ impl Application for AppWindow {
         context.set_viewport_size(width as f32, height as f32);
 
         self.variables.update();
-        self.material.set_data(&g.render, 0, &mut self.variables.environment()).unwrap();
+        let mut environment = self.variables.environment();
+        self.material.set_data(&g.render, 0, &mut environment).unwrap();
+        self.sky_material.set_data(&g.render, 0, &mut environment).unwrap();
 
-        g.render.set_back_face_culling();
-        let context = g.render.immediate_context();
         for (pos, mesh) in self.variables.meshes() {
             let mut color = color::WHITE.into();
             let sphere = Sphere::new(pos.get_translation(), 0.5);
@@ -119,15 +113,14 @@ impl Application for AppWindow {
             }).unwrap();
 
             self.material.set_data(&g.render, 1, &mut pos.clone()).unwrap();
+            g.render.set_material(&mut self.material);
 
-            context.draw_mesh_and_texture(&mesh, &mut *self.material.textures, &mut self.material.vs, &mut self.material.ps);
+            g.render.draw_mesh_and_material(&mesh, &mut self.material);
         }
 
         if let Some((pos, mesh)) = self.variables.sky_mesh() {
-            g.render.set_front_face_culling();
-            let context = g.render.immediate_context();
-            self.material.set_data(&g.render, 1, &mut pos.clone()).unwrap();
-            context.draw_mesh_and_texture(&mesh, std::slice::from_mut(&mut self.sky_tex), &mut self.material.vs, &mut self.sky_ps);
+            self.sky_material.set_data(&g.render, 1, &mut pos.clone()).unwrap();
+            g.render.draw_mesh_and_material(&mesh, &mut self.sky_material);
         }
 
         self.swapchain.present(0);

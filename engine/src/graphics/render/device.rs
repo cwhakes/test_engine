@@ -1,6 +1,7 @@
 use crate::prelude::*;
 
 use crate::error;
+use crate::graphics::material::{CullMode, Material};
 use crate::graphics::render::shader::{Blob, Shader, ShaderType};
 use crate::graphics::render::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use crate::graphics::vertex::Vertex;
@@ -44,12 +45,16 @@ impl Device {
         }
     }
 
-    pub fn new_constant_buffer<C: ?Sized>(&self, index: u32, constant: &mut C) -> error::Result<ConstantBuffer<C>> {
-        ConstantBuffer::new(self, index, constant)
+    pub fn new_constant_buffer<C: ?Sized>(&self, constant: &mut C) -> error::Result<ConstantBuffer<C>> {
+        ConstantBuffer::new(self, constant)
     }
 
     pub fn new_index_buffer(&self, indices: &[u32]) -> error::Result<IndexBuffer> {
         IndexBuffer::new(self, indices)
+    }
+
+    pub fn new_material(&self, vs: impl AsRef<Path>, ps: impl AsRef<Path>, cull_mode: CullMode) -> error::Result<Material> {
+        Material::new(self, vs, ps, cull_mode)
     }
 
     pub fn new_shader<T: ShaderType, P: AsRef<Path>>(&self, location: P) -> error::Result<(Shader<T>, Blob)> {
