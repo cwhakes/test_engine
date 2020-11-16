@@ -1,4 +1,5 @@
 pub mod color;
+pub mod material;
 pub mod render;
 pub mod resource;
 pub mod vertex;

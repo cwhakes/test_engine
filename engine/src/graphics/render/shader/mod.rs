@@ -27,9 +27,9 @@ pub trait ShaderType {
     fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<NonNull<Self::ShaderInterface>>;
 
     fn set_shader(context: &Context, shader: &mut Self::ShaderInterface);
-    fn set_textures(context: &Context, textures: &mut [Texture]);
+    fn set_textures(context: &Context, textures: &mut [Option<Texture>]);
 
-    fn set_constant_buffer<C>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>);
+    fn set_constant_buffer<C: ?Sized>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>);
 
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;

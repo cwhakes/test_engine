@@ -57,6 +57,7 @@ impl Default for PlayState {
 }
 
 #[derive(Default, Debug)]
+#[repr(C, align(16))]
 pub struct MeshInfo {
     pub color: Vector3d,
 }
@@ -98,7 +99,6 @@ impl World {
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
         let camera_pos = self.camera.get_location();
         let light_pos = self.light_source.get_translation().to_4d(1.0);
-
 
         Environment {
             view,

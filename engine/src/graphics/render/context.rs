@@ -16,6 +16,7 @@ pub struct Context(NonNull<d3d11::ID3D11DeviceContext>);
 
 // https://docs.microsoft.com/en-us/windows/win32/direct3d11/overviews-direct3d-11-render-multi-thread-intro
 unsafe impl Send for Context {}
+//NOT SYNC
 
 impl Context {
     /// # Safety
@@ -43,7 +44,7 @@ impl Context {
         }
     }
 
-    pub fn set_constant_buffer<S: ShaderType, C>(&self, index: u32, buffer: &mut ConstantBuffer<C>) {
+    pub fn set_constant_buffer<S: ShaderType, C: ?Sized>(&self, index: u32, buffer: &mut ConstantBuffer<C>) {
         S::set_constant_buffer(self, index, buffer)
     }
 
@@ -74,7 +75,7 @@ impl Context {
         S::set_shader(self, shader.as_mut());
     }
 
-    pub fn set_textures<S: ShaderType>(&self, textures: &mut [Texture]) {
+    pub fn set_textures<S: ShaderType>(&self, textures: &mut [Option<Texture>]) {
         S::set_textures(self, textures);
     }
 
@@ -114,7 +115,7 @@ impl Context {
     pub fn draw_mesh_and_texture(
         &self,
         mesh: &Mesh,
-        textures: &mut [Texture],
+        textures: &mut [Option<Texture>],
         vertex_shader: &mut Shader<shader::Vertex>,
         pixel_shader: &mut Shader<shader::Pixel>,
     ) {

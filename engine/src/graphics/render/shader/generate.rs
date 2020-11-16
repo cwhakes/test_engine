@@ -32,12 +32,12 @@ macro_rules! shader_generate {
                 unsafe { context.as_ref().$set_shader(shader, std::ptr::null(), 0) }
             }
 
-            fn set_textures(context: &Context, textures: &mut [crate::graphics::resource::texture::Texture]) {
+            fn set_textures(context: &Context, textures: &mut [Option<crate::graphics::resource::texture::Texture>]) {
                 unsafe {
-                    let texture_pointers: Vec<_> = textures.iter_mut()
+                    let texture_pointers: Vec<_> = textures.iter_mut().flatten()
                         .map(|tex| tex.resource_view_ptr())
                         .collect();
-                    let sampler_pointers: Vec<_> = textures.iter_mut()
+                    let sampler_pointers: Vec<_> = textures.iter_mut().flatten()
                         .map(|tex| tex.sampler_state_ptr())
                         .collect();
                     context.as_ref().$set_shader_resource(0, texture_pointers.len() as u32, texture_pointers.as_ptr());
@@ -45,7 +45,7 @@ macro_rules! shader_generate {
                 }
             }
 
-            fn set_constant_buffer<C>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>) {
+            fn set_constant_buffer<C: ?Sized>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>) {
                 unsafe { context.as_ref().$set_constant_buffer(index, 1, &buffer.buffer_ptr()) }
             }
 

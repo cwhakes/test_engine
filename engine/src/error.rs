@@ -50,6 +50,11 @@ impl From<ParseError> for Error {
     }
 }
 
+impl From<&str> for Error {
+    fn from(text: &str) -> Self {
+        Error::Custom(text.to_owned())
+    }
+}
 
 impl fmt::Debug for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
