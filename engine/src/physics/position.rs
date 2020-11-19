@@ -43,6 +43,10 @@ impl Position {
         self.position.clone()
     }
 
+    pub fn set_matrix(&mut self, matrix: Matrix4x4) {
+        self.position = matrix
+    }
+
     pub fn get_location(&self) -> Vector3d {
         self.position.get_translation()
     }

@@ -1,16 +1,14 @@
 mod world;
 
-use world::{World, MeshInfo, Entity};
-use crate::shaders::point_light::{self, Environment};
+use world::{World, Entity};
+use crate::shaders::point_light;
 
 use engine::error::Result;
 use engine::graphics::color;
 use engine::graphics::render::{SwapChain, WindowState};
-use engine::graphics::material::Material;
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
 use engine::math::{Matrix4x4, Point};
-use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::physics::Position;
 use engine::window::{Application, Hwnd, Window};
 
@@ -26,8 +24,7 @@ pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
     window_state: WindowState,
-    //material: Material,
-    sky_material: Material,
+    //sky_material: Material,
     #[listener]
     variables: World,
 }
@@ -52,13 +49,6 @@ impl Application for AppWindow {
 
         let mut material = device.new_material(point_light::VERTEX_SHADER_PATH, point_light::PIXEL_SHADER_PATH)?;
         let mut sky_material = device.new_material(point_light::VERTEX_SHADER_PATH, "shaders\\skybox_shader.hlsl")?.with_frontface_culling();
-
-        material.set_data(&graphics.render, 0, &mut Environment::default())?;
-        material.set_data(&graphics.render, 1, &mut Matrix4x4::default())?;
-        material.set_data(&graphics.render, 2, &mut MeshInfo::default())?;
-
-        sky_material.set_data(&graphics.render, 0, &mut Environment::default())?;
-        sky_material.set_data(&graphics.render, 1, &mut Matrix4x4::default())?;
         
         material.add_texture(&graphics.get_texture_from_file("assets\\Textures\\wall.jpg")?);
         sky_material.add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
@@ -72,14 +62,18 @@ impl Application for AppWindow {
             material,
             Position::new(Matrix4x4::translation([0.0, 0.0, 0.0])),
         ));
-        world.add_sky_mesh(sky_mesh);
+        world.add_sky_mesh(sky_mesh.clone());
+        world.add_sky_entity(Entity::new(
+            sky_mesh.clone(),
+            sky_material,
+            Position::default(),
+        ));
 
         let mut app_window = AppWindow {
             hwnd,
             swapchain: swapchain,
             window_state: WindowState::default(),
-            //material,
-            sky_material,
+            //sky_material,
             variables: world,
         };
 
@@ -101,17 +95,10 @@ impl Application for AppWindow {
         self.variables.update();
         let mut environment = self.variables.environment();
         self.variables.set_environment_data(&g.render, &mut environment);
-        //self.material.set_data(&g.render, 0, &mut environment).unwrap();
-        self.sky_material.set_data(&g.render, 0, &mut environment).unwrap();
 
         for (mesh, material) in self.variables.meshes_and_materials(&g.render) {
             g.render.set_material(material);
             g.render.draw_mesh_and_material(mesh, material);
-        }
-
-        if let Some((pos, mesh)) = self.variables.sky_mesh() {
-            self.sky_material.set_data(&g.render, 1, &mut pos.clone()).unwrap();
-            g.render.draw_mesh_and_material(&mesh, &mut self.sky_material);
         }
 
         self.swapchain.present(0);

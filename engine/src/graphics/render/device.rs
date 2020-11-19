@@ -1,7 +1,7 @@
 use crate::prelude::*;
 
 use crate::error;
-use crate::graphics::material::{CullMode, Material};
+use crate::graphics::material::Material;
 use crate::graphics::render::shader::{Blob, Shader, ShaderType};
 use crate::graphics::render::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use crate::graphics::vertex::Vertex;

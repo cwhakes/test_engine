@@ -63,7 +63,7 @@ pub struct Shader<T: ShaderType> {
     pub shader: NonNull<T::ShaderInterface>,
 }
 
-//TODO FIXME Verify
+//Should be safe, per here https://www.youtube.com/watch?v=kvuiADqIdck&t=1980
 unsafe impl<T> Send for Shader<T> where T: ShaderType + Send {}
 unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 

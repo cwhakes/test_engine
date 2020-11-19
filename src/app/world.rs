@@ -28,9 +28,9 @@ pub struct World {
 
     time: f32,
 
-    meshes: Vec<(Matrix4x4, Mesh)>,
     entities: Vec<Entity>,
     sky_mesh: Option<Mesh>,
+    sky_entity: Option<Entity>,
 
     light_rad: f32,
 }
@@ -133,6 +133,12 @@ impl World {
                 entity.color = color::RED.into()
             };
         }
+
+        // Update Skysphere
+        if let Some(entity) = self.sky_entity.as_mut() {
+            let position = self.camera.get_skysphere();
+            entity.position.set_matrix(position);
+        }
         
         self.light_source *= Matrix4x4::rotation_y(1.0 * delta_t);
         self.time += delta_t;
@@ -168,25 +174,22 @@ impl World {
         self.screen_height = height as f32;
     }
 
-    pub fn add_mesh(&mut self, position: Matrix4x4, mesh: Mesh) {
-        self.meshes.push((position, mesh))
-    }
-
     pub fn add_entity(&mut self, entity: Entity) {
         self.entities.push(entity)
     }
 
-    pub fn meshes(&self) -> impl Iterator<Item=(Matrix4x4, Mesh)> {
-        self.meshes.clone().into_iter()
-    }
-
     pub fn meshes_and_materials<'a, 'b>(&'a mut self, render: &'b Render) -> impl Iterator<Item = (&'a mut Mesh, &'a mut Material)> {
-        let vec: Vec<_> = self.entities.iter_mut().map(|entity| entity.get_mesh_and_material(render)).collect();
+        let vec: Vec<_> = self.entities.iter_mut()
+            .chain(self.sky_entity.as_mut())
+            .map(|entity| entity.get_mesh_and_material(render))
+            .collect();
         vec.into_iter()
     }
 
     pub fn set_environment_data(&mut self, render: &Render, data: &mut Environment) {
-        for entity in self.entities.iter_mut() {
+        for entity in self.entities.iter_mut()
+            .chain(self.sky_entity.as_mut())
+        {
             entity.material.set_data(render, 0, data).unwrap();
         }
     }
@@ -195,13 +198,8 @@ impl World {
         self.sky_mesh = Some(sky_mesh)
     }
 
-    pub fn sky_mesh(&self) -> Option<(Matrix4x4, Mesh)> {
-        if let Some(mesh) = self.sky_mesh.clone() {
-            Some((
-                self.camera.get_skysphere(),
-                mesh,
-            ))
-        } else { None }
+    pub fn add_sky_entity(&mut self, sky_entity: Entity) {
+        self.sky_entity = Some(sky_entity)
     }
 }
 
