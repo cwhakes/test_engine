@@ -4,9 +4,11 @@ pub mod render;
 pub mod resource;
 pub mod vertex;
 
+use material::Material;
 use render::Render;
 use resource::mesh::{Mesh, MeshManager};
 use resource::texture::{Texture, TextureManager};
+use resource::shader::{Shader, ShaderManager, Vertex, Pixel};
 
 use crate::error;
 
@@ -21,6 +23,8 @@ pub struct Graphics {
     pub render: Render,
     pub mesh_manager: MeshManager,
     pub texture_manager: TextureManager,
+    pub vs_manager: ShaderManager<Vertex>,
+    pub ps_manager: ShaderManager<Pixel>,
 }
 
 impl Graphics {
@@ -29,6 +33,8 @@ impl Graphics {
             render: Render::new()?,
             mesh_manager: MeshManager::new(),
             texture_manager: TextureManager::new(),
+            vs_manager: ShaderManager::new(),
+            ps_manager: ShaderManager::new(),
         })
     }
 
@@ -38,5 +44,17 @@ impl Graphics {
 
     pub fn get_mesh_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Mesh> {
         self.mesh_manager.get_resource_from_file(self.render.device(), path)
+    }
+
+    pub fn get_vertex_shader_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Shader<Vertex>> {
+        self.vs_manager.get_resource_from_file(self.render.device(), path)
+    }
+
+    pub fn get_pixel_shader_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Shader<Pixel>> {
+        self.ps_manager.get_resource_from_file(self.render.device(), path)
+    }
+
+    pub fn new_material(&mut self, vs: impl AsRef<Path>, ps: impl AsRef<Path>) -> error::Result<Material> {
+        Material::new(self, vs, ps)
     }
 }

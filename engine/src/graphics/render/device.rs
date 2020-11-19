@@ -1,14 +1,11 @@
 use crate::prelude::*;
 
 use crate::error;
-use crate::graphics::material::Material;
-use crate::graphics::render::shader::{Blob, Shader, ShaderType};
 use crate::graphics::render::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 use crate::graphics::vertex::Vertex;
 use crate::util::get_output;
 use crate::window::Hwnd;
 
-use std::path::Path;
 use std::ptr::NonNull;
 
 use winapi::um::d3d11sdklayers::{ID3D11Debug, D3D11_RLDO_DETAIL};
@@ -51,14 +48,6 @@ impl Device {
 
     pub fn new_index_buffer(&self, indices: &[u32]) -> error::Result<IndexBuffer> {
         IndexBuffer::new(self, indices)
-    }
-
-    pub fn new_material(&self, vs: impl AsRef<Path>, ps: impl AsRef<Path>) -> error::Result<Material> {
-        Material::new(self, vs, ps)
-    }
-
-    pub fn new_shader<T: ShaderType, P: AsRef<Path>>(&self, location: P) -> error::Result<(Shader<T>, Blob)> {
-        Shader::<T>::new(self, location)
     }
 
     pub fn new_vertex_buffer<V: Vertex>(&self, vertices: &[V], bytecode: &[u8]) -> error::Result<VertexBuffer<V>> {

@@ -1,6 +1,7 @@
 
 use crate::error::Result;
-use crate::graphics::render::{ConstantBuffer, Device, Render};
+use crate::graphics::Graphics;
+use crate::graphics::render::{ConstantBuffer, Render};
 use crate::graphics::resource::shader::{self, Shader};
 use crate::graphics::resource::Texture;
 use std::any::{Any, TypeId};
@@ -14,11 +15,17 @@ pub struct Material {
     pub cull_mode: CullMode,
 }
 
-impl Material {
-    pub fn new(device: &Device, vs: impl AsRef<Path>, ps: impl AsRef<Path>) -> Result<Self> {
+#[derive (Clone, Debug)]
+pub enum CullMode {
+    Front,
+    Back,
+}
 
-        let (vertex_shader, _) = device.new_shader::<shader::Vertex, _>(vs)?;
-        let (pixel_shader, _) = device.new_shader::<shader::Pixel, _>(ps)?;
+impl Material {
+    pub fn new(graphics: &mut Graphics, vs: impl AsRef<Path>, ps: impl AsRef<Path>) -> Result<Self> {
+
+        let vertex_shader = graphics.get_vertex_shader_from_file(vs)?;
+        let pixel_shader = graphics.get_pixel_shader_from_file(ps)?;
 
         Ok(Material {
             vs: vertex_shader,
@@ -69,7 +76,14 @@ impl Material {
     }
 }
 
-pub enum CullMode {
-    Front,
-    Back,
+impl Clone for Material {
+    fn clone(&self) -> Self {
+        Material {
+            vs: self.vs.clone(),
+            ps: self.ps.clone(),
+            const_buffs: Vec::new(),
+            textures: self.textures.clone(),
+            cull_mode: self.cull_mode.clone(),
+        }
+    }
 }

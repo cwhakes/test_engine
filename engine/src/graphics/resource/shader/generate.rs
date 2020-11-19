@@ -10,6 +10,7 @@ macro_rules! shader_generate {
         $entry_point: expr,
         $target: expr
     }) => {
+        #[derive(Clone)]
         pub enum $name {}
 
         impl ShaderType for $name {
@@ -28,8 +29,12 @@ macro_rules! shader_generate {
                 }
             }
 
-            fn set_shader(context: &Context, shader: &mut Self::ShaderInterface) {
-                unsafe { context.as_ref().$set_shader(shader, std::ptr::null(), 0) }
+            fn set_shader(context: &Context, shader: &Self::ShaderInterface) {
+                unsafe {
+                    // Should be safe; see parent. This shouldn't be mutated
+                    let shader = shader as *const _ as *mut _;
+                    context.as_ref().$set_shader(shader, std::ptr::null(), 0)
+                }
             }
 
             fn set_textures(context: &Context, textures: &mut [Option<crate::graphics::resource::texture::Texture>]) {

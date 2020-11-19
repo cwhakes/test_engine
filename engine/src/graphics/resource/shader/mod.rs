@@ -4,6 +4,8 @@ mod generate;
 mod blob;
 pub use blob::Blob;
 
+use super::{Resource, ResourceManager};
+
 use crate::prelude::*;
 use crate::error;
 use crate::graphics::render::{ConstantBuffer, Context, Device};
@@ -13,6 +15,7 @@ use crate::util::get_output;
 use std::ffi::CString;
 use std::path::Path;
 use std::ptr::{null, null_mut, NonNull};
+use std::sync::Arc;
 use std::{convert, fs, ops};
 
 use winapi::um::d3dcompiler;
@@ -26,13 +29,36 @@ pub trait ShaderType {
 
     fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<NonNull<Self::ShaderInterface>>;
 
-    fn set_shader(context: &Context, shader: &mut Self::ShaderInterface);
+    fn set_shader(context: &Context, shader: &Self::ShaderInterface);
     fn set_textures(context: &Context, textures: &mut [Option<Texture>]);
 
     fn set_constant_buffer<C: ?Sized>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>);
 
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;
+}
+pub type ShaderManager<T> = ResourceManager<Shader<T>>;
+
+#[derive(Clone)]
+pub struct Shader<T: ShaderType>(Arc<ShaderInner<T>>);
+
+pub struct ShaderInner<T: ShaderType> {
+    pub shader: NonNull<T::ShaderInterface>,
+}
+
+impl<T: ShaderType + Clone> Resource for Shader<T> {
+    fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
+        let (inner, _) = ShaderInner::new(device, path)?;
+        Ok(Shader(Arc::new(inner)))
+    }
+}
+
+impl<T: ShaderType> ops::Deref for Shader<T> {
+    type Target = ShaderInner<T>;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.0
+    }
 }
 
 shader_generate!( unsafe {
@@ -59,36 +85,32 @@ shader_generate!( unsafe {
     "vs_5_0"
 });
 
-pub struct Shader<T: ShaderType> {
-    pub shader: NonNull<T::ShaderInterface>,
-}
-
 //Should be safe, per here https://www.youtube.com/watch?v=kvuiADqIdck&t=1980
-unsafe impl<T> Send for Shader<T> where T: ShaderType + Send {}
-unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
+unsafe impl<T> Send for ShaderInner<T> where T: ShaderType + Send {}
+unsafe impl<T> Sync for ShaderInner<T> where T: ShaderType + Sync {}
 
-impl<T: ShaderType> Shader<T> {
-    pub fn new(device: &Device, location: impl AsRef<Path>) -> error::Result<(Shader<T>, Blob)> {
+impl<T: ShaderType> ShaderInner<T> {
+    pub fn new(device: &Device, location: impl AsRef<Path>) -> error::Result<(ShaderInner<T>, Blob)> {
         let bytecode = compile_shader_from_location(location, T::ENTRY_POINT, T::TARGET)?;
         let shader = T::create_shader(device, &*bytecode)?;
 
-        Ok((Shader { shader }, bytecode))
+        Ok((ShaderInner { shader }, bytecode))
     }
 }
 
-impl<T: ShaderType> convert::AsRef<T::ShaderInterface> for Shader<T> {
+impl<T: ShaderType> convert::AsRef<T::ShaderInterface> for ShaderInner<T> {
     fn as_ref(&self) -> &T::ShaderInterface {
         unsafe { self.shader.as_ref() }
     }
 }
 
-impl<T: ShaderType> convert::AsMut<T::ShaderInterface> for Shader<T> {
+impl<T: ShaderType> convert::AsMut<T::ShaderInterface> for ShaderInner<T> {
     fn as_mut(&mut self) -> &mut T::ShaderInterface {
         unsafe { self.shader.as_mut() }
     }
 }
 
-impl<T: ShaderType> ops::Drop for Shader<T> {
+impl<T: ShaderType> ops::Drop for ShaderInner<T> {
     fn drop(&mut self) {
         unsafe {
             self.shader.as_ref().Release();
@@ -131,3 +153,4 @@ pub fn compile_shader(uncompiled: &[u8], entry_point: &str, target: &str) -> err
             .or_else(|_| Err(Blob::new(err_blob)?.into()))
     }
 }
+
