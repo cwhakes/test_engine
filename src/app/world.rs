@@ -29,7 +29,6 @@ pub struct World {
     time: f32,
 
     entities: Vec<Entity>,
-    sky_mesh: Option<Mesh>,
     sky_entity: Option<Entity>,
 
     light_rad: f32,
@@ -68,6 +67,7 @@ pub struct MeshInfo {
     pub color: Vector3d,
 }
 
+#[derive(Clone)]
 pub struct Entity {
     pub mesh: Mesh,
     pub material: Material,
@@ -192,10 +192,6 @@ impl World {
         {
             entity.material.set_data(render, 0, data).unwrap();
         }
-    }
-
-    pub fn add_sky_mesh(&mut self, sky_mesh: Mesh) {
-        self.sky_mesh = Some(sky_mesh)
     }
 
     pub fn add_sky_entity(&mut self, sky_entity: Entity) {

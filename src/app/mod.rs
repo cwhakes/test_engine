@@ -24,7 +24,6 @@ pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
     window_state: WindowState,
-    //sky_material: Material,
     #[listener]
     variables: World,
 }
@@ -47,22 +46,42 @@ impl Application for AppWindow {
         let device = &mut graphics.render.device_mut();
         let swapchain = device.new_swapchain(&hwnd).unwrap();
 
-        let mut material = graphics.new_material(point_light::VERTEX_SHADER_PATH, point_light::PIXEL_SHADER_PATH)?;
+        let mut world = World::new();
+
+        let material = graphics.new_material(point_light::VERTEX_SHADER_PATH, point_light::PIXEL_SHADER_PATH)?;
+        
+        let sphere = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
+        let torus = graphics.get_mesh_from_file("assets\\Meshes\\torus.obj")?;
+        let suzanne = graphics.get_mesh_from_file("assets\\Meshes\\suzanne.obj")?;
+        let plane = graphics.get_mesh_from_file("assets\\Meshes\\plane2.obj")?;
+        
+        let mut stone = material.clone();
+        stone.add_texture(&graphics.get_texture_from_file("assets\\Textures\\wall.jpg")?);
+        let mut brick = material.clone();
+        brick.add_texture(&graphics.get_texture_from_file("assets\\Textures\\brick.png")?);
+        let mut earth = material.clone();
+        earth.add_texture(&graphics.get_texture_from_file("assets\\Textures\\earth_color.jpg")?);
+
+        let mut entity_0 = Entity::new(sphere, stone.clone(), Position::new(Matrix4x4::translation([0.0, 2.0, 0.0])));
+        let mut entity_1 = Entity::new(torus, brick, Position::new(Matrix4x4::translation([5.0, 2.0, 0.0])));
+        let mut entity_2 = Entity::new(suzanne, earth, Position::new(Matrix4x4::translation([-5.0, 2.0, 0.0])));
+
+        for _ in 0..3 {
+            world.add_entity(entity_0.clone());
+            entity_0.position.move_forward(4.0);
+            world.add_entity(entity_1.clone());
+            entity_1.position.move_forward(4.0);
+            world.add_entity(entity_2.clone());
+            entity_2.position.move_forward(4.0);
+        }
+
+        world.add_entity(Entity::new(plane, stone, Position::default()));
+        
         let mut sky_material = graphics.new_material(point_light::VERTEX_SHADER_PATH, "shaders\\skybox_shader.hlsl")?.with_frontface_culling();
-        
-        material.add_texture(&graphics.get_texture_from_file("assets\\Textures\\wall.jpg")?);
         sky_material.add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
-        
-        let teapot = graphics.get_mesh_from_file("assets\\Meshes\\scene.obj")?;
+
         let sky_mesh = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 
-        let mut world = World::new();
-        world.add_entity(Entity::new(
-            teapot.clone(),
-            material,
-            Position::new(Matrix4x4::translation([0.0, 0.0, 0.0])),
-        ));
-        world.add_sky_mesh(sky_mesh.clone());
         world.add_sky_entity(Entity::new(
             sky_mesh.clone(),
             sky_material,
@@ -73,7 +92,6 @@ impl Application for AppWindow {
             hwnd,
             swapchain: swapchain,
             window_state: WindowState::default(),
-            //sky_material,
             variables: world,
         };
 
