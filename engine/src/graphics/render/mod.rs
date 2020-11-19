@@ -2,7 +2,6 @@ mod constant_buffer;
 mod context;
 mod device;
 mod index_buffer;
-pub mod shader;
 mod raster_state;
 mod swapchain;
 mod vertex_buffer;
@@ -16,7 +15,7 @@ pub use swapchain::{SwapChain, WindowState};
 pub use vertex_buffer::VertexBuffer;
 
 use crate::error;
-use crate::graphics::resource::Mesh;
+use crate::graphics::resource::{Mesh, shader};
 use crate::graphics::material::{CullMode, Material};
 use crate::util::get_output2;
 

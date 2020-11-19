@@ -1,7 +1,7 @@
-use super::{Resource, ResourceManager};
+use super::{Resource, ResourceManager, shader};
 
 use crate::error;
-use crate::graphics::render::{Device, IndexBuffer, shader, VertexBuffer};
+use crate::graphics::render::{Device, IndexBuffer, VertexBuffer};
 use crate::graphics::vertex;
 use crate::math::Vector3d;
 

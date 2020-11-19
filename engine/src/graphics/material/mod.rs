@@ -1,7 +1,7 @@
 
 use crate::error::Result;
 use crate::graphics::render::{ConstantBuffer, Device, Render};
-use crate::graphics::render::shader::{self, Shader};
+use crate::graphics::resource::shader::{self, Shader};
 use crate::graphics::resource::Texture;
 use std::any::{Any, TypeId};
 use std::path::Path;

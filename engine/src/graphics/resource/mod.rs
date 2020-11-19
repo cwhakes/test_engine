@@ -1,5 +1,6 @@
 pub mod manager;
 pub mod mesh;
+pub mod shader;
 pub mod texture;
 
 pub use manager::ResourceManager;
