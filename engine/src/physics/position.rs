@@ -10,8 +10,11 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn new() -> Position {
-        dbg!(Position::default())
+    pub fn new(position: Matrix4x4) -> Self {
+        Position {
+            position,
+            ..Position::default()
+        }
     }
 
     pub fn with_gravity(mut self, gravity: f32) -> Position {

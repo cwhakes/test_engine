@@ -53,8 +53,8 @@ impl Device {
         IndexBuffer::new(self, indices)
     }
 
-    pub fn new_material(&self, vs: impl AsRef<Path>, ps: impl AsRef<Path>, cull_mode: CullMode) -> error::Result<Material> {
-        Material::new(self, vs, ps, cull_mode)
+    pub fn new_material(&self, vs: impl AsRef<Path>, ps: impl AsRef<Path>) -> error::Result<Material> {
+        Material::new(self, vs, ps)
     }
 
     pub fn new_shader<T: ShaderType, P: AsRef<Path>>(&self, location: P) -> error::Result<(Shader<T>, Blob)> {

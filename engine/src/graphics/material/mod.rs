@@ -15,7 +15,7 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn new(device: &Device, vs: impl AsRef<Path>, ps: impl AsRef<Path>, cull_mode: CullMode) -> Result<Self> {
+    pub fn new(device: &Device, vs: impl AsRef<Path>, ps: impl AsRef<Path>) -> Result<Self> {
 
         let (vertex_shader, _) = device.new_shader::<shader::Vertex, _>(vs)?;
         let (pixel_shader, _) = device.new_shader::<shader::Pixel, _>(ps)?;
@@ -25,8 +25,13 @@ impl Material {
             ps: pixel_shader,
             const_buffs: Vec::new(),
             textures: Vec::new(),
-            cull_mode,
+            cull_mode: CullMode::Back,
         })
+    }
+
+    pub fn with_frontface_culling(mut self) -> Self {
+        self.cull_mode = CullMode::Front;
+        self
     }
 
     pub fn add_texture(&mut self, texture: &Texture) -> usize {

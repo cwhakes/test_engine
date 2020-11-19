@@ -1,7 +1,12 @@
 use engine::components::Camera;
+use engine::graphics::color;
+use engine::graphics::material::Material;
+use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
 use engine::math::{Matrix4x4, Point, Vector3d};
+use engine::physics::Position;
+use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::time::DeltaT;
 
 use crate::shaders::point_light::Environment;
@@ -24,6 +29,7 @@ pub struct World {
     time: f32,
 
     meshes: Vec<(Matrix4x4, Mesh)>,
+    entities: Vec<Entity>,
     sky_mesh: Option<Mesh>,
 
     light_rad: f32,
@@ -62,6 +68,38 @@ pub struct MeshInfo {
     pub color: Vector3d,
 }
 
+pub struct Entity {
+    pub mesh: Mesh,
+    pub material: Material,
+
+    pub position: Position,
+    pub color: Vector3d,
+}
+
+impl Entity {
+    pub fn new(mesh: Mesh, material: Material, position: Position) -> Self {
+        Entity {
+            mesh,
+            material,
+            position,
+            color: color::WHITE.into(),
+        }
+    }
+
+    pub fn update(&mut self, delta_t: f32) {
+        self.position.update(delta_t);
+    }
+
+    pub fn get_mesh_and_material<'a, 'b>(&'a mut self, render: &'b Render) -> (&'a mut Mesh, &'a mut Material) {
+        //Datum 1 is position. How to label?
+        self.material.set_data(render, 1, &mut self.position.get_matrix()).unwrap();
+        //Datum 2 is color. Mostly unused
+        self.material.set_data(render, 2, &mut MeshInfo { color: self.color }).unwrap();
+
+        (&mut self.mesh, &mut self.material)
+    }
+}
+
 impl World {
     pub fn new() -> World {
         let mut camera = Camera::default();
@@ -80,13 +118,24 @@ impl World {
     }
 
     pub fn update(&mut self) {
-        self.delta_t.update();
+        let delta_t = self.delta_t.update().get();
+        self.camera.update(delta_t);
+
+        for entity in self.entities.iter_mut() {
+
+            entity.update(delta_t);
+
+            let position = entity.position.get_location();
+
+            entity.color = color::WHITE.into();
+            let sphere = Sphere::new(position, 0.5);
+            if GjkEngine.collision_between(&self.camera, &sphere) {
+                entity.color = color::RED.into()
+            };
+        }
         
-        self.light_source *= Matrix4x4::rotation_y(1.0 * self.delta_t.get());
-        self.time += self.delta_t.get();
-
-        self.camera.update(self.delta_t.get());
-
+        self.light_source *= Matrix4x4::rotation_y(1.0 * delta_t);
+        self.time += delta_t;
     }
 
     pub fn environment(&self) -> Environment {
@@ -123,8 +172,23 @@ impl World {
         self.meshes.push((position, mesh))
     }
 
+    pub fn add_entity(&mut self, entity: Entity) {
+        self.entities.push(entity)
+    }
+
     pub fn meshes(&self) -> impl Iterator<Item=(Matrix4x4, Mesh)> {
         self.meshes.clone().into_iter()
+    }
+
+    pub fn meshes_and_materials<'a, 'b>(&'a mut self, render: &'b Render) -> impl Iterator<Item = (&'a mut Mesh, &'a mut Material)> {
+        let vec: Vec<_> = self.entities.iter_mut().map(|entity| entity.get_mesh_and_material(render)).collect();
+        vec.into_iter()
+    }
+
+    pub fn set_environment_data(&mut self, render: &Render, data: &mut Environment) {
+        for entity in self.entities.iter_mut() {
+            entity.material.set_data(render, 0, data).unwrap();
+        }
     }
 
     pub fn add_sky_mesh(&mut self, sky_mesh: Mesh) {
