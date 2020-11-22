@@ -112,13 +112,24 @@ impl Render {
 
     }
 
-    pub fn draw_mesh_and_material(
+    pub fn draw_mesh_and_materials(
         &mut self,
         mesh: &Mesh,
-        material: &mut Material,
+        materials: &mut [Material],
     ) {
-        self.set_material(material);
-        self.context.draw_mesh(mesh);
+        let mut mesh_inner = mesh.inner();
+        for (index, material_index) in mesh_inner.material_indices.clone().iter().enumerate() {
+            self.set_material(&mut materials[index]);
+
+            self.context.set_vertex_buffer(&mut mesh_inner.vertex_buffer);
+            self.context.set_index_buffer(&mut mesh_inner.index_buffer);
+
+            self.context.draw_indexed_triangle_list(
+                material_index.len,
+                material_index.start_index,
+                0,
+            );
+        }
     }
 
     pub fn set_front_face_culling(&mut self) {

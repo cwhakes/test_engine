@@ -5,12 +5,14 @@ use crate::graphics::render::{Device, IndexBuffer, VertexBuffer};
 use crate::graphics::vertex;
 use crate::math::Vector3d;
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
+use std::mem;
 use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard};
 
-use wavefront_obj::obj;
+use wavefront_obj::{obj, mtl};
 
 pub type MeshManager = ResourceManager<Mesh>;
 
@@ -19,37 +21,80 @@ pub struct Mesh(Arc<Mutex<MeshInner>>);
 
 impl Resource for Mesh {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
-        let mut file = File::open(path.as_ref())?;
         let mut string = String::new();
+
+        let mut file = File::open(path.as_ref())?;
         file.read_to_string(&mut string)?;
-        let obj_set = obj::parse(string)?;
+        let obj_set = obj::parse(&string)?;
+
+        let mut mtl_map = HashMap::new();
+        if let Some(mtl_file) = obj_set.material_library.as_ref() {
+            if let Ok(mtl_set) = load_material(path.as_ref().join(mtl_file)) {
+                for (index, mtl) in mtl_set.materials.iter().enumerate() {
+                    mtl_map.insert(mtl.name.clone(), index);
+                }
+            } else {
+                    println!("Material not found for object: {}", path.as_ref().display());
+            }
+        }
+        let num_mats = mtl_map.len();
+
+        let mut geometries: Vec<_> = obj_set.objects.iter()
+            .flat_map(|object| object.geometry.iter().map(move |geometry| (object, geometry)))
+            .collect();
+        geometries.sort_by_key(|(_, geometry)| {
+            geometry.material_name
+                .as_ref()
+                .and_then(|name| mtl_map.get(name))
+                .unwrap_or(&num_mats)
+        });
 
         let mut vertices = Vec::new();
         let mut indices = Vec::new();
         let mut index = 0;
-        
-        for object in obj_set.objects.iter() {
-            for geometry in object.geometry.iter() {
-                for shape in geometry.shapes.iter() {
-                    match shape.primitive {
-                        obj::Primitive::Triangle(a, b, c) => {
-                            let normal = calc_normal(object, [&a, &b, &c]);
-                            for x in [a, b, c].iter() {
-                                let mut mesh_vertex = MeshVertex::from_index(object, x);
-                                if x.2.is_none() {
-                                    mesh_vertex.2 = normal.clone();
-                                }
-                                vertices.push(mesh_vertex);
-                                indices.push(index as u32);
-                                index += 1;
-                            }
-                        }
-                        _ => {}
-                    }
-                }
+        let mut material_index = MaterialIndex {
+            start_index: 0,
+            len: 0,
+            material_name: geometries[0].1.material_name.clone()
+        };
+        let mut material_indices = Vec::new();
 
+        for (object, geometry) in geometries.iter() {
+            if geometry.material_name != material_index.material_name {
+                material_index.len = index - material_index.start_index;
+
+                let new_material_index = MaterialIndex {
+                    start_index: index,
+                    len: 0,
+                    material_name: geometry.material_name.clone(),
+                };
+
+                material_indices.push(
+                    mem::replace(&mut material_index, new_material_index)
+                );
+            }
+
+            for shape in geometry.shapes.iter() {
+                match shape.primitive {
+                    obj::Primitive::Triangle(a, b, c) => {
+                        let normal = calc_normal(object, [&a, &b, &c]);
+                        for x in [a, b, c].iter() {
+                            let mut mesh_vertex = MeshVertex::from_index(object, x);
+                            if x.2.is_none() {
+                                mesh_vertex.2 = normal.clone();
+                            }
+                            vertices.push(mesh_vertex);
+                            indices.push(index as u32);
+                            index += 1;
+                        }
+                    }
+                    _ => {}
+                }
             }
         }
+        material_index.len = index - material_index.start_index;
+        material_indices.push(dbg!(material_index));
+        println!("{}", indices.len());
 
         if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
 
@@ -62,6 +107,7 @@ impl Resource for Mesh {
             vertex_buffer,
             indices,
             index_buffer,
+            material_indices,
         }))))
     }
 }
@@ -79,6 +125,20 @@ impl PartialEq for Mesh {
 }
 
 impl Eq for Mesh {}
+
+#[derive(Clone, Debug)]
+pub struct MaterialIndex {
+    pub start_index: usize,
+    pub len: usize,
+    pub material_name: Option<String>,
+}
+
+fn load_material<P: AsRef<Path>>(path: P) -> error::Result<mtl::MtlSet> {
+    let mut string = String::new();
+    let mut file = File::open(path)?;
+    file.read_to_string(&mut string)?;
+    Ok(mtl::parse(&string)?)
+}
 
 //needed for custom derive
 use crate::{self as engine};
@@ -116,6 +176,7 @@ pub struct MeshInner {
     pub vertex_buffer: VertexBuffer<MeshVertex>,
     pub indices: Vec<u32>,
     pub index_buffer:  IndexBuffer,
+    pub material_indices: Vec<MaterialIndex>
 }
 
 //TODO Verify

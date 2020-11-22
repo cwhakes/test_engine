@@ -116,7 +116,7 @@ impl Application for AppWindow {
 
         for (mesh, material) in self.variables.meshes_and_materials(&g.render) {
             g.render.set_material(material);
-            g.render.draw_mesh_and_material(mesh, material);
+            g.render.draw_mesh_and_materials(mesh, std::slice::from_mut(material));
         }
 
         self.swapchain.present(0);
