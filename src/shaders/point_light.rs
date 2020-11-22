@@ -20,8 +20,8 @@ pub struct Environment {
 impl Environment {
     pub fn new() -> Self {
         Environment {
-            light_pos: [0.0, 1.0, 0.0, 0.0].into(),
-            light_rad: 4.0,
+            light_pos: [100.0, 100.0, 100.0, 0.0].into(),
+            light_rad: 400.0,
 
             ..Environment::default()
         }

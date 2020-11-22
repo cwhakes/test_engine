@@ -29,12 +29,13 @@ impl Resource for Mesh {
 
         let mut mtl_map = HashMap::new();
         if let Some(mtl_file) = obj_set.material_library.as_ref() {
-            if let Ok(mtl_set) = load_material(path.as_ref().join(mtl_file)) {
+            if let Ok(mtl_set) = load_material(path.as_ref().parent().unwrap().join(mtl_file)) {
                 for (index, mtl) in mtl_set.materials.iter().enumerate() {
                     mtl_map.insert(mtl.name.clone(), index);
                 }
             } else {
                     println!("Material not found for object: {}", path.as_ref().display());
+                    println!("Looked for {}", path.as_ref().parent().unwrap().join(mtl_file).display())
             }
         }
         let num_mats = mtl_map.len();
@@ -93,8 +94,8 @@ impl Resource for Mesh {
             }
         }
         material_index.len = index - material_index.start_index;
-        material_indices.push(dbg!(material_index));
-        println!("{}", indices.len());
+        material_indices.push(material_index);
+        println!("{:#?}", &material_indices);
 
         if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
 

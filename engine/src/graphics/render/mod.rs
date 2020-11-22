@@ -119,7 +119,9 @@ impl Render {
     ) {
         let mut mesh_inner = mesh.inner();
         for (index, material_index) in mesh_inner.material_indices.clone().iter().enumerate() {
-            self.set_material(&mut materials[index]);
+            self.set_material(if let Some (material) = materials.get_mut(index) {
+                material
+            } else { continue; });
 
             self.context.set_vertex_buffer(&mut mesh_inner.vertex_buffer);
             self.context.set_index_buffer(&mut mesh_inner.index_buffer);

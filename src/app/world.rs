@@ -70,17 +70,18 @@ pub struct MeshInfo {
 #[derive(Clone)]
 pub struct Entity {
     pub mesh: Mesh,
-    pub material: Material,
+    pub materials: Vec<Material>,
 
     pub position: Position,
     pub color: Vector3d,
 }
 
 impl Entity {
-    pub fn new(mesh: Mesh, material: Material, position: Position) -> Self {
+    pub fn new(mesh: Mesh, materials: impl IntoIterator<Item=Material>, position: Position) -> Self {
+        let materials: Vec<_> = materials.into_iter().collect();
         Entity {
             mesh,
-            material,
+            materials,
             position,
             color: color::WHITE.into(),
         }
@@ -90,13 +91,16 @@ impl Entity {
         self.position.update(delta_t);
     }
 
-    pub fn get_mesh_and_material<'a, 'b>(&'a mut self, render: &'b Render) -> (&'a mut Mesh, &'a mut Material) {
-        //Datum 1 is position. How to label?
-        self.material.set_data(render, 1, &mut self.position.get_matrix()).unwrap();
-        //Datum 2 is color. Mostly unused
-        self.material.set_data(render, 2, &mut MeshInfo { color: self.color }).unwrap();
+    pub fn get_mesh_and_materials<'a, 'b>(&'a mut self, render: &'b Render) -> (&'a mut Mesh, &'a mut [Material]) {
 
-        (&mut self.mesh, &mut self.material)
+        for material in self.materials.iter_mut() {
+            //Datum 1 is position. How to label?
+            material.set_data(render, 1, &mut self.position.get_matrix()).unwrap();
+            //Datum 2 is color. Mostly unused
+            material.set_data(render, 2, &mut MeshInfo { color: self.color }).unwrap();
+        }
+
+        (&mut self.mesh, &mut self.materials)
     }
 }
 
@@ -106,13 +110,13 @@ impl World {
         camera.move_forward(-2.0);
         camera.move_up(1.0);
         //let light_source = Matrix4x4::rotation_x(-std::f32::consts::PI / 6.0);
-        let light_source = Matrix4x4::translation([0.0, 1.0, 2.0]);
+        let light_source = Matrix4x4::translation([100.0, 100.0, 100.0]);
 
         World {
             scale_cube: 1.0,
             camera,
             light_source,
-            light_rad: 4.0,
+            light_rad: 40000.0,
             ..Default::default()
         }
     }
@@ -140,7 +144,7 @@ impl World {
             entity.position.set_matrix(position);
         }
         
-        self.light_source *= Matrix4x4::rotation_y(1.0 * delta_t);
+        //self.light_source *= Matrix4x4::rotation_y(1.0 * delta_t);
         self.time += delta_t;
     }
 
@@ -178,10 +182,10 @@ impl World {
         self.entities.push(entity)
     }
 
-    pub fn meshes_and_materials<'a, 'b>(&'a mut self, render: &'b Render) -> impl Iterator<Item = (&'a mut Mesh, &'a mut Material)> {
+    pub fn meshes_and_materials<'a, 'b>(&'a mut self, render: &'b Render) -> impl Iterator<Item = (&'a mut Mesh, &'a mut [Material])> {
         let vec: Vec<_> = self.entities.iter_mut()
             .chain(self.sky_entity.as_mut())
-            .map(|entity| entity.get_mesh_and_material(render))
+            .map(|entity| entity.get_mesh_and_materials(render))
             .collect();
         vec.into_iter()
     }
@@ -190,7 +194,9 @@ impl World {
         for entity in self.entities.iter_mut()
             .chain(self.sky_entity.as_mut())
         {
-            entity.material.set_data(render, 0, data).unwrap();
+            for material in entity.materials.iter_mut() {
+                material.set_data(render, 0, data).unwrap();
+            }
         }
     }
 

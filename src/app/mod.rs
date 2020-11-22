@@ -50,32 +50,24 @@ impl Application for AppWindow {
 
         let material = graphics.new_material(point_light::VERTEX_SHADER_PATH, point_light::PIXEL_SHADER_PATH)?;
         
-        let sphere = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
-        let torus = graphics.get_mesh_from_file("assets\\Meshes\\torus.obj")?;
-        let suzanne = graphics.get_mesh_from_file("assets\\Meshes\\suzanne.obj")?;
+        let house = graphics.get_mesh_from_file("assets\\Meshes\\house.obj")?;
         let plane = graphics.get_mesh_from_file("assets\\Meshes\\plane2.obj")?;
         
-        let mut stone = material.clone();
-        stone.add_texture(&graphics.get_texture_from_file("assets\\Textures\\wall.jpg")?);
+        let mut barrel = material.clone();
+        barrel.add_texture(&graphics.get_texture_from_file("assets\\Textures\\barrel.jpg")?);
         let mut brick = material.clone();
-        brick.add_texture(&graphics.get_texture_from_file("assets\\Textures\\brick.png")?);
-        let mut earth = material.clone();
-        earth.add_texture(&graphics.get_texture_from_file("assets\\Textures\\earth_color.jpg")?);
+        brick.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_brick.jpg")?);
+        let mut windows = material.clone();
+        windows.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_windows.jpg")?);
+        let mut wood = material.clone();
+        wood.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_wood.jpg")?);
+        let house_textures = vec![barrel, brick, windows, wood];
 
-        let mut entity_0 = Entity::new(sphere, stone.clone(), Position::new(Matrix4x4::translation([0.0, 2.0, 0.0])));
-        let mut entity_1 = Entity::new(torus, brick, Position::new(Matrix4x4::translation([5.0, 2.0, 0.0])));
-        let mut entity_2 = Entity::new(suzanne, earth, Position::new(Matrix4x4::translation([-5.0, 2.0, 0.0])));
+        let mut sand = material.clone();
+        sand.add_texture(&graphics.get_texture_from_file("assets\\Textures\\sand.jpg")?);
 
-        for _ in 0..3 {
-            world.add_entity(entity_0.clone());
-            entity_0.position.move_forward(4.0);
-            world.add_entity(entity_1.clone());
-            entity_1.position.move_forward(4.0);
-            world.add_entity(entity_2.clone());
-            entity_2.position.move_forward(4.0);
-        }
-
-        world.add_entity(Entity::new(plane, stone, Position::default()));
+        world.add_entity(Entity::new(house, house_textures, Position::new(Matrix4x4::translation([0.0, 0.0, 0.0]))));
+        world.add_entity(Entity::new(plane, Some(sand), Position::default()));
         
         let mut sky_material = graphics.new_material(point_light::VERTEX_SHADER_PATH, "shaders\\skybox_shader.hlsl")?.with_frontface_culling();
         sky_material.add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
@@ -84,7 +76,7 @@ impl Application for AppWindow {
 
         world.add_sky_entity(Entity::new(
             sky_mesh.clone(),
-            sky_material,
+            Some(sky_material),
             Position::default(),
         ));
 
@@ -114,9 +106,8 @@ impl Application for AppWindow {
         let mut environment = self.variables.environment();
         self.variables.set_environment_data(&g.render, &mut environment);
 
-        for (mesh, material) in self.variables.meshes_and_materials(&g.render) {
-            g.render.set_material(material);
-            g.render.draw_mesh_and_materials(mesh, std::slice::from_mut(material));
+        for (mesh, materials) in self.variables.meshes_and_materials(&g.render) {
+            g.render.draw_mesh_and_materials(mesh, materials);
         }
 
         self.swapchain.present(0);
