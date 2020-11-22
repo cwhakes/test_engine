@@ -40,32 +40,52 @@ impl Resource for Mesh {
         }
         let num_mats = mtl_map.len();
 
+        let mut vertices = Vec::new();
+        let mut vertex_finalization = Vec::new();
+        for object in obj_set.objects.iter() {
+            for vertex in object.vertices.iter() {
+                vertices.push(MeshVertex::from_vertex(*vertex));
+                vertex_finalization.push(Finalizer::default())
+            }
+        }
+
         let mut geometries: Vec<_> = obj_set.objects.iter()
-            .flat_map(|object| object.geometry.iter().map(move |geometry| (object, geometry)))
+            //find the object start index
+            .scan(0, |start_index, object| {
+                let old_index = *start_index;
+                *start_index += object.vertices.len();
+                Some((old_index, object))
+            })
+            .flat_map(|object| object.1.geometry.iter().map(move |geometry| (object, geometry)))
             .collect();
+
+        // Sort geometries by material index and them by name if material index does not exist
         geometries.sort_by_key(|(_, geometry)| {
-            geometry.material_name
+            let index = geometry.material_name
                 .as_ref()
                 .and_then(|name| mtl_map.get(name))
-                .unwrap_or(&num_mats)
+                .unwrap_or(&num_mats);
+            (index, geometry.material_name.clone())
         });
 
-        let mut vertices = Vec::new();
+        //let mut vertices = Vec::new();
         let mut indices = Vec::new();
-        let mut index = 0;
+        //let mut index = 0;
         let mut material_index = MaterialIndex {
             start_index: 0,
             len: 0,
-            material_name: geometries[0].1.material_name.clone()
+            material_name: geometries[0].1.material_name.clone(),
         };
         let mut material_indices = Vec::new();
 
-        for (object, geometry) in geometries.iter() {
+        for ((offset, object), geometry) in geometries.iter() {
+            // if material name has changed, that is the end of geometries for that material because they are sorted by material
+            // we can put it into material_indices
             if geometry.material_name != material_index.material_name {
-                material_index.len = index - material_index.start_index;
+                material_index.len = indices.len() - material_index.start_index;
 
                 let new_material_index = MaterialIndex {
-                    start_index: index,
+                    start_index: indices.len(),
                     len: 0,
                     material_name: geometry.material_name.clone(),
                 };
@@ -80,20 +100,48 @@ impl Resource for Mesh {
                     obj::Primitive::Triangle(a, b, c) => {
                         let normal = calc_normal(object, [&a, &b, &c]);
                         for x in [a, b, c].iter() {
-                            let mut mesh_vertex = MeshVertex::from_index(object, x);
-                            if x.2.is_none() {
-                                mesh_vertex.2 = normal.clone();
+                            let finalizer = &mut vertex_finalization[x.0 + offset];
+                            if finalizer.finalized {
+                                if finalizer.i_tex == x.1 && finalizer.i_nor == x.2 {
+                                    indices.push((x.0 + offset) as u32);
+                                } else {
+                                    vertices.push(MeshVertex::from_index(object, x));
+                                    indices.push((vertices.len() - 1) as u32);
+                                }
+                            } else {
+                                let vertex = &mut vertices[x.0 + offset];
+                                if let Some(i_tex) = x.1 {
+                                    *vertex.1 = object.tex_vertices[i_tex].into();
+                                    finalizer.i_tex = Some(i_tex);
+                                } else {
+                                    *vertex.1 = [0.0, 0.0].into();
+                                }
+                                if let Some(i_nor) = x.2 {
+                                    *vertex.2 = object.normals[i_nor].into();
+                                    finalizer.i_nor = Some(i_nor);
+                                } else {
+                                    *vertex.2 = *normal;
+                                }
+                                finalizer.finalized = true;
+                                indices.push((x.0 + offset) as u32);
                             }
-                            vertices.push(mesh_vertex);
-                            indices.push(index as u32);
-                            index += 1;
+
+
+
+                            // let mut mesh_vertex = MeshVertex::from_index(object, x);
+                            // if x.2.is_none() {
+                            //     mesh_vertex.2 = normal.clone();
+                            // }
+                            // vertices.push(mesh_vertex);
+                            // indices.push(index as u32);
+                            // index += 1;
                         }
                     }
                     _ => {}
                 }
             }
         }
-        material_index.len = index - material_index.start_index;
+        material_index.len = indices.len() - material_index.start_index;
         material_indices.push(material_index);
         println!("{:#?}", &material_indices);
 
@@ -126,6 +174,13 @@ impl PartialEq for Mesh {
 }
 
 impl Eq for Mesh {}
+
+#[derive(Default)]
+struct Finalizer {
+    finalized: bool,
+    i_tex: Option<obj::TextureIndex>,
+    i_nor: Option<obj::NormalIndex>,
+}
 
 #[derive(Clone, Debug)]
 pub struct MaterialIndex {
@@ -161,6 +216,13 @@ impl MeshVertex {
             [0.0, 0.0, 0.0].into()
         };
 
+        MeshVertex(position, texture, normal)
+    }
+
+    fn from_vertex(vertex: obj::Vertex) -> MeshVertex {
+        let position = vertex.into();
+        let texture = [0.0, 0.0].into();
+        let normal = [0.0, 0.0, 0.0].into();
         MeshVertex(position, texture, normal)
     }
 }
