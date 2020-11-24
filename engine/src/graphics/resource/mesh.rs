@@ -12,6 +12,7 @@ use std::mem;
 use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard};
 
+use log::warn;
 use wavefront_obj::{obj, mtl};
 
 pub type MeshManager = ResourceManager<Mesh>;
@@ -34,8 +35,8 @@ impl Resource for Mesh {
                     material_map.0.insert(mtl.name.clone(), index);
                 }
             } else {
-                println!("Material not found for object: {}", path.as_ref().display());
-                println!("Looked for {}", path.as_ref().parent().unwrap().join(mtl_file).display())
+                warn!("Material not found for object: {}", path.as_ref().display());
+                warn!("Looked for {}", path.as_ref().parent().unwrap().join(mtl_file).display())
             }
         }
 
@@ -62,7 +63,6 @@ impl Resource for Mesh {
             .objects.iter().flat_map(|object| object.vertices.iter())
             .map(MeshVertex::from_vertex)
             .collect();
-        println!("{}", vertices.len());
         let mut vertex_metadata = vec![VertexMetadata::default(); vertices.len()];
 
         let mut material_id = MaterialId {
@@ -132,8 +132,6 @@ impl Resource for Mesh {
         //We have to put the last material in the indices
         material_id.len = indices.len() - material_id.offset;
         material_ids.push(material_id);
-
-        println!("{}/{}", indices.len(), vertices.len());
 
         if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
 

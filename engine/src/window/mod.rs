@@ -6,6 +6,8 @@ use crate::error::Result;
 use crate::input::INPUT;
 use crate::util::os_vec;
 
+use log::debug;
+
 use std::sync::atomic::{AtomicBool, Ordering, spin_loop_hint};
 use std::sync::Mutex;
 use std::{mem, ptr};
@@ -139,24 +141,24 @@ impl<A: Application> Window<A> {
     {
         match msg {
             winuser::WM_CREATE => {
-                println!("WM_CREATE");
+                debug!("WM_CREATE");
                 let hwnd = Hwnd::new(hwnd);
                 A::on_create(hwnd).unwrap();
                 A::me().running.store(true, Ordering::Relaxed);
                 0
             }
             winuser::WM_SETFOCUS => {
-                println!("WM_SETFOCUS");
+                debug!("WM_SETFOCUS");
                 A::on_focus(&A::me().application);
                 0
             }
             winuser::WM_KILLFOCUS => {
-                println!("WM_KILLFOCUS");
+                debug!("WM_KILLFOCUS");
                 A::on_kill_focus(&A::me().application);
                 0
             }
             winuser::WM_SIZE | winuser::WM_SIZING => {
-                println!("WM_SIZE");
+                debug!("WM_SIZE");
                 let mut guard = match A::me().application.try_lock() {
                     Ok(guard) => guard,
                     Err(std::sync::TryLockError::WouldBlock) => return 0,
@@ -170,7 +172,7 @@ impl<A: Application> Window<A> {
                 0
             }
             winuser::WM_MOVE => {
-                println!("WM_MOVE");
+                debug!("WM_MOVE");
 
                 let mut guard = match A::me().application.try_lock() {
                     Ok(guard) => guard,
@@ -184,7 +186,7 @@ impl<A: Application> Window<A> {
                 0
             }
             winuser::WM_DESTROY => {
-                println!("WM_DESTROY");
+                debug!("WM_DESTROY");
                 A::me().running.store(false, Ordering::Relaxed);
                 if let Some(window) = &mut *A::me().application.lock().unwrap() {
                     window.on_destroy();

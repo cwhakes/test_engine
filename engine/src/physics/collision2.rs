@@ -1,6 +1,8 @@
 use crate::math::Vector3d;
 use crate::physics::simplex::Simplex;
 
+use log::error;
+
 pub trait ConvexCollision: ConvexCollider {
     fn collides_with<T: ConvexCollider>(&self, other: &T) -> bool {
         let initial_dir = Vector3d::RIGHT;
@@ -22,7 +24,7 @@ pub trait ConvexCollision: ConvexCollider {
                 return true;
             }
         }
-        println!("Warning: Infinite loop");
+        error!("Warning: Infinite loop");
         false
     }
 }

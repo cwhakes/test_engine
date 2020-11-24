@@ -11,8 +11,12 @@ mod app;
 mod shaders;
 
 use engine::window::Window;
+use log::info;
 
 fn main() {
+    env_logger::init();
+    info!("Starting up..");
+
     Window::<app::AppWindow>::init();
 
     while app::WINDOW.broadcast() {

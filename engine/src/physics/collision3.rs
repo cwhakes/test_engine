@@ -1,6 +1,8 @@
 use crate::math::Vector3d;
 use crate::physics::simplex::Simplex;
 
+use log::error;
+
 pub trait CollisionEngine {
     type Collider: ?Sized;
     fn collision_between(&self, obj0: &Self::Collider, obj1: &Self::Collider) -> bool;
@@ -31,7 +33,7 @@ impl CollisionEngine for GjkEngine {
                 return true;
             }
         }
-        eprintln!("Warning: Infinite loop");
+        error!("Warning: Infinite loop");
         false
     }
 }

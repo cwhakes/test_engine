@@ -19,6 +19,7 @@ use crate::graphics::resource::{Mesh, shader};
 use crate::graphics::material::{CullMode, Material};
 use crate::util::get_output2;
 
+use log::warn;
 use std::ptr::null_mut;
 use winapi::um::{d3d11, d3dcommon};
 
@@ -124,7 +125,7 @@ impl Render {
                 self.set_material(material);
             } else {
                 // TODO: set default material
-                println!("Missing material for: {:#?}", material_id.name);
+                warn!("Missing material for: {:#?}", material_id.name);
                 continue;
             };
 
