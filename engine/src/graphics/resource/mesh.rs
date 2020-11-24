@@ -1,4 +1,4 @@
-use super::{Resource, ResourceManager, shader};
+use super::{shader, Resource, ResourceManager};
 
 use crate::error;
 use crate::graphics::render::{Device, IndexBuffer, VertexBuffer};
@@ -13,7 +13,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use log::warn;
-use wavefront_obj::{obj, mtl};
+use wavefront_obj::{mtl, obj};
 
 pub type MeshManager = ResourceManager<Mesh>;
 
@@ -22,7 +22,6 @@ pub struct Mesh(Arc<Mutex<MeshInner>>);
 
 impl Resource for Mesh {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
-
         let mut file = File::open(path.as_ref())?;
         let mut string = String::new();
         file.read_to_string(&mut string)?;
@@ -36,19 +35,30 @@ impl Resource for Mesh {
                 }
             } else {
                 warn!("Material not found for object: {}", path.as_ref().display());
-                warn!("Looked for {}", path.as_ref().parent().unwrap().join(mtl_file).display())
+                warn!(
+                    "Looked for {}",
+                    path.as_ref().parent().unwrap().join(mtl_file).display()
+                )
             }
         }
 
         //Put in a vector, because you can't sort an iterator
-        let mut geometries: Vec<_> = obj_set.objects.iter()
+        let mut geometries: Vec<_> = obj_set
+            .objects
+            .iter()
             //find the object start index, used for offsets
             .scan(0, |offset, object| {
                 let old_offset = *offset;
                 *offset += object.vertices.len();
                 Some((old_offset, object))
             })
-            .flat_map(|object| object.1.geometry.iter().map(move |geometry| (object, geometry)))
+            .flat_map(|object| {
+                object
+                    .1
+                    .geometry
+                    .iter()
+                    .map(move |geometry| (object, geometry))
+            })
             .collect();
 
         // Sort geometries by material index and them by name if material index does not exist
@@ -60,7 +70,9 @@ impl Resource for Mesh {
 
         let mut indices = Vec::new();
         let mut vertices: Vec<MeshVertex> = obj_set
-            .objects.iter().flat_map(|object| object.vertices.iter())
+            .objects
+            .iter()
+            .flat_map(|object| object.vertices.iter())
             .map(MeshVertex::from_vertex)
             .collect();
         let mut vertex_metadata = vec![VertexMetadata::default(); vertices.len()];
@@ -86,9 +98,7 @@ impl Resource for Mesh {
                     len: 0,
                 };
 
-                material_ids.push(
-                    mem::replace(&mut material_id, new_material_index)
-                );
+                material_ids.push(mem::replace(&mut material_id, new_material_index));
             }
 
             for shape in geometry.shapes.iter() {
@@ -133,13 +143,19 @@ impl Resource for Mesh {
         material_id.len = indices.len() - material_id.offset;
         material_ids.push(material_id);
 
-        if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
+        if vertices.is_empty() {
+            return Err(error::Custom("Empty Object".to_string()));
+        }
 
-        let vs = shader::compile_shader(include_bytes!("vertex_mesh_layout.hlsl"), "vsmain", "vs_5_0")?;
+        let vs = shader::compile_shader(
+            include_bytes!("vertex_mesh_layout.hlsl"),
+            "vsmain",
+            "vs_5_0",
+        )?;
         let vertex_buffer = device.new_vertex_buffer(&vertices, &vs)?;
         let index_buffer = device.new_index_buffer(&indices)?;
 
-        Ok( Mesh(Arc::new(Mutex::new(MeshInner {
+        Ok(Mesh(Arc::new(Mutex::new(MeshInner {
             vertices,
             vertex_buffer,
             indices,
@@ -156,11 +172,11 @@ fn load_material<P: AsRef<Path>>(path: P) -> error::Result<mtl::MtlSet> {
     Ok(mtl::parse(&string)?)
 }
 
-fn calc_normal(object: &obj::Object, indices: [&obj::VTNIndex;3]) -> vertex::Normal {
+fn calc_normal(object: &obj::Object, indices: [&obj::VTNIndex; 3]) -> vertex::Normal {
     let a: Vector3d = object.vertices[indices[0].0].into();
     let b: Vector3d = object.vertices[indices[1].0].into();
     let c: Vector3d = object.vertices[indices[2].0].into();
-    (b-a).cross(c-a).normalize().into()
+    (b - a).cross(c - a).normalize().into()
 }
 
 impl Mesh {
@@ -234,13 +250,12 @@ impl MeshVertex {
     }
 }
 
-
 pub struct MeshInner {
     pub vertices: Vec<MeshVertex>,
     pub vertex_buffer: VertexBuffer<MeshVertex>,
     pub indices: Vec<u32>,
-    pub index_buffer:  IndexBuffer,
-    pub material_ids: Vec<MaterialId>
+    pub index_buffer: IndexBuffer,
+    pub material_ids: Vec<MaterialId>,
 }
 
 //TODO Verify
@@ -248,7 +263,5 @@ unsafe impl Send for MeshInner {}
 unsafe impl Sync for MeshInner {}
 
 impl Drop for MeshInner {
-    fn drop(&mut self) {
-
-    }
+    fn drop(&mut self) {}
 }

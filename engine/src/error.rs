@@ -2,8 +2,8 @@ use crate::graphics::resource::shader::Blob;
 
 use std::{error, fmt, result};
 
-use std::io;
 use image::error::ImageError;
+use std::io;
 use wavefront_obj::ParseError;
 use winapi::shared::winerror;
 use winapi::um::winnt;
@@ -65,7 +65,11 @@ impl fmt::Debug for Error {
             ImageError(image_err) => write!(f, "Image Error: {:?}", image_err),
             Io(io_err) => write!(f, "Io Error: {:?}", io_err),
             ObjError(obj_err) => write!(f, "Obj Error: {:?}", obj_err),
-            NullPointer(file, line, col) => write!(f, "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}", file, line, col),
+            NullPointer(file, line, col) => write!(
+                f,
+                "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}",
+                file, line, col
+            ),
         }
     }
 }
@@ -79,14 +83,18 @@ impl fmt::Display for Error {
             ImageError(image_err) => write!(f, "Image Error: {}", image_err),
             Io(io_err) => write!(f, "Io Error: {}", io_err),
             ObjError(obj_err) => write!(f, "Obj Error: {:?}", obj_err),
-            NullPointer(file, line, col) => write!(f, "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}", file, line, col),
+            NullPointer(file, line, col) => write!(
+                f,
+                "Null Pointer Encountered\nFile:{}\nLine:{} Column:{}",
+                file, line, col
+            ),
         }
     }
 }
 
-impl error::Error for Error{}
+impl error::Error for Error {}
 
-pub trait HResultToResult{
+pub trait HResultToResult {
     fn result(self) -> Result<Okay>;
 }
 

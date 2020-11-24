@@ -15,12 +15,7 @@ pub struct Vector4d {
 
 impl Vector4d {
     pub fn to_array(&self) -> [f32; 4] {
-        [
-            self.x,
-            self.y,
-            self.z,
-            self.w,
-        ]
+        [self.x, self.y, self.z, self.w]
     }
 
     pub fn to_3d_unchecked(&self) -> Vector3d {
@@ -33,10 +28,14 @@ impl Vector4d {
 
     pub fn cross(v1: &Vector4d, v2: &Vector4d, v3: &Vector4d) -> Vector4d {
         Vector4d {
-            x: v1.y * (v2.z * v3.w - v3.z * v2.w) - v1.z * (v2.y * v3.w - v3.y * v2.w) + v1.w * (v2.y * v3.z - v2.z *v3.y),
-            y: -(v1.x * (v2.z * v3.w - v3.z * v2.w) - v1.z * (v2.x * v3.w - v3.x * v2.w) + v1.w * (v2.x * v3.z - v3.x * v2.z)),
-            z: v1.x * (v2.y * v3.w - v3.y * v2.w) - v1.y * (v2.x *v3.w - v3.x * v2.w) + v1.w * (v2.x * v3.y - v3.x * v2.y),
-            w: -(v1.x * (v2.y * v3.z - v3.y * v2.z) - v1.y * (v2.x * v3.z - v3.x *v2.z) + v1.z * (v2.x * v3.y - v3.x * v2.y)),
+            x: v1.y * (v2.z * v3.w - v3.z * v2.w) - v1.z * (v2.y * v3.w - v3.y * v2.w)
+                + v1.w * (v2.y * v3.z - v2.z * v3.y),
+            y: -(v1.x * (v2.z * v3.w - v3.z * v2.w) - v1.z * (v2.x * v3.w - v3.x * v2.w)
+                + v1.w * (v2.x * v3.z - v3.x * v2.z)),
+            z: v1.x * (v2.y * v3.w - v3.y * v2.w) - v1.y * (v2.x * v3.w - v3.x * v2.w)
+                + v1.w * (v2.x * v3.y - v3.x * v2.y),
+            w: -(v1.x * (v2.y * v3.z - v3.y * v2.z) - v1.y * (v2.x * v3.z - v3.x * v2.z)
+                + v1.z * (v2.x * v3.y - v3.x * v2.y)),
         }
     }
 

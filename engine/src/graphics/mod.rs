@@ -7,8 +7,8 @@ pub mod vertex;
 use material::Material;
 use render::Render;
 use resource::mesh::{Mesh, MeshManager};
+use resource::shader::{Pixel, Shader, ShaderManager, Vertex};
 use resource::texture::{Texture, TextureManager};
-use resource::shader::{Shader, ShaderManager, Vertex, Pixel};
 
 use crate::error;
 
@@ -39,22 +39,36 @@ impl Graphics {
     }
 
     pub fn get_texture_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Texture> {
-        self.texture_manager.get_resource_from_file(self.render.device(), path)
+        self.texture_manager
+            .get_resource_from_file(self.render.device(), path)
     }
 
     pub fn get_mesh_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Mesh> {
-        self.mesh_manager.get_resource_from_file(self.render.device(), path)
+        self.mesh_manager
+            .get_resource_from_file(self.render.device(), path)
     }
 
-    pub fn get_vertex_shader_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Shader<Vertex>> {
-        self.vs_manager.get_resource_from_file(self.render.device(), path)
+    pub fn get_vertex_shader_from_file(
+        &mut self,
+        path: impl AsRef<Path>,
+    ) -> error::Result<Shader<Vertex>> {
+        self.vs_manager
+            .get_resource_from_file(self.render.device(), path)
     }
 
-    pub fn get_pixel_shader_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Shader<Pixel>> {
-        self.ps_manager.get_resource_from_file(self.render.device(), path)
+    pub fn get_pixel_shader_from_file(
+        &mut self,
+        path: impl AsRef<Path>,
+    ) -> error::Result<Shader<Pixel>> {
+        self.ps_manager
+            .get_resource_from_file(self.render.device(), path)
     }
 
-    pub fn new_material(&mut self, vs: impl AsRef<Path>, ps: impl AsRef<Path>) -> error::Result<Material> {
+    pub fn new_material(
+        &mut self,
+        vs: impl AsRef<Path>,
+        ps: impl AsRef<Path>,
+    ) -> error::Result<Material> {
         Material::new(self, vs, ps)
     }
 }

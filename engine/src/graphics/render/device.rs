@@ -8,9 +8,9 @@ use crate::window::Hwnd;
 
 use std::ptr::NonNull;
 
-use winapi::um::d3d11sdklayers::{ID3D11Debug, D3D11_RLDO_DETAIL};
 use winapi::shared::dxgi;
 use winapi::um::d3d11;
+use winapi::um::d3d11sdklayers::{ID3D11Debug, D3D11_RLDO_DETAIL};
 
 pub struct Device(NonNull<d3d11::ID3D11Device>);
 
@@ -20,7 +20,7 @@ unsafe impl Sync for Device {}
 
 impl Device {
     /// # Safety
-    /// 
+    ///
     /// `device` must point to a valid ID3D11Device
     pub unsafe fn from_nonnull(device: NonNull<d3d11::ID3D11Device>) -> error::Result<Device> {
         Ok(Device(device))
@@ -31,18 +31,25 @@ impl Device {
             let dxgi_device = self.as_ref().query_interface::<dxgi::IDXGIDevice>()?;
             let dxgi_adapter = dxgi_device.as_ref().get_parent::<dxgi::IDXGIAdapter>()?;
             let dxgi_factory = dxgi_adapter.as_ref().get_parent::<dxgi::IDXGIFactory>()?;
-            
+
             let mut desc = SwapChain::get_desc(hwnd);
 
             let swapchain = get_output(|ptr| {
-                dxgi_factory.as_ref().CreateSwapChain(&**self.as_mut() as *const _ as *mut _, &mut desc, ptr)
+                dxgi_factory.as_ref().CreateSwapChain(
+                    &**self.as_mut() as *const _ as *mut _,
+                    &mut desc,
+                    ptr,
+                )
             })?;
 
             SwapChain::new(swapchain, self)
         }
     }
 
-    pub fn new_constant_buffer<C: ?Sized>(&self, constant: &mut C) -> error::Result<ConstantBuffer<C>> {
+    pub fn new_constant_buffer<C: ?Sized>(
+        &self,
+        constant: &mut C,
+    ) -> error::Result<ConstantBuffer<C>> {
         ConstantBuffer::new(self, constant)
     }
 
@@ -50,14 +57,21 @@ impl Device {
         IndexBuffer::new(self, indices)
     }
 
-    pub fn new_vertex_buffer<V: Vertex>(&self, vertices: &[V], bytecode: &[u8]) -> error::Result<VertexBuffer<V>> {
+    pub fn new_vertex_buffer<V: Vertex>(
+        &self,
+        vertices: &[V],
+        bytecode: &[u8],
+    ) -> error::Result<VertexBuffer<V>> {
         VertexBuffer::new(self, vertices, bytecode)
     }
 
     pub fn debug(&self) -> error::Result<()> {
         unsafe {
             let debug = self.as_ref().query_interface::<ID3D11Debug>()?;
-            debug.as_ref().ReportLiveDeviceObjects(D3D11_RLDO_DETAIL).result()?;
+            debug
+                .as_ref()
+                .ReportLiveDeviceObjects(D3D11_RLDO_DETAIL)
+                .result()?;
             Ok(())
         }
     }

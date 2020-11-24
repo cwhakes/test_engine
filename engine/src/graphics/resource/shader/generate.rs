@@ -16,7 +16,10 @@ macro_rules! shader_generate {
         impl ShaderType for $name {
             type ShaderInterface = $interface;
 
-            fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<NonNull<Self::ShaderInterface>> {
+            fn create_shader(
+                device: &Device,
+                bytecode: &[u8],
+            ) -> error::Result<NonNull<Self::ShaderInterface>> {
                 unsafe {
                     get_output(|shader| {
                         device.as_ref().$create_shader(
@@ -37,25 +40,48 @@ macro_rules! shader_generate {
                 }
             }
 
-            fn set_textures(context: &Context, textures: &mut [Option<crate::graphics::resource::texture::Texture>]) {
+            fn set_textures(
+                context: &Context,
+                textures: &mut [Option<crate::graphics::resource::texture::Texture>],
+            ) {
                 unsafe {
-                    let texture_pointers: Vec<_> = textures.iter_mut().flatten()
+                    let texture_pointers: Vec<_> = textures
+                        .iter_mut()
+                        .flatten()
                         .map(|tex| tex.resource_view_ptr())
                         .collect();
-                    let sampler_pointers: Vec<_> = textures.iter_mut().flatten()
+                    let sampler_pointers: Vec<_> = textures
+                        .iter_mut()
+                        .flatten()
                         .map(|tex| tex.sampler_state_ptr())
                         .collect();
-                    context.as_ref().$set_shader_resource(0, texture_pointers.len() as u32, texture_pointers.as_ptr());
-                    context.as_ref().$set_sampler(0, sampler_pointers.len() as u32, sampler_pointers.as_ptr());
+                    context.as_ref().$set_shader_resource(
+                        0,
+                        texture_pointers.len() as u32,
+                        texture_pointers.as_ptr(),
+                    );
+                    context.as_ref().$set_sampler(
+                        0,
+                        sampler_pointers.len() as u32,
+                        sampler_pointers.as_ptr(),
+                    );
                 }
             }
 
-            fn set_constant_buffer<C: ?Sized>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>) {
-                unsafe { context.as_ref().$set_constant_buffer(index, 1, &buffer.buffer_ptr()) }
+            fn set_constant_buffer<C: ?Sized>(
+                context: &Context,
+                index: u32,
+                buffer: &mut ConstantBuffer<C>,
+            ) {
+                unsafe {
+                    context
+                        .as_ref()
+                        .$set_constant_buffer(index, 1, &buffer.buffer_ptr())
+                }
             }
 
             const ENTRY_POINT: &'static str = $entry_point;
             const TARGET: &'static str = $target;
         }
-    }
+    };
 }

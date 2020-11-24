@@ -46,7 +46,9 @@ pub trait PartialMaxMin: Iterator {
         F: FnMut(&Self::Item, &Self::Item) -> Option<Ordering>,
     {
         #[inline]
-        fn fold<T>(mut compare: impl FnMut(&T, &T) -> Option<Ordering>) -> impl FnMut(T, T) -> Option<T> {
+        fn fold<T>(
+            mut compare: impl FnMut(&T, &T) -> Option<Ordering>,
+        ) -> impl FnMut(T, T) -> Option<T> {
             move |x, y| partial_max_by(x, y, &mut compare)
         }
 
@@ -80,7 +82,9 @@ pub trait PartialMaxMin: Iterator {
         F: FnMut(&Self::Item, &Self::Item) -> Option<Ordering>,
     {
         #[inline]
-        fn fold<T>(mut compare: impl FnMut(&T, &T) -> Option<Ordering>) -> impl FnMut(T, T) -> Option<T> {
+        fn fold<T>(
+            mut compare: impl FnMut(&T, &T) -> Option<Ordering>,
+        ) -> impl FnMut(T, T) -> Option<T> {
             move |x, y| partial_min_by(x, y, &mut compare)
         }
 
@@ -90,23 +94,27 @@ pub trait PartialMaxMin: Iterator {
 
 #[inline]
 #[must_use]
-pub fn partial_min_by<T, F: FnOnce(&T, &T) -> Option<Ordering>>(v1: T, v2: T, compare: F) -> Option<T> {
-    compare(&v1, &v2).map(|res| {
-        match res {
-            Ordering::Less | Ordering::Equal => v1,
-            Ordering::Greater => v2,
-        }
+pub fn partial_min_by<T, F: FnOnce(&T, &T) -> Option<Ordering>>(
+    v1: T,
+    v2: T,
+    compare: F,
+) -> Option<T> {
+    compare(&v1, &v2).map(|res| match res {
+        Ordering::Less | Ordering::Equal => v1,
+        Ordering::Greater => v2,
     })
 }
 
 #[inline]
 #[must_use]
-pub fn partial_max_by<T, F: FnOnce(&T, &T) -> Option<Ordering>>(v1: T, v2: T, compare: F) -> Option<T> {
-    compare(&v1, &v2).map(|res| {
-        match res {
-            Ordering::Less | Ordering::Equal => v2,
-            Ordering::Greater => v1,
-        }
+pub fn partial_max_by<T, F: FnOnce(&T, &T) -> Option<Ordering>>(
+    v1: T,
+    v2: T,
+    compare: F,
+) -> Option<T> {
+    compare(&v1, &v2).map(|res| match res {
+        Ordering::Less | Ordering::Equal => v2,
+        Ordering::Greater => v1,
     })
 }
 

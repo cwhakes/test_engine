@@ -36,9 +36,7 @@ impl<C: ?Sized> ConstantBuffer<C> {
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.pSysMem = constant as *const _ as *const c_void;
 
-            let buffer = get_output(|ptr| {
-                device.as_ref().CreateBuffer(&buff_desc, &data, ptr)
-            })?;
+            let buffer = get_output(|ptr| device.as_ref().CreateBuffer(&buff_desc, &data, ptr))?;
 
             Ok(ConstantBuffer {
                 buffer,

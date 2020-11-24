@@ -6,10 +6,10 @@ pub use blob::Blob;
 
 use super::{Resource, ResourceManager};
 
-use crate::prelude::*;
 use crate::error;
 use crate::graphics::render::{ConstantBuffer, Context, Device};
 use crate::graphics::resource::texture::Texture;
+use crate::prelude::*;
 use crate::util::get_output;
 
 use std::ffi::CString;
@@ -18,8 +18,8 @@ use std::ptr::{null, null_mut, NonNull};
 use std::sync::Arc;
 use std::{convert, fs, ops};
 
-use winapi::um::d3dcompiler;
 use winapi::um::d3d11;
+use winapi::um::d3dcompiler;
 
 /// Trait used to define new shaders.
 /// It's a MadLibs trait, use to fill in some functions used throughout the render chain.
@@ -27,12 +27,19 @@ use winapi::um::d3d11;
 pub trait ShaderType {
     type ShaderInterface: ops::Deref<Target = d3d11::ID3D11DeviceChild>;
 
-    fn create_shader(device: &Device, bytecode: &[u8]) -> error::Result<NonNull<Self::ShaderInterface>>;
+    fn create_shader(
+        device: &Device,
+        bytecode: &[u8],
+    ) -> error::Result<NonNull<Self::ShaderInterface>>;
 
     fn set_shader(context: &Context, shader: &Self::ShaderInterface);
     fn set_textures(context: &Context, textures: &mut [Option<Texture>]);
 
-    fn set_constant_buffer<C: ?Sized>(context: &Context, index: u32, buffer: &mut ConstantBuffer<C>);
+    fn set_constant_buffer<C: ?Sized>(
+        context: &Context,
+        index: u32,
+        buffer: &mut ConstantBuffer<C>,
+    );
 
     const ENTRY_POINT: &'static str;
     const TARGET: &'static str;
@@ -90,7 +97,10 @@ unsafe impl<T> Send for ShaderInner<T> where T: ShaderType + Send {}
 unsafe impl<T> Sync for ShaderInner<T> where T: ShaderType + Sync {}
 
 impl<T: ShaderType> ShaderInner<T> {
-    pub fn new(device: &Device, location: impl AsRef<Path>) -> error::Result<(ShaderInner<T>, Blob)> {
+    pub fn new(
+        device: &Device,
+        location: impl AsRef<Path>,
+    ) -> error::Result<(ShaderInner<T>, Blob)> {
         let bytecode = compile_shader_from_location(location, T::ENTRY_POINT, T::TARGET)?;
         let shader = T::create_shader(device, &*bytecode)?;
 
@@ -118,17 +128,20 @@ impl<T: ShaderType> ops::Drop for ShaderInner<T> {
     }
 }
 
-pub fn compile_shader_from_location(location: impl AsRef<Path>, entry_point: &str, target: &str) -> error::Result<Blob> {
+pub fn compile_shader_from_location(
+    location: impl AsRef<Path>,
+    entry_point: &str,
+    target: &str,
+) -> error::Result<Blob> {
     let uncompiled = fs::read(location)?;
     compile_shader(&uncompiled, entry_point, target)
 }
 
 pub fn compile_shader(uncompiled: &[u8], entry_point: &str, target: &str) -> error::Result<Blob> {
     unsafe {
-        let entry_point = CString::new(entry_point)
-            .map_err(|_| error::Custom("Bad Entry Point".to_owned()))?;
-        let target = CString::new(target)
-            .map_err(|_| error::Custom("Bad Target".to_owned()))?;
+        let entry_point =
+            CString::new(entry_point).map_err(|_| error::Custom("Bad Entry Point".to_owned()))?;
+        let target = CString::new(target).map_err(|_| error::Custom("Bad Target".to_owned()))?;
 
         let mut blob = null_mut();
         let mut err_blob = null_mut();
@@ -145,7 +158,8 @@ pub fn compile_shader(uncompiled: &[u8], entry_point: &str, target: &str) -> err
             0,
             &mut blob,
             &mut err_blob,
-        ).result();
+        )
+        .result();
 
         result
             .and(Blob::new(blob))
@@ -153,4 +167,3 @@ pub fn compile_shader(uncompiled: &[u8], entry_point: &str, target: &str) -> err
             .or_else(|_| Err(Blob::new(err_blob)?.into()))
     }
 }
-

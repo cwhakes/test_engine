@@ -1,6 +1,6 @@
-use crate::graphics::render::Device;
-use crate::graphics::vertex::{Vertex, SemanticIndexFix};
 use crate::error;
+use crate::graphics::render::Device;
+use crate::graphics::vertex::{SemanticIndexFix, Vertex};
 use crate::util::get_output;
 
 use std::ptr::NonNull;
@@ -34,13 +34,9 @@ impl<V: Vertex> VertexBuffer<V> {
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.pSysMem = vertices.as_ptr() as *const _;
 
-            let buffer = get_output(|ptr| {
-                device.as_ref().CreateBuffer(&buff_desc, &data, ptr)
-            })?;
-            
-            let layout_desc: Vec<_> = V::desc(0)
-                .semantic_index_fix()
-                .collect();
+            let buffer = get_output(|ptr| device.as_ref().CreateBuffer(&buff_desc, &data, ptr))?;
+
+            let layout_desc: Vec<_> = V::desc(0).semantic_index_fix().collect();
 
             let layout = get_output(|ptr| {
                 device.as_ref().CreateInputLayout(

@@ -12,7 +12,8 @@ pub trait CollidesWith<Oth> {
     fn collides_with(&self, other: &Oth) -> bool;
 }
 
-impl<A,  B> CollidesWith<B> for A where
+impl<A, B> CollidesWith<B> for A
+where
     A: Collision,
     B: Collision,
     <A as Collision>::Collider: CollidesWith2<<B as Collision>::Collider>,
@@ -43,7 +44,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(position: impl Into<Vector3d>, radius: f32 ) -> Sphere {
+    pub fn new(position: impl Into<Vector3d>, radius: f32) -> Sphere {
         Sphere {
             position: position.into(),
             radius,

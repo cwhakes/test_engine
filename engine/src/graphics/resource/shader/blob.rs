@@ -8,7 +8,7 @@ pub struct Blob(NonNull<ID3DBlob>);
 
 impl Blob {
     /// # Safety
-    /// 
+    ///
     /// `blob` must point to a valid ID3DBlob
     pub unsafe fn new(blob: *mut ID3DBlob) -> error::Result<Blob> {
         match NonNull::new(blob) {
@@ -30,7 +30,7 @@ impl fmt::Display for Blob {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let string = String::from_utf8_lossy(&self);
 
-        write!{f, "{}", string}
+        write! {f, "{}", string}
     }
 }
 

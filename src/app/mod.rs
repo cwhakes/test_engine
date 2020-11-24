@@ -1,7 +1,7 @@
 mod world;
 
-use world::{World, Entity};
 use crate::shaders::point_light;
+use world::{Entity, World};
 
 use engine::error::Result;
 use engine::graphics::color;
@@ -48,17 +48,21 @@ impl Application for AppWindow {
 
         let mut world = World::new();
 
-        let material = graphics.new_material(point_light::VERTEX_SHADER_PATH, point_light::PIXEL_SHADER_PATH)?;
-        
+        let material = graphics.new_material(
+            point_light::VERTEX_SHADER_PATH,
+            point_light::PIXEL_SHADER_PATH,
+        )?;
+
         let house = graphics.get_mesh_from_file("assets\\Meshes\\house.obj")?;
         let plane = graphics.get_mesh_from_file("assets\\Meshes\\plane2.obj")?;
-        
+
         let mut barrel = material.clone();
         barrel.add_texture(&graphics.get_texture_from_file("assets\\Textures\\barrel.jpg")?);
         let mut brick = material.clone();
         brick.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_brick.jpg")?);
         let mut windows = material.clone();
-        windows.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_windows.jpg")?);
+        windows
+            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_windows.jpg")?);
         let mut wood = material.clone();
         wood.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_wood.jpg")?);
         let house_textures = vec![barrel, brick, windows, wood];
@@ -66,11 +70,21 @@ impl Application for AppWindow {
         let mut sand = material;
         sand.add_texture(&graphics.get_texture_from_file("assets\\Textures\\sand.jpg")?);
 
-        world.add_entity(Entity::new(house, house_textures, Position::new(Matrix4x4::translation([0.0, 0.0, 0.0]))));
+        world.add_entity(Entity::new(
+            house,
+            house_textures,
+            Position::new(Matrix4x4::translation([0.0, 0.0, 0.0])),
+        ));
         world.add_entity(Entity::new(plane, Some(sand), Position::default()));
-        
-        let mut sky_material = graphics.new_material(point_light::VERTEX_SHADER_PATH, "shaders\\skybox_shader.hlsl")?.with_frontface_culling();
-        sky_material.add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
+
+        let mut sky_material = graphics
+            .new_material(
+                point_light::VERTEX_SHADER_PATH,
+                "shaders\\skybox_shader.hlsl",
+            )?
+            .with_frontface_culling();
+        sky_material
+            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
 
         let sky_mesh = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 
@@ -104,7 +118,8 @@ impl Application for AppWindow {
 
         self.variables.update();
         let mut environment = self.variables.environment();
-        self.variables.set_environment_data(&g.render, &mut environment);
+        self.variables
+            .set_environment_data(&g.render, &mut environment);
 
         for (mesh, materials) in self.variables.meshes_and_materials(&g.render) {
             g.render.draw_mesh_and_materials(mesh, materials);
@@ -118,7 +133,6 @@ impl Application for AppWindow {
     }
 
     fn on_focus(window: &'static Mutex<Option<AppWindow>>) {
-
         INPUT.lock().unwrap().add_listener(window);
     }
 
@@ -140,10 +154,9 @@ impl AppWindow {
             b'F' => {
                 self.window_state.toggle();
                 let state = self.window_state;
-                self.swapchain.set_windowed_state(
-                    GRAPHICS.lock().unwrap().render.device(),
-                    state,
-                ).unwrap();
+                self.swapchain
+                    .set_windowed_state(GRAPHICS.lock().unwrap().render.device(), state)
+                    .unwrap();
             }
             _ => {}
         }

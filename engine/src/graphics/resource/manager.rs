@@ -17,7 +17,11 @@ impl<R: Resource> ResourceManager<R> {
         }
     }
 
-    pub fn get_resource_from_file(&mut self, device: &Device, path: impl AsRef<Path>) -> error::Result<R> {
+    pub fn get_resource_from_file(
+        &mut self,
+        device: &Device,
+        path: impl AsRef<Path>,
+    ) -> error::Result<R> {
         let path = path.as_ref().canonicalize()?;
         if let Some(resource) = self.map.get(&path) {
             Ok(resource.clone())

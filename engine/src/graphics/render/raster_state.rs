@@ -22,9 +22,7 @@ impl RasterState {
             desc.DepthClipEnable = minwindef::FALSE;
             desc.FillMode = d3d11::D3D11_FILL_SOLID;
 
-            get_output(|ptr| {
-                device.as_ref().CreateRasterizerState(&desc, ptr)
-            }).map(RasterState)
+            get_output(|ptr| device.as_ref().CreateRasterizerState(&desc, ptr)).map(RasterState)
         }
     }
 
@@ -35,9 +33,7 @@ impl RasterState {
             desc.DepthClipEnable = minwindef::TRUE;
             desc.FillMode = d3d11::D3D11_FILL_SOLID;
 
-            get_output(|ptr| {
-                device.as_ref().CreateRasterizerState(&desc, ptr)
-            }).map(RasterState)
+            get_output(|ptr| device.as_ref().CreateRasterizerState(&desc, ptr)).map(RasterState)
         }
     }
 }

@@ -19,7 +19,6 @@ pub struct Texture(Arc<TextureInner>);
 
 impl Resource for Texture {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
-        
         unsafe {
             let image = Reader::open(path.as_ref())?.decode()?.to_rgba();
             let mut sample_desc = dxgitype::DXGI_SAMPLE_DESC::default();
@@ -38,19 +37,14 @@ impl Resource for Texture {
             desc.CPUAccessFlags = 0;
             desc.MiscFlags = 0;
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-            data.SysMemPitch = image.sample_layout().height_stride.max(
-                image.sample_layout().width_stride
-            ) as u32;
+            data.SysMemPitch = image
+                .sample_layout()
+                .height_stride
+                .max(image.sample_layout().width_stride) as u32;
             let buffer: Vec<u8> = image.into_raw();
             data.pSysMem = buffer.as_ptr() as *const _;
 
-            let texture = get_output(|ptr| {
-                device.as_ref().CreateTexture2D(
-                    &desc,
-                    &data,
-                    ptr,
-                )
-            })?;
+            let texture = get_output(|ptr| device.as_ref().CreateTexture2D(&desc, &data, ptr))?;
 
             drop(buffer);
 
@@ -62,13 +56,9 @@ impl Resource for Texture {
             sampler_desc.MinLOD = 0.0;
             sampler_desc.MaxLOD = 1.0;
 
-            let sampler_state = get_output(|ptr| {
-                device.as_ref().CreateSamplerState(
-                    &sampler_desc,
-                    ptr,
-                )
-            })?;
-            
+            let sampler_state =
+                get_output(|ptr| device.as_ref().CreateSamplerState(&sampler_desc, ptr))?;
+
             let resource_view = get_output(|ptr| {
                 device.as_ref().CreateShaderResourceView(
                     &**texture.as_ref() as *const d3d11::ID3D11Resource as *mut _,
@@ -77,7 +67,7 @@ impl Resource for Texture {
                 )
             })?;
 
-            Ok( Texture(Arc::new(TextureInner {
+            Ok(Texture(Arc::new(TextureInner {
                 texture,
                 sampler_state,
                 resource_view,
@@ -100,9 +90,7 @@ impl Texture {
 
 impl AsRef<d3d11::ID3D11Texture2D> for Texture {
     fn as_ref(&self) -> &d3d11::ID3D11Texture2D {
-        unsafe {
-            self.0.as_ref().texture.as_ref()
-        }
+        unsafe { self.0.as_ref().texture.as_ref() }
     }
 }
 

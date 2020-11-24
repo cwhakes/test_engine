@@ -28,9 +28,7 @@ impl IndexBuffer {
             let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
             data.pSysMem = indices.as_ptr() as *const _;
 
-            let buffer = get_output(|ptr| {
-                device.as_ref().CreateBuffer(&buff_desc, &data, ptr)
-            })?;
+            let buffer = get_output(|ptr| device.as_ref().CreateBuffer(&buff_desc, &data, ptr))?;
 
             Ok(IndexBuffer {
                 len: indices.len(),

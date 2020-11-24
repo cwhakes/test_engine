@@ -14,7 +14,7 @@ impl Vector2d {
         Vector2d { x, y }
     }
 
-    pub fn lerp(&self, other: impl Into<Vector2d>, delta: f32) -> Vector2d  {
+    pub fn lerp(&self, other: impl Into<Vector2d>, delta: f32) -> Vector2d {
         let other = other.into();
         Vector2d {
             x: self.x * (1.0 - delta) + other.x * delta,
@@ -44,7 +44,7 @@ impl convert::From<obj::TVertex> for Vector2d {
 impl ops::Add<Vector2d> for Vector2d {
     type Output = Vector2d;
 
-    fn add(self, rhs: Vector2d) -> Self::Output{
+    fn add(self, rhs: Vector2d) -> Self::Output {
         Vector2d {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -55,7 +55,7 @@ impl ops::Add<Vector2d> for Vector2d {
 impl ops::Mul<f32> for Vector2d {
     type Output = Vector2d;
 
-    fn mul(self, rhs: f32) -> Self::Output{
+    fn mul(self, rhs: f32) -> Self::Output {
         Vector2d {
             x: self.x * rhs,
             y: self.y * rhs,

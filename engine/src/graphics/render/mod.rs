@@ -15,8 +15,8 @@ pub use swapchain::{SwapChain, WindowState};
 pub use vertex_buffer::VertexBuffer;
 
 use crate::error;
-use crate::graphics::resource::{Mesh, shader};
 use crate::graphics::material::{CullMode, Material};
+use crate::graphics::resource::{shader, Mesh};
 use crate::util::get_output2;
 
 use log::warn;
@@ -37,9 +37,7 @@ const DRIVER_TYPES: [d3dcommon::D3D_DRIVER_TYPE; 3] = [
     d3dcommon::D3D_DRIVER_TYPE_REFERENCE,
 ];
 
-const FEATURE_LEVELS: [d3dcommon::D3D_FEATURE_LEVEL; 1] = [
-    d3dcommon::D3D_FEATURE_LEVEL_11_0
-];
+const FEATURE_LEVELS: [d3dcommon::D3D_FEATURE_LEVEL; 1] = [d3dcommon::D3D_FEATURE_LEVEL_11_0];
 
 impl Render {
     pub fn new() -> error::Result<Render> {
@@ -109,19 +107,14 @@ impl Render {
 
         self.context.set_shader(&mut material.vs);
         self.context.set_shader(&mut material.ps);
-        self.context.set_textures::<shader::Pixel>(&mut *material.textures);
-
+        self.context
+            .set_textures::<shader::Pixel>(&mut *material.textures);
     }
 
-    pub fn draw_mesh_and_materials(
-        &mut self,
-        mesh: &Mesh,
-        materials: &mut [Material],
-    ) {
+    pub fn draw_mesh_and_materials(&mut self, mesh: &Mesh, materials: &mut [Material]) {
         let mut mesh_inner = mesh.inner();
         for material_id in mesh_inner.material_ids.clone().iter() {
-
-            if let Some (material) = materials.get_mut(material_id.id) {
+            if let Some(material) = materials.get_mut(material_id.id) {
                 self.set_material(material);
             } else {
                 // TODO: set default material
@@ -129,14 +122,12 @@ impl Render {
                 continue;
             };
 
-            self.context.set_vertex_buffer(&mut mesh_inner.vertex_buffer);
+            self.context
+                .set_vertex_buffer(&mut mesh_inner.vertex_buffer);
             self.context.set_index_buffer(&mut mesh_inner.index_buffer);
 
-            self.context.draw_indexed_triangle_list(
-                material_id.len,
-                material_id.offset,
-                0,
-            );
+            self.context
+                .draw_indexed_triangle_list(material_id.len, material_id.offset, 0);
         }
     }
 

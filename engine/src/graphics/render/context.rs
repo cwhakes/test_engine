@@ -3,7 +3,7 @@ use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 
 use crate::error;
 use crate::graphics::resource::texture::Texture;
-use crate::graphics::vertex::{Vertex, Color};
+use crate::graphics::vertex::{Color, Vertex};
 
 use std::ptr::NonNull;
 
@@ -19,9 +19,11 @@ unsafe impl Send for Context {}
 
 impl Context {
     /// # Safety
-    /// 
+    ///
     /// `context` must point to a valid ID3D11DeviceContext
-    pub unsafe fn from_nonnull(context: NonNull<d3d11::ID3D11DeviceContext>) -> error::Result<Context> {
+    pub unsafe fn from_nonnull(
+        context: NonNull<d3d11::ID3D11DeviceContext>,
+    ) -> error::Result<Context> {
         Ok(Context(context))
     }
 
@@ -30,14 +32,16 @@ impl Context {
         unsafe {
             if let Some(back_buffer) = swapchain.back_buffer_ptr() {
                 if let Some(depth_buffer) = swapchain.depth_buffer_mut() {
-                    self.as_ref().ClearRenderTargetView(back_buffer, &[color.x, color.y, color.z, 1.0]);
+                    self.as_ref()
+                        .ClearRenderTargetView(back_buffer, &[color.x, color.y, color.z, 1.0]);
                     self.as_ref().ClearDepthStencilView(
                         depth_buffer.as_mut(),
                         d3d11::D3D11_CLEAR_DEPTH | d3d11::D3D11_CLEAR_STENCIL,
                         1.0,
                         0,
                     );
-                    self.as_ref().OMSetRenderTargets(1, &back_buffer, depth_buffer.as_mut());
+                    self.as_ref()
+                        .OMSetRenderTargets(1, &back_buffer, depth_buffer.as_mut());
                 }
             }
         }
@@ -79,7 +83,6 @@ impl Context {
         S::set_textures(self, textures);
     }
 
-
     pub fn draw_triangle_list(&self, vertices_len: usize, vertices_start: usize) {
         unsafe {
             self.as_ref()
@@ -98,12 +101,20 @@ impl Context {
         }
     }
 
-    pub fn draw_indexed_triangle_list(&self, indices_len: usize, indices_start: usize, vertices_offset: isize) {
+    pub fn draw_indexed_triangle_list(
+        &self,
+        indices_len: usize,
+        indices_start: usize,
+        vertices_offset: isize,
+    ) {
         unsafe {
             self.as_ref()
                 .IASetPrimitiveTopology(d3dcommon::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            self.as_ref()
-                .DrawIndexed(indices_len as u32, indices_start as u32, vertices_offset as i32);
+            self.as_ref().DrawIndexed(
+                indices_len as u32,
+                indices_start as u32,
+                vertices_offset as i32,
+            );
         }
     }
 

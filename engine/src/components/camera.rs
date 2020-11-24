@@ -32,12 +32,7 @@ impl Camera {
     }
 
     pub fn get_proj(&self, aspect_ratio: f32) -> Matrix4x4 {
-        Matrix4x4::perspective(
-            self.fov,
-            aspect_ratio,
-            self.front_plate,
-            self.back_plate,
-        )
+        Matrix4x4::perspective(self.fov, aspect_ratio, self.front_plate, self.back_plate)
     }
 
     pub fn move_forward(&mut self, distance: f32) {
@@ -78,7 +73,7 @@ impl Default for Camera {
     fn default() -> Self {
         Camera {
             position: Position::default(),
-            fov: std::f32::consts::PI/4.0,
+            fov: std::f32::consts::PI / 4.0,
             front_plate: 0.01,
             back_plate: 100.0,
         }
@@ -89,9 +84,6 @@ impl InheritedCollider for Camera {
     type Collider = Sphere;
 
     fn collider(&self) -> Sphere {
-        Sphere::new(
-            self.position.get_location(),
-            Self::COLLISION_RADIUS,
-        )
+        Sphere::new(self.position.get_location(), Self::COLLISION_RADIUS)
     }
 }

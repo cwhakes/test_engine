@@ -9,7 +9,7 @@ unsafe impl Sync for Hwnd {}
 
 impl Hwnd {
     /// # Safety
-    /// 
+    ///
     /// `hwnd` must be a valid HWND
     pub unsafe fn new(hwnd: HWND) -> Hwnd {
         Hwnd(hwnd)

@@ -8,32 +8,47 @@ use crate::util::os_vec;
 
 use log::debug;
 
-use std::sync::atomic::{AtomicBool, Ordering, spin_loop_hint};
+use std::sync::atomic::{spin_loop_hint, AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::{mem, ptr};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
-use winapi::shared::windef::HWND;
 use winapi::shared::windef::HBRUSH;
+use winapi::shared::windef::HWND;
 
 use winapi::um::winuser;
-use winapi::um::winuser::{CreateWindowExW, RegisterClassExW, WNDCLASSEXW};
 use winapi::um::winuser::COLOR_WINDOW;
+use winapi::um::winuser::{CreateWindowExW, RegisterClassExW, WNDCLASSEXW};
 use winapi::um::winuser::{DispatchMessageW, PeekMessageW, TranslateMessage};
 use winapi::um::winuser::{ShowWindow, UpdateWindow};
 use winapi::um::winuser::{IDC_ARROW, IDI_APPLICATION};
 use winapi::um::winuser::{WS_EX_OVERLAPPEDWINDOW, WS_OVERLAPPEDWINDOW};
 
 pub trait Application: Send + Sync {
-    fn me() -> &'static Window<Self> where Self: Sized;
+    fn me() -> &'static Window<Self>
+    where
+        Self: Sized;
     fn hwnd(&self) -> &Hwnd;
     fn hwnd_mut(&mut self) -> &mut Hwnd;
 
-    fn on_create(_hwnd: Hwnd) -> Result<()> where Self: Sized {Ok(())}
+    fn on_create(_hwnd: Hwnd) -> Result<()>
+    where
+        Self: Sized,
+    {
+        Ok(())
+    }
     fn on_update(&mut self) {}
     fn on_destroy(&mut self) {}
-    fn on_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
-    fn on_kill_focus(_window: &'static Mutex<Option<Self>>) where Self: Sized {}
+    fn on_focus(_window: &'static Mutex<Option<Self>>)
+    where
+        Self: Sized,
+    {
+    }
+    fn on_kill_focus(_window: &'static Mutex<Option<Self>>)
+    where
+        Self: Sized,
+    {
+    }
     fn on_resize(&mut self) {}
 }
 
@@ -49,11 +64,14 @@ impl<A: Application> Window<A> {
         Window {
             running: AtomicBool::new(false),
             moving: AtomicBool::new(false),
-            application: Mutex::new(None) ,
+            application: Mutex::new(None),
         }
     }
 
-    pub fn init() where A: 'static {
+    pub fn init()
+    where
+        A: 'static,
+    {
         unsafe {
             let class_name = os_vec("MyWindowClass");
             let menu_name = os_vec("");
@@ -119,7 +137,7 @@ impl<A: Application> Window<A> {
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
-            
+
             spin_loop_hint();
 
             self.running.load(Ordering::Relaxed)
@@ -127,9 +145,9 @@ impl<A: Application> Window<A> {
     }
 
     /// Windows Window event Loop
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// Should only ever be called by Windows
     unsafe extern "system" fn window_loop(
         hwnd: HWND,
@@ -137,7 +155,8 @@ impl<A: Application> Window<A> {
         wparam: WPARAM,
         lparam: LPARAM,
     ) -> LRESULT
-        where Self: Sized + 'static
+    where
+        Self: Sized + 'static,
     {
         match msg {
             winuser::WM_CREATE => {

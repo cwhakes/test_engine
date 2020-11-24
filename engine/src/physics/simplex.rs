@@ -1,7 +1,7 @@
 #![allow(clippy::many_single_char_names)]
 
-use crate::prelude::*;
 use crate::math::Vector3d;
+use crate::prelude::*;
 
 use Simplex::*;
 
@@ -46,21 +46,24 @@ impl Simplex {
                 let proj = Vector3d::ORIGIN.projection_along_1d([a, b]);
                 if 0.0 < proj && proj < 1.0 {
                     Some(a.lerp(b, proj))
-                } else { None }
+                } else {
+                    None
+                }
             }
             Triangle([a, b, c]) => {
                 let (u, v) = Vector3d::ORIGIN.projection_along_2d([a, b, c]);
-                if 0.0 < u && u < 1.0 &&
-                    0.0 < v && v < 1.0 &&
-                    u + v < 1.0
-                {
+                if 0.0 < u && u < 1.0 && 0.0 < v && v < 1.0 && u + v < 1.0 {
                     Some(a.lerp(b, u).lerp(c, v))
-                } else { None }
+                } else {
+                    None
+                }
             }
             Tetrahedron(volume) => {
                 if Vector3d::ORIGIN.contained_by_3d(volume) {
                     Some(Vector3d::ORIGIN)
-                } else { None }
+                } else {
+                    None
+                }
             }
         }
     }
@@ -83,7 +86,7 @@ impl Simplex {
             Line(line) => Vector3d::ORIGIN.bounded_by_1d(line),
             Triangle(plane) => Vector3d::ORIGIN.bounded_by_2d(plane),
             Tetrahedron(volume) => Vector3d::ORIGIN.contained_by_3d(volume),
-            _ => false
+            _ => false,
         }
     }
 }
@@ -102,25 +105,25 @@ impl Iterator for SubSimplexes {
             Point([_]) => match self.index {
                 0 => Some(Null([])),
                 _ => None,
-            }
+            },
             Line([a, b]) => match self.index {
                 0 => Some(Point([a])),
                 1 => Some(Point([b])),
                 _ => None,
-            }
-            Triangle([a, b, c]) =>  match self.index {
+            },
+            Triangle([a, b, c]) => match self.index {
                 0 => Some(Line([a, b])),
                 1 => Some(Line([a, c])),
                 2 => Some(Line([b, c])),
                 _ => None,
-            }
-            Tetrahedron([a, b, c, d]) =>  match self.index {
+            },
+            Tetrahedron([a, b, c, d]) => match self.index {
                 0 => Some(Triangle([a, b, c])),
                 1 => Some(Triangle([a, b, d])),
                 2 => Some(Triangle([a, c, d])),
                 3 => Some(Triangle([b, c, d])),
                 _ => None,
-            }
+            },
         };
         self.index += 1;
         simplex

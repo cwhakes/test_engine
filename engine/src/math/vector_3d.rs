@@ -14,10 +14,26 @@ pub struct Vector3d {
 }
 
 impl Vector3d {
-    pub const ORIGIN: Vector3d = Vector3d { x: 0.0, y: 0.0, z: 0.0 };
-    pub const RIGHT: Vector3d = Vector3d { x: 1.0, y: 0.0, z: 0.0 };
-    pub const UP: Vector3d = Vector3d { x: 0.0, y: 0.0, z: 1.0 };
-    pub const FORWARD: Vector3d = Vector3d { x: 0.0, y: 0.0, z: 1.0 };
+    pub const ORIGIN: Vector3d = Vector3d {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    pub const RIGHT: Vector3d = Vector3d {
+        x: 1.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    pub const UP: Vector3d = Vector3d {
+        x: 0.0,
+        y: 0.0,
+        z: 1.0,
+    };
+    pub const FORWARD: Vector3d = Vector3d {
+        x: 0.0,
+        y: 0.0,
+        z: 1.0,
+    };
 
     pub fn new(x: f32, y: f32, z: f32) -> Vector3d {
         Vector3d { x, y, z }
@@ -58,7 +74,7 @@ impl Vector3d {
         *self += new_component;
     }
 
-    pub fn lerp(self, other: impl Into<Vector3d>, delta: f32) -> Vector3d  {
+    pub fn lerp(self, other: impl Into<Vector3d>, delta: f32) -> Vector3d {
         let other = other.into();
         Vector3d {
             x: self.x * (1.0 - delta) + other.x * delta,
@@ -69,9 +85,7 @@ impl Vector3d {
 
     pub fn dot(self, rhs: impl Into<Vector3d>) -> f32 {
         let rhs = rhs.into();
-        self.x * rhs.x +
-            self.y * rhs.y +
-            self.z * rhs.z
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
     pub fn cross(self, rhs: impl Into<Vector3d>) -> Vector3d {
@@ -122,21 +136,27 @@ impl Vector3d {
     }
 
     pub fn bounded_by_1d(self, line: [Vector3d; 2]) -> bool {
-        let area2_of_tri = (self - line[0]).cross(line[1] - line[0]).magnitude_squared();
+        let area2_of_tri = (self - line[0])
+            .cross(line[1] - line[0])
+            .magnitude_squared();
         let proj = self.projection_along_1d(line);
 
-        approx_eq!( f32, 0.0, area2_of_tri ) &&
-            0.0 <= proj && proj <= 1.0
+        approx_eq!(f32, 0.0, area2_of_tri) && 0.0 <= proj && proj <= 1.0
     }
 
     pub fn bounded_by_2d(&self, plane: [Vector3d; 3]) -> bool {
-        let volume_of_cube = (plane[1] - plane[0]).cross(plane[1] - plane[0]).dot(*self - plane[0]).abs();
+        let volume_of_cube = (plane[1] - plane[0])
+            .cross(plane[1] - plane[0])
+            .dot(*self - plane[0])
+            .abs();
         let (u, v) = self.projection_along_2d(plane);
 
-        0.0 <= u && u <= 1.0 &&
-            0.0 <= v && v <= 1.0 &&
-            u + v <= 1.0 &&
-            approx_eq!(f32, 0.0, volume_of_cube)
+        0.0 <= u
+            && u <= 1.0
+            && 0.0 <= v
+            && v <= 1.0
+            && u + v <= 1.0
+            && approx_eq!(f32, 0.0, volume_of_cube)
     }
 
     pub fn contained_by_3d(&self, tetrahedron: [Vector3d; 4]) -> bool {
@@ -149,9 +169,9 @@ impl Vector3d {
 
         //If the signs are the same, all normals are pointing either inwards or outwards
         let sign = (*self - t[0]).dot(p0).signum();
-        0.0 < sign * (*self - t[0]).dot(p1).signum() &&
-        0.0 < sign * (*self - t[0]).dot(p2).signum() &&
-        0.0 < sign * (*self - t[1]).dot(p3).signum()
+        0.0 < sign * (*self - t[0]).dot(p1).signum()
+            && 0.0 < sign * (*self - t[0]).dot(p2).signum()
+            && 0.0 < sign * (*self - t[1]).dot(p3).signum()
     }
 }
 
@@ -263,7 +283,7 @@ mod test {
         let proj = origin.projection_along_1d([p1, p2]);
         let point = p1.lerp(p2.clone(), proj);
         let distance = (point - origin).magnitude();
-        
+
         let same_distance = origin.distance_to_line((p1.clone(), p2.clone()));
 
         assert!((distance - same_distance).abs() < 0.001);
@@ -305,6 +325,6 @@ mod test {
 
         let proj = dbg!(p2.projection_along_1d([origin, p1]));
 
-        assert!( approx_eq!(f32, 0.5, proj));
+        assert!(approx_eq!(f32, 0.5, proj));
     }
 }

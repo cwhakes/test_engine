@@ -3,7 +3,9 @@ extern crate proc_macro;
 use proc_macro2::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::spanned::Spanned;
-use syn::{parse_macro_input, parse_quote, Data, DeriveInput, Field, Fields, GenericParam, Generics};
+use syn::{
+    parse_macro_input, parse_quote, Data, DeriveInput, Field, Fields, GenericParam, Generics,
+};
 
 #[proc_macro_derive(Vertex)]
 pub fn derive_vertex(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -30,7 +32,9 @@ pub fn derive_vertex(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 fn add_trait_bounds(mut generics: Generics) -> Generics {
     for param in &mut generics.params {
         if let GenericParam::Type(ref mut type_param) = *param {
-            type_param.bounds.push(parse_quote!(engine::graphics::vertex::Vertex));
+            type_param
+                .bounds
+                .push(parse_quote!(engine::graphics::vertex::Vertex));
         }
     }
     generics
@@ -38,26 +42,20 @@ fn add_trait_bounds(mut generics: Generics) -> Generics {
 
 fn desc_chain(data: &Data) -> TokenStream {
     match *data {
-        Data::Struct(ref data) => {
-            match data.fields {
-                Fields::Named(ref fields) => {
-                    desc_chain_inner(fields.named.iter())
-                }
-                Fields::Unnamed(ref fields) => {
-                    desc_chain_inner(fields.unnamed.iter())
-                }
-                Fields::Unit => {
-                    quote! {
-                        Box::new(None.into_iter())
-                    }
+        Data::Struct(ref data) => match data.fields {
+            Fields::Named(ref fields) => desc_chain_inner(fields.named.iter()),
+            Fields::Unnamed(ref fields) => desc_chain_inner(fields.unnamed.iter()),
+            Fields::Unit => {
+                quote! {
+                    Box::new(None.into_iter())
                 }
             }
-        }
+        },
         Data::Enum(_) | Data::Union(_) => unimplemented!(),
     }
 }
 
-fn desc_chain_inner<'a>(iter: impl Iterator<Item=&'a Field>) -> TokenStream {
+fn desc_chain_inner<'a>(iter: impl Iterator<Item = &'a Field>) -> TokenStream {
     let recurse = iter.map(|f| {
         let ty = &f.ty;
         quote_spanned! {f.span()=>

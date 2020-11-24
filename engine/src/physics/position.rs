@@ -23,17 +23,15 @@ impl Position {
     }
 
     pub fn update(&mut self, delta_t: f32) -> &mut Self {
-        let delta_x =
-            (self.velocity * delta_t) +
-            (self.accelleration * delta_t.powi(2) / 2.0);
-        let delta_angle =
-            (self.angular_velocity * delta_t) +
-            (self.angular_accelleration * delta_t.powi(2) / 2.0);
+        let delta_x = (self.velocity * delta_t) + (self.accelleration * delta_t.powi(2) / 2.0);
+        let delta_angle = (self.angular_velocity * delta_t)
+            + (self.angular_accelleration * delta_t.powi(2) / 2.0);
 
         self.velocity += self.accelleration * delta_t;
         self.angular_velocity += self.angular_accelleration * delta_t;
 
-        self.position.rotate_in_place(Matrix4x4::rotation_vec(delta_angle));
+        self.position
+            .rotate_in_place(Matrix4x4::rotation_vec(delta_angle));
         self.position.translate(delta_x);
 
         self
@@ -64,18 +62,14 @@ impl Position {
     }
 
     pub fn move_forward(&mut self, distance: f32) -> &mut Self {
-
-        let new_pos = self.position.get_translation()
-            + self.position.get_direction_z() * distance;
+        let new_pos = self.position.get_translation() + self.position.get_direction_z() * distance;
 
         self.position.set_translation(new_pos);
         self
     }
 
     pub fn move_up(&mut self, distance: f32) -> &mut Self {
-
-        let new_pos = self.position.get_translation()
-            + self.position.get_direction_y() * distance;
+        let new_pos = self.position.get_translation() + self.position.get_direction_y() * distance;
 
         self.position.set_translation(new_pos);
         self
@@ -84,16 +78,18 @@ impl Position {
     pub fn pan(&mut self, angle: f32) -> &mut Self {
         let upward_direction: Vector3d = [0.0, 1.0, 0.0].into();
         let delta_angle = upward_direction * angle;
-        
-        self.position.rotate_in_place(Matrix4x4::rotation_vec(delta_angle));
+
+        self.position
+            .rotate_in_place(Matrix4x4::rotation_vec(delta_angle));
 
         self
     }
 
     pub fn tilt(&mut self, angle: f32) -> &mut Self {
         let delta_angle = self.right() * angle;
-        
-        self.position.rotate_in_place(Matrix4x4::rotation_vec(delta_angle));
+
+        self.position
+            .rotate_in_place(Matrix4x4::rotation_vec(delta_angle));
 
         self
     }
@@ -108,7 +104,7 @@ impl Position {
         self
     }
 
-    pub fn set_rightward_velocity(&mut self, new_velocity: f32) -> &mut Self  {
+    pub fn set_rightward_velocity(&mut self, new_velocity: f32) -> &mut Self {
         self.velocity.set_component(self.right() * new_velocity);
         self
     }
@@ -119,7 +115,7 @@ impl Position {
         self
     }
 
-    pub fn set_tilt_velocity(&mut self, new_angular: f32) -> &mut Self  {
+    pub fn set_tilt_velocity(&mut self, new_angular: f32) -> &mut Self {
         self.velocity.set_component(self.right() * new_angular);
         self
     }

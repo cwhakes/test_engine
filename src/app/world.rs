@@ -5,8 +5,8 @@ use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
 use engine::math::{Matrix4x4, Point, Vector3d};
-use engine::physics::Position;
 use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
+use engine::physics::Position;
 use engine::time::DeltaT;
 
 use crate::shaders::point_light::Environment;
@@ -77,7 +77,11 @@ pub struct Entity {
 }
 
 impl Entity {
-    pub fn new(mesh: Mesh, materials: impl IntoIterator<Item=Material>, position: Position) -> Self {
+    pub fn new(
+        mesh: Mesh,
+        materials: impl IntoIterator<Item = Material>,
+        position: Position,
+    ) -> Self {
         let materials: Vec<_> = materials.into_iter().collect();
         Entity {
             mesh,
@@ -91,13 +95,19 @@ impl Entity {
         self.position.update(delta_t);
     }
 
-    pub fn get_mesh_and_materials<'a, 'b>(&'a mut self, render: &'b Render) -> (&'a mut Mesh, &'a mut [Material]) {
-
+    pub fn get_mesh_and_materials<'a, 'b>(
+        &'a mut self,
+        render: &'b Render,
+    ) -> (&'a mut Mesh, &'a mut [Material]) {
         for material in self.materials.iter_mut() {
             //Datum 1 is position. How to label?
-            material.set_data(render, 1, &mut self.position.get_matrix()).unwrap();
+            material
+                .set_data(render, 1, &mut self.position.get_matrix())
+                .unwrap();
             //Datum 2 is color. Mostly unused
-            material.set_data(render, 2, &mut MeshInfo { color: self.color }).unwrap();
+            material
+                .set_data(render, 2, &mut MeshInfo { color: self.color })
+                .unwrap();
         }
 
         (&mut self.mesh, &mut self.materials)
@@ -126,7 +136,6 @@ impl World {
         self.camera.update(delta_t);
 
         for entity in self.entities.iter_mut() {
-
             entity.update(delta_t);
 
             let position = entity.position.get_location();
@@ -143,7 +152,7 @@ impl World {
             let position = self.camera.get_skysphere();
             entity.position.set_matrix(position);
         }
-        
+
         //self.light_source *= Matrix4x4::rotation_y(1.0 * delta_t);
         self.time += delta_t;
     }
@@ -180,8 +189,13 @@ impl World {
         self.entities.push(entity)
     }
 
-    pub fn meshes_and_materials<'a, 'b>(&'a mut self, render: &'b Render) -> impl Iterator<Item = (&'a mut Mesh, &'a mut [Material])> {
-        let vec: Vec<_> = self.entities.iter_mut()
+    pub fn meshes_and_materials<'a, 'b>(
+        &'a mut self,
+        render: &'b Render,
+    ) -> impl Iterator<Item = (&'a mut Mesh, &'a mut [Material])> {
+        let vec: Vec<_> = self
+            .entities
+            .iter_mut()
             .chain(self.sky_entity.as_mut())
             .map(|entity| entity.get_mesh_and_materials(render))
             .collect();
@@ -189,9 +203,7 @@ impl World {
     }
 
     pub fn set_environment_data(&mut self, render: &Render, data: &mut Environment) {
-        for entity in self.entities.iter_mut()
-            .chain(self.sky_entity.as_mut())
-        {
+        for entity in self.entities.iter_mut().chain(self.sky_entity.as_mut()) {
             for material in entity.materials.iter_mut() {
                 material.set_data(render, 0, data).unwrap();
             }
@@ -211,12 +223,24 @@ impl Listener for World {
     fn on_key_down(&mut self, key: usize) {
         let key = key as u8;
         match key {
-            b'W' => {self.camera.moving_forward(SPEED);}
-            b'S' => {self.camera.moving_forward(-SPEED);}
-            b'A' => {self.camera.moving_rightward(-SPEED);}
-            b'D' => {self.camera.moving_rightward(SPEED);}
-            b'O' => {self.light_rad -= 5.0 * self.delta_t.get();}
-            b'P' => {self.light_rad += 5.0 * self.delta_t.get();}
+            b'W' => {
+                self.camera.moving_forward(SPEED);
+            }
+            b'S' => {
+                self.camera.moving_forward(-SPEED);
+            }
+            b'A' => {
+                self.camera.moving_rightward(-SPEED);
+            }
+            b'D' => {
+                self.camera.moving_rightward(SPEED);
+            }
+            b'O' => {
+                self.light_rad -= 5.0 * self.delta_t.get();
+            }
+            b'P' => {
+                self.light_rad += 5.0 * self.delta_t.get();
+            }
             _ => {}
         }
     }
@@ -225,17 +249,18 @@ impl Listener for World {
 
         let key = key as u8;
         match key {
-            b'G' => {self.play_state.toggle();}
+            b'G' => {
+                self.play_state.toggle();
+            }
             _ => {}
         }
     }
     fn on_mouse_move(&mut self, pos: Point) {
         if self.play_state == PlayState::Playing {
-
             let (width, height) = (self.screen_width as i32, self.screen_height as i32);
 
-            self.camera.tilt( (pos.y - height / 2) as f32 * 0.002);
-            self.camera.pan( (pos.x - width / 2) as f32 * 0.002);
+            self.camera.tilt((pos.y - height / 2) as f32 * 0.002);
+            self.camera.pan((pos.x - width / 2) as f32 * 0.002);
 
             input::set_cursor_position((width / 2, height / 2));
         }

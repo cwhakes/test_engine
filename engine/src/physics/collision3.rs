@@ -51,7 +51,7 @@ pub trait GjkCollider {
         let b_x = self.support([1.0, 0.0, 0.0].into()).x;
         let b_y = self.support([0.0, 1.0, 0.0].into()).y;
         let b_z = self.support([0.0, 0.0, 1.0].into()).z;
-        
+
         let a = Vector3d::new(a_x, a_y, a_z);
         let b = Vector3d::new(b_x, b_y, b_z);
 
@@ -65,7 +65,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(position: impl Into<Vector3d>, radius: f32 ) -> Sphere {
+    pub fn new(position: impl Into<Vector3d>, radius: f32) -> Sphere {
         Sphere {
             position: position.into(),
             radius,
@@ -99,7 +99,8 @@ pub trait InheritedCollider {
     fn collider(&self) -> Self::Collider;
 }
 
-impl<T> GjkCollider for T where
+impl<T> GjkCollider for T
+where
     T: InheritedCollider,
 {
     fn support(&self, angle: Vector3d) -> Vector3d {
@@ -117,7 +118,6 @@ mod test {
 
     #[test]
     fn sphere_collision() {
-
         let gjk = GjkEngine;
 
         let s0 = Sphere::new([0.0, 0.0, 0.0], 0.6);
