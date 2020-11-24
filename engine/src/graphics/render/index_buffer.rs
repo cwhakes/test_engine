@@ -42,6 +42,10 @@ impl IndexBuffer {
     pub fn len(&self) -> usize {
         self.len
     }
+
+    pub fn is_empty(&self) -> bool {
+        0 == self.len
+    }
 }
 
 impl AsRef<d3d11::ID3D11Buffer> for IndexBuffer {

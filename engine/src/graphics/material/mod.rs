@@ -47,7 +47,9 @@ impl Material {
     }
 
     pub fn remove_texture(&mut self, idx: usize) {
-        self.textures.get_mut(idx).map(|tex| *tex = None);
+        if let Some(tex) = self.textures.get_mut(idx) {
+            *tex = None;
+        }
     }
 
     pub fn set_data<A: Any + Send + Sync>(&mut self, render: &Render, idx: usize, data: &mut A) -> Result<()> {

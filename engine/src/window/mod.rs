@@ -35,6 +35,7 @@ pub trait Application: Send + Sync {
     fn on_resize(&mut self) {}
 }
 
+#[derive(Default)]
 pub struct Window<A: Application> {
     pub running: AtomicBool,
     pub moving: AtomicBool,
@@ -65,7 +66,7 @@ impl<A: Application> Window<A> {
                 hIcon: winuser::LoadIconW(ptr::null_mut(), IDI_APPLICATION),
                 hIconSm: winuser::LoadIconW(ptr::null_mut(), IDI_APPLICATION),
                 hInstance: ptr::null_mut(),
-                lpszClassName: class_name.clone().as_ptr(),
+                lpszClassName: class_name.as_ptr(),
                 lpszMenuName: menu_name.as_ptr(),
                 style: 0,
                 lpfnWndProc: Some(Self::window_loop),

@@ -21,9 +21,7 @@ impl Resource for Texture {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
         
         unsafe {
-            let foo = Reader::open(path.as_ref())?;
-            let bar = foo.decode()?;
-            let image = bar.to_rgba();
+            let image = Reader::open(path.as_ref())?.decode()?.to_rgba();
             let mut sample_desc = dxgitype::DXGI_SAMPLE_DESC::default();
             sample_desc.Count = 1;
             sample_desc.Quality = 0;

@@ -1,3 +1,5 @@
+#![allow(clippy::many_single_char_names)]
+
 use crate::prelude::*;
 use crate::math::Vector3d;
 
@@ -122,6 +124,12 @@ impl Iterator for SubSimplexes {
         };
         self.index += 1;
         simplex
+    }
+}
+
+impl Default for Simplex {
+    fn default() -> Self {
+        Null([])
     }
 }
 

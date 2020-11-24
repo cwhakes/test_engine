@@ -63,7 +63,7 @@ impl Application for AppWindow {
         wood.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_wood.jpg")?);
         let house_textures = vec![barrel, brick, windows, wood];
 
-        let mut sand = material.clone();
+        let mut sand = material;
         sand.add_texture(&graphics.get_texture_from_file("assets\\Textures\\sand.jpg")?);
 
         world.add_entity(Entity::new(house, house_textures, Position::new(Matrix4x4::translation([0.0, 0.0, 0.0]))));
@@ -75,14 +75,14 @@ impl Application for AppWindow {
         let sky_mesh = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 
         world.add_sky_entity(Entity::new(
-            sky_mesh.clone(),
+            sky_mesh,
             Some(sky_material),
             Position::default(),
         ));
 
         let mut app_window = AppWindow {
             hwnd,
-            swapchain: swapchain,
+            swapchain,
             window_state: WindowState::default(),
             variables: world,
         };
@@ -139,7 +139,7 @@ impl AppWindow {
         match key {
             b'F' => {
                 self.window_state.toggle();
-                let state = self.window_state.clone();
+                let state = self.window_state;
                 self.swapchain.set_windowed_state(
                     GRAPHICS.lock().unwrap().render.device(),
                     state,

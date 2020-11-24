@@ -24,7 +24,7 @@ pub fn derive_listener(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
     let parent = find_parent_fns(&input.attrs);
     let on_key_up_parent = parent.get("on_key_up").map(|stream| {
         quote!{ self.#stream(key); }
-    }).unwrap_or(TokenStream::new());
+    }).unwrap_or_default();
 
     let expanded = quote! {
         impl engine::input::Listener for #name {

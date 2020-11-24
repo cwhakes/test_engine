@@ -16,14 +16,3 @@ pub struct Environment {
     pub light_rad: f32,
     pub time: f32,
 }
-
-impl Environment {
-    pub fn new() -> Self {
-        Environment {
-            light_pos: [100.0, 100.0, 100.0, 0.0].into(),
-            light_rad: 400.0,
-
-            ..Environment::default()
-        }
-    }
-}

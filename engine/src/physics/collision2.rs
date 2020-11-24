@@ -23,7 +23,7 @@ pub trait ConvexCollision: ConvexCollider {
             }
         }
         println!("Warning: Infinite loop");
-        return false;
+        false
     }
 }
 

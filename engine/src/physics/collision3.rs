@@ -32,7 +32,7 @@ impl CollisionEngine for GjkEngine {
             }
         }
         eprintln!("Warning: Infinite loop");
-        return false;
+        false
     }
 }
 

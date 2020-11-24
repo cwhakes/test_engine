@@ -72,6 +72,10 @@ impl<V: Vertex> VertexBuffer<V> {
     pub fn len(&self) -> usize {
         self.len
     }
+
+    pub fn is_empty(&self) -> bool {
+        0 == self.len
+    }
 }
 
 impl<V: Vertex> AsRef<d3d11::ID3D11Buffer> for VertexBuffer<V> {

@@ -168,8 +168,6 @@ impl World {
 
             time: self.time,
             light_rad: self.light_rad,
-
-            ..Environment::new()
         }
     }
 

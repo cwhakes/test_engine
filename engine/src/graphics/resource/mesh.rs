@@ -162,9 +162,8 @@ fn calc_normal(object: &obj::Object, indices: [&obj::VTNIndex;3]) -> vertex::Nor
     let a: Vector3d = object.vertices[indices[0].0].into();
     let b: Vector3d = object.vertices[indices[1].0].into();
     let c: Vector3d = object.vertices[indices[2].0].into();
-    (b-a.clone()).cross(c-a).normalize().into()
+    (b-a).cross(c-a).normalize().into()
 }
-
 
 impl Mesh {
     pub fn inner(&self) -> MutexGuard<MeshInner> {
@@ -202,7 +201,7 @@ impl MaterialMap {
             .and_then(|name| self.0.get(name))
             .cloned()
             //Default ID to number of materials
-            .unwrap_or(self.0.len())
+            .unwrap_or_else(|| self.0.len())
     }
 }
 

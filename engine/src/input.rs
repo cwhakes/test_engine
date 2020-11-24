@@ -77,7 +77,7 @@ pub struct Input {
 
 impl Input {
     pub fn add_listener(&mut self, listener: &'static Mutex<dyn Listener + Send + Sync>) {
-        let name = listener.lock().unwrap().name().to_string();
+        let name = listener.lock().unwrap().name();
         self.hashmap.insert(name, listener);
     }
 

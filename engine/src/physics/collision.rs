@@ -31,7 +31,7 @@ pub trait CollidesWith2<T> {
 
 impl CollidesWith2<Sphere> for Sphere {
     fn collides_with(&self, other: &Sphere) -> bool {
-        let mag = (self.position.clone() - other.position.clone()).magnitude();
+        let mag = (self.position - other.position).magnitude();
         mag < (self.radius + other.radius)
     }
 }

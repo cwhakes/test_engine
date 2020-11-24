@@ -24,14 +24,14 @@ impl Position {
 
     pub fn update(&mut self, delta_t: f32) -> &mut Self {
         let delta_x =
-            (self.velocity.clone() * delta_t) +
-            (self.accelleration.clone() * delta_t.powi(2) / 2.0);
+            (self.velocity * delta_t) +
+            (self.accelleration * delta_t.powi(2) / 2.0);
         let delta_angle =
-            (self.angular_velocity.clone() * delta_t) +
-            (self.angular_accelleration.clone() * delta_t.powi(2) / 2.0);
+            (self.angular_velocity * delta_t) +
+            (self.angular_accelleration * delta_t.powi(2) / 2.0);
 
-        self.velocity += self.accelleration.clone() * delta_t;
-        self.angular_velocity += self.angular_accelleration.clone() * delta_t;
+        self.velocity += self.accelleration * delta_t;
+        self.angular_velocity += self.angular_accelleration * delta_t;
 
         self.position.rotate_in_place(Matrix4x4::rotation_vec(delta_angle));
         self.position.translate(delta_x);

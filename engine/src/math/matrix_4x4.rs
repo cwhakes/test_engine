@@ -119,7 +119,7 @@ impl Matrix4x4 {
         };
 
         let cross = angle.cross_matrix();
-        let outer = angle.clone().outer(angle.clone());
+        let outer = angle.outer(angle);
 
         Matrix4x4::scaling(mag.cos()) +
             cross * (mag.sin()) +
@@ -144,7 +144,7 @@ impl Matrix4x4 {
             for j in 0..4 {
                 if j != i {
                     let mut a = j;
-                    if j > i { a = a - 1; }
+                    if j > i { a -= 1; }
                     vec[a].x = self.0[j][0];
                     vec[a].y = self.0[j][1];
                     vec[a].z = self.0[j][2];

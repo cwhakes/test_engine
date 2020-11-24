@@ -5,7 +5,7 @@ use std::convert;
 use wavefront_obj::obj;
 
 #[repr(C)]
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vector4d {
     pub x: f32,
     pub y: f32,

@@ -41,7 +41,7 @@ impl Vector3d {
             x: self.x,
             y: self.y,
             z: self.z,
-            w: w,
+            w,
         }
     }
 
@@ -52,8 +52,8 @@ impl Vector3d {
             return;
         };
 
-        let direction = new_component.clone().normalize();
-        let old_mag = self.clone().dot(direction.clone());
+        let direction = new_component.normalize();
+        let old_mag = self.dot(direction);
         *self -= direction * old_mag;
         *self += new_component;
     }
@@ -102,7 +102,7 @@ impl Vector3d {
 
     pub fn closest_point_on_plane(self, plane: (Vector3d, Vector3d, Vector3d)) -> Vector3d {
         let normal = (plane.1 - plane.0).cross(plane.2 - plane.0).normalize();
-        let distance = (plane.0 - self).dot(normal.clone());
+        let distance = (plane.0 - self).dot(normal);
         let projection = (plane.0 - self) - (normal * distance);
         plane.0 + projection
     }
@@ -141,15 +141,17 @@ impl Vector3d {
 
     pub fn contained_by_3d(&self, tetrahedron: [Vector3d; 4]) -> bool {
         let t = tetrahedron;
+        //Calculate normals
         let p0 = (t[1] - t[0]).cross(t[2] - t[0]);
         let p1 = (t[2] - t[0]).cross(t[3] - t[0]);
         let p2 = (t[3] - t[0]).cross(t[1] - t[0]);
         let p3 = (t[3] - t[1]).cross(t[2] - t[1]);
 
+        //If the signs are the same, all normals are pointing either inwards or outwards
         let sign = (*self - t[0]).dot(p0).signum();
-        sign == (*self - t[0]).dot(p1).signum() &&
-        sign == (*self - t[0]).dot(p2).signum() &&
-        sign == (*self - t[1]).dot(p3).signum()
+        0.0 < sign * (*self - t[0]).dot(p1).signum() &&
+        0.0 < sign * (*self - t[0]).dot(p2).signum() &&
+        0.0 < sign * (*self - t[1]).dot(p3).signum()
     }
 }
 
