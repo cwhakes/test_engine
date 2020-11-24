@@ -21,129 +21,119 @@ pub struct Mesh(Arc<Mutex<MeshInner>>);
 
 impl Resource for Mesh {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
-        let mut string = String::new();
 
         let mut file = File::open(path.as_ref())?;
+        let mut string = String::new();
         file.read_to_string(&mut string)?;
         let obj_set = obj::parse(&string)?;
 
-        let mut mtl_map = HashMap::new();
+        let mut material_map = MaterialMap(HashMap::new());
         if let Some(mtl_file) = obj_set.material_library.as_ref() {
             if let Ok(mtl_set) = load_material(path.as_ref().parent().unwrap().join(mtl_file)) {
                 for (index, mtl) in mtl_set.materials.iter().enumerate() {
-                    mtl_map.insert(mtl.name.clone(), index);
+                    material_map.0.insert(mtl.name.clone(), index);
                 }
             } else {
-                    println!("Material not found for object: {}", path.as_ref().display());
-                    println!("Looked for {}", path.as_ref().parent().unwrap().join(mtl_file).display())
-            }
-        }
-        let num_mats = mtl_map.len();
-
-        let mut vertices = Vec::new();
-        let mut vertex_finalization = Vec::new();
-        for object in obj_set.objects.iter() {
-            for vertex in object.vertices.iter() {
-                vertices.push(MeshVertex::from_vertex(*vertex));
-                vertex_finalization.push(Finalizer::default())
+                println!("Material not found for object: {}", path.as_ref().display());
+                println!("Looked for {}", path.as_ref().parent().unwrap().join(mtl_file).display())
             }
         }
 
+        //Put in a vector, because you can't sort an iterator
         let mut geometries: Vec<_> = obj_set.objects.iter()
-            //find the object start index
-            .scan(0, |start_index, object| {
-                let old_index = *start_index;
-                *start_index += object.vertices.len();
-                Some((old_index, object))
+            //find the object start index, used for offsets
+            .scan(0, |offset, object| {
+                let old_offset = *offset;
+                *offset += object.vertices.len();
+                Some((old_offset, object))
             })
             .flat_map(|object| object.1.geometry.iter().map(move |geometry| (object, geometry)))
             .collect();
 
         // Sort geometries by material index and them by name if material index does not exist
         geometries.sort_by_key(|(_, geometry)| {
-            let index = geometry.material_name
-                .as_ref()
-                .and_then(|name| mtl_map.get(name))
-                .unwrap_or(&num_mats);
-            (index, geometry.material_name.clone())
+            let name = &geometry.material_name;
+            let id = material_map.id_of(name);
+            (id, name)
         });
 
-        //let mut vertices = Vec::new();
         let mut indices = Vec::new();
-        //let mut index = 0;
-        let mut material_index = MaterialIndex {
-            start_index: 0,
+        let mut vertices: Vec<MeshVertex> = obj_set
+            .objects.iter().flat_map(|object| object.vertices.iter())
+            .map(MeshVertex::from_vertex)
+            .collect();
+        println!("{}", vertices.len());
+        let mut vertex_metadata = vec![VertexMetadata::default(); vertices.len()];
+
+        let mut material_id = MaterialId {
+            id: material_map.id_of(&geometries[0].1.material_name),
+            name: geometries[0].1.material_name.clone(),
+            offset: 0,
             len: 0,
-            material_name: geometries[0].1.material_name.clone(),
         };
-        let mut material_indices = Vec::new();
+        let mut material_ids = Vec::new();
 
         for ((offset, object), geometry) in geometries.iter() {
             // if material name has changed, that is the end of geometries for that material because they are sorted by material
-            // we can put it into material_indices
-            if geometry.material_name != material_index.material_name {
-                material_index.len = indices.len() - material_index.start_index;
+            // we can put it into material_ids
+            if geometry.material_name != material_id.name {
+                material_id.len = indices.len() - material_id.offset;
 
-                let new_material_index = MaterialIndex {
-                    start_index: indices.len(),
+                let new_material_index = MaterialId {
+                    id: material_map.id_of(&geometry.material_name),
+                    name: geometry.material_name.clone(),
+                    offset: indices.len(),
                     len: 0,
-                    material_name: geometry.material_name.clone(),
                 };
 
-                material_indices.push(
-                    mem::replace(&mut material_index, new_material_index)
+                material_ids.push(
+                    mem::replace(&mut material_id, new_material_index)
                 );
             }
 
             for shape in geometry.shapes.iter() {
                 match shape.primitive {
                     obj::Primitive::Triangle(a, b, c) => {
+                        //in case no normal exists
                         let normal = calc_normal(object, [&a, &b, &c]);
-                        for x in [a, b, c].iter() {
-                            let finalizer = &mut vertex_finalization[x.0 + offset];
-                            if finalizer.finalized {
-                                if finalizer.i_tex == x.1 && finalizer.i_nor == x.2 {
-                                    indices.push((x.0 + offset) as u32);
+                        for i_vtn in [a, b, c].iter() {
+                            let global_index = i_vtn.0 + offset;
+                            let metadata = &mut vertex_metadata[global_index];
+                            if metadata.finalized {
+                                if metadata.i_tex == i_vtn.1 && metadata.i_nor == i_vtn.2 {
+                                    indices.push(global_index as u32);
                                 } else {
-                                    vertices.push(MeshVertex::from_index(object, x));
+                                    vertices.push(MeshVertex::from_index(object, i_vtn));
                                     indices.push((vertices.len() - 1) as u32);
                                 }
                             } else {
-                                let vertex = &mut vertices[x.0 + offset];
-                                if let Some(i_tex) = x.1 {
-                                    *vertex.1 = object.tex_vertices[i_tex].into();
-                                    finalizer.i_tex = Some(i_tex);
+                                let mesh_vertex = &mut vertices[global_index];
+                                if let Some(i_tex) = i_vtn.1 {
+                                    mesh_vertex.1 = object.tex_vertices[i_tex].into();
+                                    metadata.i_tex = Some(i_tex);
                                 } else {
-                                    *vertex.1 = [0.0, 0.0].into();
+                                    mesh_vertex.1 = [0.0, 0.0].into();
                                 }
-                                if let Some(i_nor) = x.2 {
-                                    *vertex.2 = object.normals[i_nor].into();
-                                    finalizer.i_nor = Some(i_nor);
+                                if let Some(i_nor) = i_vtn.2 {
+                                    mesh_vertex.2 = object.normals[i_nor].into();
+                                    metadata.i_nor = Some(i_nor);
                                 } else {
-                                    *vertex.2 = *normal;
+                                    mesh_vertex.2 = normal.clone();
                                 }
-                                finalizer.finalized = true;
-                                indices.push((x.0 + offset) as u32);
+                                metadata.finalized = true;
+                                indices.push(global_index as u32);
                             }
-
-
-
-                            // let mut mesh_vertex = MeshVertex::from_index(object, x);
-                            // if x.2.is_none() {
-                            //     mesh_vertex.2 = normal.clone();
-                            // }
-                            // vertices.push(mesh_vertex);
-                            // indices.push(index as u32);
-                            // index += 1;
                         }
                     }
                     _ => {}
                 }
             }
         }
-        material_index.len = indices.len() - material_index.start_index;
-        material_indices.push(material_index);
-        println!("{:#?}", &material_indices);
+        //We have to put the last material in the indices
+        material_id.len = indices.len() - material_id.offset;
+        material_ids.push(material_id);
+
+        println!("{}/{}", indices.len(), vertices.len());
 
         if vertices.is_empty() { return Err(error::Custom("Empty Object".to_string())); }
 
@@ -156,10 +146,25 @@ impl Resource for Mesh {
             vertex_buffer,
             indices,
             index_buffer,
-            material_indices,
+            material_ids,
         }))))
     }
 }
+
+fn load_material<P: AsRef<Path>>(path: P) -> error::Result<mtl::MtlSet> {
+    let mut string = String::new();
+    let mut file = File::open(path)?;
+    file.read_to_string(&mut string)?;
+    Ok(mtl::parse(&string)?)
+}
+
+fn calc_normal(object: &obj::Object, indices: [&obj::VTNIndex;3]) -> vertex::Normal {
+    let a: Vector3d = object.vertices[indices[0].0].into();
+    let b: Vector3d = object.vertices[indices[1].0].into();
+    let c: Vector3d = object.vertices[indices[2].0].into();
+    (b-a.clone()).cross(c-a).normalize().into()
+}
+
 
 impl Mesh {
     pub fn inner(&self) -> MutexGuard<MeshInner> {
@@ -175,25 +180,30 @@ impl PartialEq for Mesh {
 
 impl Eq for Mesh {}
 
-#[derive(Default)]
-struct Finalizer {
+#[derive(Clone, Default)]
+struct VertexMetadata {
     finalized: bool,
     i_tex: Option<obj::TextureIndex>,
     i_nor: Option<obj::NormalIndex>,
 }
 
 #[derive(Clone, Debug)]
-pub struct MaterialIndex {
-    pub start_index: usize,
+pub struct MaterialId {
+    pub id: usize,
+    pub name: Option<String>,
+    pub offset: usize,
     pub len: usize,
-    pub material_name: Option<String>,
 }
+struct MaterialMap(HashMap<String, usize>);
 
-fn load_material<P: AsRef<Path>>(path: P) -> error::Result<mtl::MtlSet> {
-    let mut string = String::new();
-    let mut file = File::open(path)?;
-    file.read_to_string(&mut string)?;
-    Ok(mtl::parse(&string)?)
+impl MaterialMap {
+    fn id_of(&self, name: &Option<String>) -> usize {
+        name.as_ref()
+            .and_then(|name| self.0.get(name))
+            .cloned()
+            //Default ID to number of materials
+            .unwrap_or(self.0.len())
+    }
 }
 
 //needed for custom derive
@@ -219,27 +229,21 @@ impl MeshVertex {
         MeshVertex(position, texture, normal)
     }
 
-    fn from_vertex(vertex: obj::Vertex) -> MeshVertex {
-        let position = vertex.into();
+    fn from_vertex(vertex: &obj::Vertex) -> MeshVertex {
+        let position = (*vertex).into();
         let texture = [0.0, 0.0].into();
         let normal = [0.0, 0.0, 0.0].into();
         MeshVertex(position, texture, normal)
     }
 }
 
-fn calc_normal(object: &obj::Object, indices: [&obj::VTNIndex;3]) -> vertex::Normal {
-    let a: Vector3d = object.vertices[indices[0].0].into();
-    let b: Vector3d = object.vertices[indices[1].0].into();
-    let c: Vector3d = object.vertices[indices[2].0].into();
-    (b-a.clone()).cross(c-a).normalize().into()
-}
 
 pub struct MeshInner {
     pub vertices: Vec<MeshVertex>,
     pub vertex_buffer: VertexBuffer<MeshVertex>,
     pub indices: Vec<u32>,
     pub index_buffer:  IndexBuffer,
-    pub material_indices: Vec<MaterialIndex>
+    pub material_ids: Vec<MaterialId>
 }
 
 //TODO Verify

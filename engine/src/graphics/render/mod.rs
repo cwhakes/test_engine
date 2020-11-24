@@ -118,17 +118,22 @@ impl Render {
         materials: &mut [Material],
     ) {
         let mut mesh_inner = mesh.inner();
-        for (index, material_index) in mesh_inner.material_indices.clone().iter().enumerate() {
-            self.set_material(if let Some (material) = materials.get_mut(index) {
-                material
-            } else { continue; });
+        for material_id in mesh_inner.material_ids.clone().iter() {
+
+            if let Some (material) = materials.get_mut(material_id.id) {
+                self.set_material(material);
+            } else {
+                // TODO: set default material
+                println!("Missing material for: {:#?}", material_id.name);
+                continue;
+            };
 
             self.context.set_vertex_buffer(&mut mesh_inner.vertex_buffer);
             self.context.set_index_buffer(&mut mesh_inner.index_buffer);
 
             self.context.draw_indexed_triangle_list(
-                material_index.len,
-                material_index.start_index,
+                material_id.len,
+                material_id.offset,
                 0,
             );
         }

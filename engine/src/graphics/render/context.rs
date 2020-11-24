@@ -2,7 +2,6 @@ use super::shader::{self, Shader, ShaderType};
 use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 
 use crate::error;
-use crate::graphics::resource::mesh::Mesh;
 use crate::graphics::resource::texture::Texture;
 use crate::graphics::vertex::{Vertex, Color};
 
@@ -107,30 +106,6 @@ impl Context {
                 .DrawIndexed(indices_len as u32, indices_start as u32, vertices_offset as i32);
         }
     }
-
-    // pub fn draw_mesh(&self, mesh: &Mesh) {
-    //     self.set_vertex_buffer(&mut mesh.inner().vertex_buffer);
-    //     self.set_index_buffer(&mut mesh.inner().index_buffer);
-
-    //     self.draw_indexed_triangle_list(mesh.inner().index_buffer.len(), 0, 0);
-    // }
-
-    // pub fn draw_mesh_and_texture(
-    //     &self,
-    //     mesh: &Mesh,
-    //     textures: &mut [Option<Texture>],
-    //     vertex_shader: &mut Shader<shader::Vertex>,
-    //     pixel_shader: &mut Shader<shader::Pixel>,
-    // ) {
-    //     self.set_shader(vertex_shader);
-    //     self.set_shader(pixel_shader);
-    //     self.set_textures::<shader::Pixel>(textures);
-        
-    //     self.set_vertex_buffer(&mut mesh.inner().vertex_buffer);
-    //     self.set_index_buffer(&mut mesh.inner().index_buffer);
-    //     self.draw_indexed_triangle_list(mesh.inner().index_buffer.len(), 0, 0);
-    // }
-
 
     pub fn set_viewport_size(&self, width: f32, height: f32) {
         unsafe {
