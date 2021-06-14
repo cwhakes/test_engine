@@ -97,10 +97,7 @@ unsafe impl<T> Send for ShaderInner<T> where T: ShaderType + Send {}
 unsafe impl<T> Sync for ShaderInner<T> where T: ShaderType + Sync {}
 
 impl<T: ShaderType> ShaderInner<T> {
-    pub fn new(
-        device: &Device,
-        location: impl AsRef<Path>,
-    ) -> error::Result<(Self, Blob)> {
+    pub fn new(device: &Device, location: impl AsRef<Path>) -> error::Result<(Self, Blob)> {
         let bytecode = compile_shader_from_location(location, T::ENTRY_POINT, T::TARGET)?;
         let shader = T::create_shader(device, &*bytecode)?;
 

@@ -195,7 +195,6 @@ impl DepthBuffer {
             let mut sc_desc = dxgi::DXGI_SWAP_CHAIN_DESC::default();
             swapchain.inner.as_ref().GetDesc(&mut sc_desc);
 
-
             let tex_desc = d3d11::D3D11_TEXTURE2D_DESC {
                 Width: sc_desc.BufferDesc.Width,
                 Height: sc_desc.BufferDesc.Height,
@@ -208,7 +207,6 @@ impl DepthBuffer {
                     Count: 1,
                     Quality: 0,
                 },
-
 
                 BindFlags: d3d11::D3D11_BIND_DEPTH_STENCIL,
                 CPUAccessFlags: 0,

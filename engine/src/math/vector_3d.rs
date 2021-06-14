@@ -151,7 +151,7 @@ impl Vector3d {
             .abs();
         let (u, v) = self.projection_along_2d(plane);
 
-        (0.0..=1.0).contains(&u) 
+        (0.0..=1.0).contains(&u)
             && (0.0..=1.0).contains(&v)
             && u + v <= 1.0
             && approx_eq!(f32, 0.0, volume_of_cube)

@@ -228,8 +228,12 @@ pub struct MeshVertex(vertex::Position, vertex::TexCoord, vertex::Normal);
 impl MeshVertex {
     fn from_index(object: &obj::Object, index: &obj::VTNIndex) -> Self {
         let position = object.vertices[index.0].into();
-        let texture = index.1.map_or([0.0, 0.0].into(), |tex_index| object.tex_vertices[tex_index].into());
-        let normal = index.2.map_or([0.0, 0.0, 0.0].into(), |norm_index| object.normals[norm_index].into());
+        let texture = index.1.map_or([0.0, 0.0].into(), |tex_index| {
+            object.tex_vertices[tex_index].into()
+        });
+        let normal = index.2.map_or([0.0, 0.0, 0.0].into(), |norm_index| {
+            object.normals[norm_index].into()
+        });
 
         Self(position, texture, normal)
     }

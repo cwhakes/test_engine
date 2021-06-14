@@ -24,7 +24,6 @@ unsafe impl<V> Sync for VertexBuffer<V> where V: Vertex + Sync {}
 impl<V: Vertex> VertexBuffer<V> {
     pub fn new(device: &Device, vertices: &[V], bytecode: &[u8]) -> error::Result<Self> {
         unsafe {
-
             let buff_desc = d3d11::D3D11_BUFFER_DESC {
                 Usage: d3d11::D3D11_USAGE_DEFAULT,
                 ByteWidth: (vertices.len() * std::mem::size_of::<V>()) as u32,
