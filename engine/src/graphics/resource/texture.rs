@@ -21,40 +21,46 @@ impl Resource for Texture {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
         unsafe {
             let image = Reader::open(path.as_ref())?.decode()?.to_rgba();
-            let mut sample_desc = dxgitype::DXGI_SAMPLE_DESC::default();
-            sample_desc.Count = 1;
-            sample_desc.Quality = 0;
+            let sample_desc = dxgitype::DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            };
 
-            let mut desc = d3d11::D3D11_TEXTURE2D_DESC::default();
-            desc.Width = image.width();
-            desc.Height = image.height();
-            desc.MipLevels = 1;
-            desc.ArraySize = 1;
-            desc.Format = dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM;
-            desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
-            desc.SampleDesc = sample_desc;
-            desc.BindFlags = d3d11::D3D11_BIND_SHADER_RESOURCE;
-            desc.CPUAccessFlags = 0;
-            desc.MiscFlags = 0;
-            let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-            data.SysMemPitch = image
+            let desc = d3d11::D3D11_TEXTURE2D_DESC {
+                Width: image.width(),
+                Height: image.height(),
+                MipLevels: 1,
+                ArraySize: 1,
+                Format: dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM,
+                Usage: d3d11::D3D11_USAGE_DEFAULT,
+                SampleDesc: sample_desc,
+                BindFlags: d3d11::D3D11_BIND_SHADER_RESOURCE,
+                CPUAccessFlags: 0,
+                MiscFlags: 0,
+            };
+
+            let pitch = image
                 .sample_layout()
                 .height_stride
                 .max(image.sample_layout().width_stride) as u32;
             let buffer: Vec<u8> = image.into_raw();
-            data.pSysMem = buffer.as_ptr() as *const _;
-
+            let data = d3d11::D3D11_SUBRESOURCE_DATA {
+                pSysMem: buffer.as_ptr() as *const _,
+                SysMemPitch: pitch,
+                ..Default::default()
+            };
             let texture = get_output(|ptr| device.as_ref().CreateTexture2D(&desc, &data, ptr))?;
-
             drop(buffer);
 
-            let mut sampler_desc = d3d11::D3D11_SAMPLER_DESC::default();
-            sampler_desc.AddressU = d3d11::D3D11_TEXTURE_ADDRESS_WRAP;
-            sampler_desc.AddressV = d3d11::D3D11_TEXTURE_ADDRESS_WRAP;
-            sampler_desc.AddressW = d3d11::D3D11_TEXTURE_ADDRESS_WRAP;
-            sampler_desc.Filter = d3d11::D3D11_FILTER_ANISOTROPIC;
-            sampler_desc.MinLOD = 0.0;
-            sampler_desc.MaxLOD = 1.0;
+            let sampler_desc = d3d11::D3D11_SAMPLER_DESC {
+                AddressU: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+                AddressV: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+                AddressW: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+                Filter: d3d11::D3D11_FILTER_ANISOTROPIC,
+                MinLOD: 0.0,
+                MaxLOD: 1.0,
+                ..d3d11::D3D11_SAMPLER_DESC::default()
+            };
 
             let sampler_state =
                 get_output(|ptr| device.as_ref().CreateSamplerState(&sampler_desc, ptr))?;

@@ -25,16 +25,20 @@ impl<C: ?Sized> ConstantBuffer<C> {
     /// Constructs a new ConstantBuffer.
     pub fn new(device: &Device, constant: &mut C) -> error::Result<ConstantBuffer<C>> {
         unsafe {
-            let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
-            buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
-            buff_desc.ByteWidth = std::mem::size_of_val(constant) as u32;
+            let buff_desc = d3d11::D3D11_BUFFER_DESC {
+                Usage: d3d11::D3D11_USAGE_DEFAULT,
+                ByteWidth: std::mem::size_of_val(constant) as u32,
+                BindFlags: d3d11::D3D11_BIND_CONSTANT_BUFFER,
+                CPUAccessFlags: 0,
+                MiscFlags: 0,
+                ..Default::default()
+            };
             assert!(buff_desc.ByteWidth % 16 == 0);
-            buff_desc.BindFlags = d3d11::D3D11_BIND_CONSTANT_BUFFER;
-            buff_desc.CPUAccessFlags = 0;
-            buff_desc.MiscFlags = 0;
 
-            let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-            data.pSysMem = constant as *const _ as *const c_void;
+            let data = d3d11::D3D11_SUBRESOURCE_DATA {
+                pSysMem: constant as *const _ as *const c_void,
+                ..Default::default()
+            };
 
             let buffer = get_output(|ptr| device.as_ref().CreateBuffer(&buff_desc, &data, ptr))?;
 

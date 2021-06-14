@@ -120,11 +120,13 @@ impl Context {
 
     pub fn set_viewport_size(&self, width: f32, height: f32) {
         unsafe {
-            let mut vp = d3d11::D3D11_VIEWPORT::default();
-            vp.Width = width;
-            vp.Height = height;
-            vp.MinDepth = 0.0;
-            vp.MaxDepth = 1.0;
+            let vp = d3d11::D3D11_VIEWPORT {
+                Width: width,
+                Height: height,
+                MinDepth: 0.0,
+                MaxDepth: 1.0,
+                ..Default::default()
+            };
 
             self.as_ref().RSSetViewports(1, &vp);
         }

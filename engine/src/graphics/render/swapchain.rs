@@ -28,33 +28,25 @@ impl SwapChain {
     pub fn get_desc(hwnd: &Hwnd) -> dxgi::DXGI_SWAP_CHAIN_DESC {
         let (width, height) = hwnd.rect();
 
-        let mut desc = dxgi::DXGI_SWAP_CHAIN_DESC::default();
-        desc.BufferCount = 1;
-        desc.BufferDesc.Width = width;
-        desc.BufferDesc.Height = height;
-        desc.BufferDesc.Format = dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM;
-        desc.BufferUsage = dxgitype::DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        desc.OutputWindow = *hwnd.inner();
-        desc.SampleDesc.Count = 1;
-        desc.SampleDesc.Quality = 0;
-        desc.Flags = dxgi::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-        desc.Windowed = minwindef::TRUE;
-
-        // unsafe {
-        //     let mut dev_mode = wingdi::DEVMODEW::default();
-
-        //     winuser::EnumDisplaySettingsW(
-        //         ptr::null_mut(),
-        //         winuser::ENUM_CURRENT_SETTINGS,
-        //         &mut dev_mode);
-
-        //     let refresh_rate = dev_mode.dmDisplayFrequency;
-
-        //     desc.BufferDesc.RefreshRate.Numerator = refresh_rate;
-        //     desc.BufferDesc.RefreshRate.Denominator = 1;
-        // }
-
-        desc
+        dxgi::DXGI_SWAP_CHAIN_DESC {
+            BufferCount: 1,
+            BufferDesc: dxgitype::DXGI_MODE_DESC {
+                Width: width,
+                Height: height,
+                Format: dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM,
+                ..dxgitype::DXGI_MODE_DESC::default()
+            },
+            BufferUsage: dxgitype::DXGI_USAGE_RENDER_TARGET_OUTPUT,
+            OutputWindow: *hwnd.inner(),
+            SampleDesc: dxgitype::DXGI_SAMPLE_DESC {
+                Count: 1,
+                Quality: 0,
+            },
+            Flags: dxgi::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH,
+            Windowed: minwindef::TRUE,
+            
+            ..Default::default()
+        }
     }
 
     /// # Safety
@@ -203,18 +195,25 @@ impl DepthBuffer {
             let mut sc_desc = dxgi::DXGI_SWAP_CHAIN_DESC::default();
             swapchain.inner.as_ref().GetDesc(&mut sc_desc);
 
-            let mut tex_desc = d3d11::D3D11_TEXTURE2D_DESC::default();
-            tex_desc.Width = sc_desc.BufferDesc.Width;
-            tex_desc.Height = sc_desc.BufferDesc.Height;
-            tex_desc.MipLevels = 1;
-            tex_desc.ArraySize = 1;
-            tex_desc.Format = dxgiformat::DXGI_FORMAT_D24_UNORM_S8_UINT;
-            tex_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
-            tex_desc.SampleDesc.Count = 1;
-            tex_desc.SampleDesc.Quality = 0;
-            tex_desc.BindFlags = d3d11::D3D11_BIND_DEPTH_STENCIL;
-            tex_desc.CPUAccessFlags = 0;
-            tex_desc.MiscFlags = 0;
+
+            let tex_desc = d3d11::D3D11_TEXTURE2D_DESC {
+                Width: sc_desc.BufferDesc.Width,
+                Height: sc_desc.BufferDesc.Height,
+                MipLevels: 1,
+                ArraySize: 1,
+                Format: dxgiformat::DXGI_FORMAT_D24_UNORM_S8_UINT,
+                Usage: d3d11::D3D11_USAGE_DEFAULT,
+
+                SampleDesc: dxgitype::DXGI_SAMPLE_DESC {
+                    Count: 1,
+                    Quality: 0,
+                },
+
+
+                BindFlags: d3d11::D3D11_BIND_DEPTH_STENCIL,
+                CPUAccessFlags: 0,
+                MiscFlags: 0,
+            };
 
             let buffer = get_output(|ptr| {
                 device

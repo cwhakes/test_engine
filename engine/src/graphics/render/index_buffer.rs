@@ -18,15 +18,19 @@ unsafe impl Sync for IndexBuffer {}
 impl IndexBuffer {
     pub fn new(device: &Device, indices: &[u32]) -> error::Result<IndexBuffer> {
         unsafe {
-            let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
-            buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
-            buff_desc.ByteWidth = (indices.len() * std::mem::size_of::<u32>()) as u32;
-            buff_desc.BindFlags = d3d11::D3D11_BIND_VERTEX_BUFFER;
-            buff_desc.CPUAccessFlags = 0;
-            buff_desc.MiscFlags = 0;
+            let buff_desc = d3d11::D3D11_BUFFER_DESC {
+                Usage: d3d11::D3D11_USAGE_DEFAULT,
+                ByteWidth: (indices.len() * std::mem::size_of::<u32>()) as u32,
+                BindFlags: d3d11::D3D11_BIND_VERTEX_BUFFER,
+                CPUAccessFlags: 0,
+                MiscFlags: 0,
+                ..Default::default()
+            };
 
-            let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-            data.pSysMem = indices.as_ptr() as *const _;
+            let data = d3d11::D3D11_SUBRESOURCE_DATA {
+                pSysMem: indices.as_ptr() as *const _,
+                ..Default::default()
+            };
 
             let buffer = get_output(|ptr| device.as_ref().CreateBuffer(&buff_desc, &data, ptr))?;
 

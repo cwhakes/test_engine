@@ -8,9 +8,9 @@ use crate::util::os_vec;
 
 use log::debug;
 
-use std::sync::atomic::{spin_loop_hint, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
-use std::{mem, ptr};
+use std::{hint, mem, ptr};
 
 use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
 use winapi::shared::windef::HBRUSH;
@@ -138,7 +138,7 @@ impl<A: Application> Window<A> {
                 DispatchMessageW(&msg);
             }
 
-            spin_loop_hint();
+            hint::spin_loop();
 
             self.running.load(Ordering::Relaxed)
         }

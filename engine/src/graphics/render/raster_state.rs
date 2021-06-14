@@ -17,10 +17,12 @@ unsafe impl Sync for RasterState {}
 impl RasterState {
     pub fn new_front(device: &Device) -> error::Result<RasterState> {
         unsafe {
-            let mut desc = d3d11::D3D11_RASTERIZER_DESC::default();
-            desc.CullMode = d3d11::D3D11_CULL_FRONT;
-            desc.DepthClipEnable = minwindef::FALSE;
-            desc.FillMode = d3d11::D3D11_FILL_SOLID;
+            let desc = d3d11::D3D11_RASTERIZER_DESC {
+                CullMode: d3d11::D3D11_CULL_FRONT,
+                DepthClipEnable: minwindef::FALSE,
+                FillMode: d3d11::D3D11_FILL_SOLID,
+                ..Default::default()
+            };
 
             get_output(|ptr| device.as_ref().CreateRasterizerState(&desc, ptr)).map(RasterState)
         }
@@ -28,10 +30,12 @@ impl RasterState {
 
     pub fn new_back(device: &Device) -> error::Result<RasterState> {
         unsafe {
-            let mut desc = d3d11::D3D11_RASTERIZER_DESC::default();
-            desc.CullMode = d3d11::D3D11_CULL_BACK;
-            desc.DepthClipEnable = minwindef::TRUE;
-            desc.FillMode = d3d11::D3D11_FILL_SOLID;
+            let desc = d3d11::D3D11_RASTERIZER_DESC {
+                CullMode: d3d11::D3D11_CULL_BACK,
+                DepthClipEnable: minwindef::TRUE,
+                FillMode: d3d11::D3D11_FILL_SOLID,
+                ..Default::default()
+            };
 
             get_output(|ptr| device.as_ref().CreateRasterizerState(&desc, ptr)).map(RasterState)
         }

@@ -24,15 +24,20 @@ unsafe impl<V> Sync for VertexBuffer<V> where V: Vertex + Sync {}
 impl<V: Vertex> VertexBuffer<V> {
     pub fn new(device: &Device, vertices: &[V], bytecode: &[u8]) -> error::Result<VertexBuffer<V>> {
         unsafe {
-            let mut buff_desc = d3d11::D3D11_BUFFER_DESC::default();
-            buff_desc.Usage = d3d11::D3D11_USAGE_DEFAULT;
-            buff_desc.ByteWidth = (vertices.len() * std::mem::size_of::<V>()) as u32;
-            buff_desc.BindFlags = d3d11::D3D11_BIND_VERTEX_BUFFER;
-            buff_desc.CPUAccessFlags = 0;
-            buff_desc.MiscFlags = 0;
 
-            let mut data = d3d11::D3D11_SUBRESOURCE_DATA::default();
-            data.pSysMem = vertices.as_ptr() as *const _;
+            let buff_desc = d3d11::D3D11_BUFFER_DESC {
+                Usage: d3d11::D3D11_USAGE_DEFAULT,
+                ByteWidth: (vertices.len() * std::mem::size_of::<V>()) as u32,
+                BindFlags: d3d11::D3D11_BIND_VERTEX_BUFFER,
+                CPUAccessFlags: 0,
+                MiscFlags: 0,
+                ..Default::default()
+            };
+
+            let data = d3d11::D3D11_SUBRESOURCE_DATA {
+                pSysMem: vertices.as_ptr() as *const _,
+                ..Default::default()
+            };
 
             let buffer = get_output(|ptr| device.as_ref().CreateBuffer(&buff_desc, &data, ptr))?;
 
