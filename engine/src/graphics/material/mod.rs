@@ -29,7 +29,7 @@ impl Material {
         let vertex_shader = graphics.get_vertex_shader_from_file(vs)?;
         let pixel_shader = graphics.get_pixel_shader_from_file(ps)?;
 
-        Ok(Material {
+        Ok(Self {
             vs: vertex_shader,
             ps: pixel_shader,
             const_buffs: Vec::new(),

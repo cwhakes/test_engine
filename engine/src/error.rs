@@ -34,25 +34,25 @@ impl From<Blob> for Error {
 
 impl From<ImageError> for Error {
     fn from(image_err: ImageError) -> Self {
-        Error::ImageError(image_err)
+        Self::ImageError(image_err)
     }
 }
 
 impl From<io::Error> for Error {
     fn from(io_err: io::Error) -> Self {
-        Error::Io(io_err)
+        Self::Io(io_err)
     }
 }
 
 impl From<ParseError> for Error {
     fn from(obj_error: ParseError) -> Self {
-        Error::ObjError(obj_error)
+        Self::ObjError(obj_error)
     }
 }
 
 impl From<&str> for Error {
     fn from(text: &str) -> Self {
-        Error::Custom(text.to_owned())
+        Self::Custom(text.to_owned())
     }
 }
 

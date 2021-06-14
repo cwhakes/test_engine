@@ -11,13 +11,13 @@ pub struct Position {
 
 impl Position {
     pub fn new(position: Matrix4x4) -> Self {
-        Position {
+        Self {
             position,
-            ..Position::default()
+            ..Default::default()
         }
     }
 
-    pub fn with_gravity(mut self, gravity: f32) -> Position {
+    pub fn with_gravity(mut self, gravity: f32) -> Self {
         self.accelleration.y = -gravity;
         self
     }

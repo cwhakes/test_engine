@@ -7,7 +7,7 @@ use winapi::shared::windef;
 use winapi::um::winuser;
 
 lazy_static! {
-    pub static ref INPUT: Mutex<Input> = Mutex::new(Default::default());
+    pub static ref INPUT: Mutex<Input> = Mutex::new(Input::default());
 }
 
 pub trait Listener {

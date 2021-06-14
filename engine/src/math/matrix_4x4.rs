@@ -8,11 +8,11 @@ pub struct Matrix4x4(pub [[f32; 4]; 4]);
 
 impl Matrix4x4 {
     pub fn zero() -> Matrix4x4 {
-        Matrix4x4([[0.0; 4]; 4])
+        Self([[0.0; 4]; 4])
     }
 
     pub fn identity() -> Matrix4x4 {
-        Matrix4x4([
+        Self([
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
             [0.0, 0.0, 1.0, 0.0],
@@ -20,8 +20,8 @@ impl Matrix4x4 {
         ])
     }
 
-    pub fn translation(vec: impl Into<Vector3d>) -> Matrix4x4 {
-        let mut matrix = Matrix4x4::identity();
+    pub fn translation(vec: impl Into<Vector3d>) -> Self {
+        let mut matrix = Self::identity();
         matrix.set_translation(vec);
         matrix
     }
@@ -40,16 +40,16 @@ impl Matrix4x4 {
         self.0[3][2] += vec.z;
     }
 
-    pub fn scaling(scale: f32) -> Matrix4x4 {
-        let mut matrix = Matrix4x4::identity();
+    pub fn scaling(scale: f32) -> Self {
+        let mut matrix = Self::identity();
         matrix.0[0][0] = scale;
         matrix.0[1][1] = scale;
         matrix.0[2][2] = scale;
         matrix
     }
 
-    pub fn scaling3(vec: impl Into<Vector3d>) -> Matrix4x4 {
-        let mut matrix = Matrix4x4::identity();
+    pub fn scaling3(vec: impl Into<Vector3d>) -> Self {
+        let mut matrix = Self::identity();
         let vec = vec.into();
         matrix.0[0][0] = vec.x;
         matrix.0[1][1] = vec.y;
@@ -57,8 +57,8 @@ impl Matrix4x4 {
         matrix
     }
 
-    pub fn orthoganal(width: f32, height: f32, near_plane: f32, far_plane: f32) -> Matrix4x4 {
-        let mut matrix = Matrix4x4::zero();
+    pub fn orthoganal(width: f32, height: f32, near_plane: f32, far_plane: f32) -> Self {
+        let mut matrix = Self::zero();
 
         matrix.0[0][0] = 2.0 / width;
         matrix.0[1][1] = 2.0 / height;
@@ -67,11 +67,11 @@ impl Matrix4x4 {
         matrix
     }
 
-    pub fn perspective(fov: f32, aspect: f32, znear: f32, zfar: f32) -> Matrix4x4 {
+    pub fn perspective(fov: f32, aspect: f32, znear: f32, zfar: f32) -> Self {
         let yscale = 1.0 / (fov / 2.0).tan();
         let xscale = yscale / aspect;
 
-        let mut matrix = Matrix4x4::zero();
+        let mut matrix = Self::zero();
         matrix.0[0][0] = xscale;
         matrix.0[1][1] = yscale;
         matrix.0[2][2] = zfar / (zfar - znear);
@@ -80,8 +80,8 @@ impl Matrix4x4 {
         matrix
     }
 
-    pub fn rotation_x(angle: f32) -> Matrix4x4 {
-        let mut matrix = Matrix4x4::identity();
+    pub fn rotation_x(angle: f32) -> Self {
+        let mut matrix = Self::identity();
         matrix.0[1][1] = angle.cos();
         matrix.0[1][2] = angle.sin();
         matrix.0[2][1] = -angle.sin();
@@ -89,8 +89,8 @@ impl Matrix4x4 {
         matrix
     }
 
-    pub fn rotation_y(angle: f32) -> Matrix4x4 {
-        let mut matrix = Matrix4x4::identity();
+    pub fn rotation_y(angle: f32) -> Self {
+        let mut matrix = Self::identity();
         matrix.0[0][0] = angle.cos();
         matrix.0[0][2] = -angle.sin();
         matrix.0[2][0] = angle.sin();
@@ -98,8 +98,8 @@ impl Matrix4x4 {
         matrix
     }
 
-    pub fn rotation_z(angle: f32) -> Matrix4x4 {
-        let mut matrix = Matrix4x4::identity();
+    pub fn rotation_z(angle: f32) -> Self {
+        let mut matrix = Self::identity();
         matrix.0[0][0] = angle.cos();
         matrix.0[0][1] = angle.sin();
         matrix.0[1][0] = -angle.sin();
@@ -108,7 +108,7 @@ impl Matrix4x4 {
     }
 
     /// https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
-    pub fn rotation_vec(angle: impl Into<Vector3d>) -> Matrix4x4 {
+    pub fn rotation_vec(angle: impl Into<Vector3d>) -> Self {
         let angle = angle.into();
         let mag = angle.magnitude();
 
@@ -121,10 +121,10 @@ impl Matrix4x4 {
         let cross = angle.cross_matrix();
         let outer = angle.outer(angle);
 
-        Matrix4x4::scaling(mag.cos()) + cross * (mag.sin()) + outer * (1.0 - mag.cos())
+        Self::scaling(mag.cos()) + cross * (mag.sin()) + outer * (1.0 - mag.cos())
     }
 
-    pub fn rotate_in_place(&mut self, rotation_matrix: Matrix4x4) -> &mut Self {
+    pub fn rotate_in_place(&mut self, rotation_matrix: Self) -> &mut Self {
         let translation = self.get_translation();
         self.set_translation([0.0, 0.0, 0.0]);
         *self *= rotation_matrix;
@@ -132,8 +132,8 @@ impl Matrix4x4 {
         self
     }
 
-    pub fn inverse(&self) -> Option<Matrix4x4> {
-        let mut out = Matrix4x4::default();
+    pub fn inverse(&self) -> Option<Self> {
+        let mut out = Self::default();
         let mut vec = <[Vector4d; 3]>::default();
 
         let det = self.determinant();
@@ -155,10 +155,10 @@ impl Matrix4x4 {
             }
             let v = Vector4d::cross(&vec[0], &vec[1], &vec[2]);
 
-            out.0[0][i] = (-1.0f32).powi(i as i32) * v.x / det;
-            out.0[1][i] = (-1.0f32).powi(i as i32) * v.y / det;
-            out.0[2][i] = (-1.0f32).powi(i as i32) * v.z / det;
-            out.0[3][i] = (-1.0f32).powi(i as i32) * v.w / det;
+            out.0[0][i] = (-1.0_f32).powi(i as i32) * v.x / det;
+            out.0[1][i] = (-1.0_f32).powi(i as i32) * v.y / det;
+            out.0[2][i] = (-1.0_f32).powi(i as i32) * v.z / det;
+            out.0[3][i] = (-1.0_f32).powi(i as i32) * v.w / det;
         }
 
         Some(out)
@@ -221,27 +221,27 @@ impl Matrix4x4 {
 
 impl convert::From<[[f32; 4]; 4]> for Matrix4x4 {
     fn from(array: [[f32; 4]; 4]) -> Self {
-        Matrix4x4(array)
+        Self(array)
     }
 }
 
 impl Default for Matrix4x4 {
     fn default() -> Self {
-        Matrix4x4::identity()
+        Self::identity()
     }
 }
 
-impl ops::Add<Matrix4x4> for Matrix4x4 {
-    type Output = Matrix4x4;
+impl ops::Add for Matrix4x4 {
+    type Output = Self;
 
-    fn add(mut self, rhs: Matrix4x4) -> Self::Output {
+    fn add(mut self, rhs: Self) -> Self::Output {
         self += rhs;
         self
     }
 }
 
-impl ops::AddAssign<Matrix4x4> for Matrix4x4 {
-    fn add_assign(&mut self, rhs: Matrix4x4) {
+impl ops::AddAssign for Matrix4x4 {
+    fn add_assign(&mut self, rhs: Self) {
         for i in 0..4 {
             for j in 0..4 {
                 self.0[i][j] += rhs.0[i][j];
@@ -251,7 +251,7 @@ impl ops::AddAssign<Matrix4x4> for Matrix4x4 {
 }
 
 impl ops::Mul<f32> for Matrix4x4 {
-    type Output = Matrix4x4;
+    type Output = Self;
 
     fn mul(mut self, rhs: f32) -> Self::Output {
         self *= rhs;
@@ -269,8 +269,8 @@ impl ops::MulAssign<f32> for Matrix4x4 {
     }
 }
 
-impl ops::MulAssign<Matrix4x4> for Matrix4x4 {
-    fn mul_assign(&mut self, rhs: Matrix4x4) {
+impl ops::MulAssign for Matrix4x4 {
+    fn mul_assign(&mut self, rhs: Self) {
         let mut new = Matrix4x4::default();
         for i in 0..4 {
             for j in 0..4 {

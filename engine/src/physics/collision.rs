@@ -30,8 +30,8 @@ pub trait CollidesWith2<T> {
     fn collides_with(&self, other: &T) -> bool;
 }
 
-impl CollidesWith2<Sphere> for Sphere {
-    fn collides_with(&self, other: &Sphere) -> bool {
+impl CollidesWith2<Self> for Sphere {
+    fn collides_with(&self, other: &Self) -> bool {
         let mag = (self.position - other.position).magnitude();
         mag < (self.radius + other.radius)
     }
@@ -44,8 +44,8 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(position: impl Into<Vector3d>, radius: f32) -> Sphere {
-        Sphere {
+    pub fn new(position: impl Into<Vector3d>, radius: f32) -> Self {
+        Self {
             position: position.into(),
             radius,
         }
@@ -62,6 +62,6 @@ impl Collision for Sphere {
 
 impl Default for Sphere {
     fn default() -> Self {
-        Sphere::new([0.0; 3], 1.0)
+        Self::new([0.0; 3], 1.0)
     }
 }

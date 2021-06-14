@@ -29,7 +29,7 @@ pub struct AppWindow {
 }
 
 impl Application for AppWindow {
-    fn me() -> &'static Window<AppWindow> {
+    fn me() -> &'static Window<Self> {
         &WINDOW
     }
 
@@ -94,7 +94,7 @@ impl Application for AppWindow {
             Position::default(),
         ));
 
-        let mut app_window = AppWindow {
+        let mut app_window = Self {
             hwnd,
             swapchain,
             window_state: WindowState::default(),
@@ -132,11 +132,11 @@ impl Application for AppWindow {
         //GRAPHICS.lock().unwrap().destroy();
     }
 
-    fn on_focus(window: &'static Mutex<Option<AppWindow>>) {
+    fn on_focus(window: &'static Mutex<Option<Self>>) {
         INPUT.lock().unwrap().add_listener(window);
     }
 
-    fn on_kill_focus(window: &'static Mutex<Option<AppWindow>>) {
+    fn on_kill_focus(window: &'static Mutex<Option<Self>>) {
         INPUT.lock().unwrap().remove_listener(window);
     }
 

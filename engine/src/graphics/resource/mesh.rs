@@ -85,7 +85,7 @@ impl Resource for Mesh {
         };
         let mut material_ids = Vec::new();
 
-        for ((offset, object), geometry) in geometries.iter() {
+        for ((offset, object), geometry) in &geometries {
             // if material name has changed, that is the end of geometries for that material because they are sorted by material
             // we can put it into material_ids
             if geometry.material_name != material_id.name {
@@ -101,19 +101,19 @@ impl Resource for Mesh {
                 material_ids.push(mem::replace(&mut material_id, new_material_index));
             }
 
-            for shape in geometry.shapes.iter() {
+            for shape in &geometry.shapes {
                 match shape.primitive {
                     obj::Primitive::Triangle(a, b, c) => {
                         //in case no normal exists
                         let normal = calc_normal(object, [&a, &b, &c]);
-                        for i_vtn in [a, b, c].iter() {
+                        for i_vtn in std::array::IntoIter::new([a, b, c]) {
                             let global_index = i_vtn.0 + offset;
                             let metadata = &mut vertex_metadata[global_index];
                             if metadata.finalized {
                                 if metadata.i_tex == i_vtn.1 && metadata.i_nor == i_vtn.2 {
                                     indices.push(global_index as u32);
                                 } else {
-                                    vertices.push(MeshVertex::from_index(object, i_vtn));
+                                    vertices.push(MeshVertex::from_index(object, &i_vtn));
                                     indices.push((vertices.len() - 1) as u32);
                                 }
                             } else {
@@ -155,7 +155,7 @@ impl Resource for Mesh {
         let vertex_buffer = device.new_vertex_buffer(&vertices, &vs)?;
         let index_buffer = device.new_index_buffer(&indices)?;
 
-        Ok(Mesh(Arc::new(Mutex::new(MeshInner {
+        Ok(Self(Arc::new(Mutex::new(MeshInner {
             vertices,
             vertex_buffer,
             indices,
@@ -226,27 +226,19 @@ use crate::{self as engine};
 pub struct MeshVertex(vertex::Position, vertex::TexCoord, vertex::Normal);
 
 impl MeshVertex {
-    fn from_index(object: &obj::Object, index: &obj::VTNIndex) -> MeshVertex {
+    fn from_index(object: &obj::Object, index: &obj::VTNIndex) -> Self {
         let position = object.vertices[index.0].into();
-        let texture = if let Some(tex_index) = index.1 {
-            object.tex_vertices[tex_index].into()
-        } else {
-            [0.0, 0.0].into()
-        };
-        let normal = if let Some(norm_index) = index.2 {
-            object.normals[norm_index].into()
-        } else {
-            [0.0, 0.0, 0.0].into()
-        };
+        let texture = index.1.map_or([0.0, 0.0].into(), |tex_index| object.tex_vertices[tex_index].into());
+        let normal = index.2.map_or([0.0, 0.0, 0.0].into(), |norm_index| object.normals[norm_index].into());
 
-        MeshVertex(position, texture, normal)
+        Self(position, texture, normal)
     }
 
-    fn from_vertex(vertex: &obj::Vertex) -> MeshVertex {
+    fn from_vertex(vertex: &obj::Vertex) -> Self {
         let position = (*vertex).into();
         let texture = [0.0, 0.0].into();
         let normal = [0.0, 0.0, 0.0].into();
-        MeshVertex(position, texture, normal)
+        Self(position, texture, normal)
     }
 }
 

@@ -28,8 +28,8 @@ pub struct Graphics {
 }
 
 impl Graphics {
-    pub fn new() -> error::Result<Graphics> {
-        Ok(Graphics {
+    pub fn new() -> error::Result<Self> {
+        Ok(Self {
             render: Render::new()?,
             mesh_manager: MeshManager::new(),
             texture_manager: TextureManager::new(),

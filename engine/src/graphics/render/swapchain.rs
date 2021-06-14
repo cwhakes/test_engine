@@ -44,7 +44,7 @@ impl SwapChain {
             },
             Flags: dxgi::DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH,
             Windowed: minwindef::TRUE,
-            
+
             ..Default::default()
         }
     }
@@ -55,9 +55,9 @@ impl SwapChain {
     pub unsafe fn new(
         swapchain: NonNull<dxgi::IDXGISwapChain>,
         device: &Device,
-    ) -> error::Result<SwapChain> {
+    ) -> error::Result<Self> {
         let inner = swapchain;
-        let mut swapchain = SwapChain {
+        let mut swapchain = Self {
             inner,
             back_buffer: None,
             depth_buffer: None,
@@ -157,7 +157,7 @@ impl Drop for SwapChain {
 struct BackBuffer(NonNull<d3d11::ID3D11RenderTargetView>);
 
 impl BackBuffer {
-    fn new(swapchain: &SwapChain, device: &Device) -> error::Result<BackBuffer> {
+    fn new(swapchain: &SwapChain, device: &Device) -> error::Result<Self> {
         unsafe {
             let buffer = get_output(|ptr| {
                 swapchain
@@ -174,7 +174,7 @@ impl BackBuffer {
 
             buffer.as_ref().Release();
 
-            Ok(BackBuffer(rtv))
+            Ok(Self(rtv))
         }
     }
 }
@@ -264,14 +264,14 @@ pub enum WindowState {
 impl WindowState {
     pub fn toggle(&mut self) {
         match self {
-            WindowState::Windowed => *self = WindowState::Fullscreen,
-            WindowState::Fullscreen => *self = WindowState::Windowed,
+            Self::Windowed => *self = Self::Fullscreen,
+            Self::Fullscreen => *self = Self::Windowed,
         }
     }
 }
 
 impl Default for WindowState {
     fn default() -> Self {
-        WindowState::Windowed
+        Self::Windowed
     }
 }

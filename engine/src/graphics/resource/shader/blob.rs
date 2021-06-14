@@ -10,9 +10,9 @@ impl Blob {
     /// # Safety
     ///
     /// `blob` must point to a valid ID3DBlob
-    pub unsafe fn new(blob: *mut ID3DBlob) -> error::Result<Blob> {
+    pub unsafe fn new(blob: *mut ID3DBlob) -> error::Result<Self> {
         match NonNull::new(blob) {
-            Some(inner) => Ok(Blob(inner)),
+            Some(inner) => Ok(Self(inner)),
             None => Err(null_ptr_err!()),
         }
     }
@@ -20,7 +20,7 @@ impl Blob {
 
 impl fmt::Debug for Blob {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let string = String::from_utf8_lossy(&self);
+        let string = String::from_utf8_lossy(self);
 
         f.debug_struct("Blob").field("slice", &string).finish()
     }

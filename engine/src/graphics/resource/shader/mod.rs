@@ -100,11 +100,11 @@ impl<T: ShaderType> ShaderInner<T> {
     pub fn new(
         device: &Device,
         location: impl AsRef<Path>,
-    ) -> error::Result<(ShaderInner<T>, Blob)> {
+    ) -> error::Result<(Self, Blob)> {
         let bytecode = compile_shader_from_location(location, T::ENTRY_POINT, T::TARGET)?;
         let shader = T::create_shader(device, &*bytecode)?;
 
-        Ok((ShaderInner { shader }, bytecode))
+        Ok((Self { shader }, bytecode))
     }
 }
 
@@ -147,7 +147,7 @@ pub fn compile_shader(uncompiled: &[u8], entry_point: &str, target: &str) -> err
         let mut err_blob = null_mut();
 
         let result = d3dcompiler::D3DCompile(
-            uncompiled.as_ptr() as *const _,
+            uncompiled.as_ptr().cast(),
             uncompiled.len(),
             null_mut(),
             null(),

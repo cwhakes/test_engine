@@ -43,13 +43,13 @@ enum PlayState {
 impl PlayState {
     fn toggle(&mut self) {
         match self {
-            PlayState::Playing => {
+            Self::Playing => {
                 input::show_cursor(true);
-                *self = PlayState::NotPlaying;
+                *self = Self::NotPlaying;
             }
-            PlayState::NotPlaying => {
+            Self::NotPlaying => {
                 input::show_cursor(false);
-                *self = PlayState::Playing;
+                *self = Self::Playing;
             }
         }
     }
@@ -57,7 +57,7 @@ impl PlayState {
 
 impl Default for PlayState {
     fn default() -> Self {
-        PlayState::NotPlaying
+        Self::NotPlaying
     }
 }
 
@@ -83,7 +83,7 @@ impl Entity {
         position: Position,
     ) -> Self {
         let materials: Vec<_> = materials.into_iter().collect();
-        Entity {
+        Self {
             mesh,
             materials,
             position,
@@ -115,14 +115,14 @@ impl Entity {
 }
 
 impl World {
-    pub fn new() -> World {
+    pub fn new() -> Self {
         let mut camera = Camera::default();
         camera.move_forward(-2.0);
         camera.move_up(1.0);
         //let light_source = Matrix4x4::rotation_x(-std::f32::consts::PI / 6.0);
         let light_source = Matrix4x4::translation([100.0, 100.0, 100.0]);
 
-        World {
+        Self {
             scale_cube: 1.0,
             camera,
             light_source,

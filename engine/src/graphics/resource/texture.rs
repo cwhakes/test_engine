@@ -45,7 +45,7 @@ impl Resource for Texture {
                 .max(image.sample_layout().width_stride) as u32;
             let buffer: Vec<u8> = image.into_raw();
             let data = d3d11::D3D11_SUBRESOURCE_DATA {
-                pSysMem: buffer.as_ptr() as *const _,
+                pSysMem: buffer.as_ptr().cast(),
                 SysMemPitch: pitch,
                 ..Default::default()
             };
@@ -73,7 +73,7 @@ impl Resource for Texture {
                 )
             })?;
 
-            Ok(Texture(Arc::new(TextureInner {
+            Ok(Self(Arc::new(TextureInner {
                 texture,
                 sampler_state,
                 resource_view,

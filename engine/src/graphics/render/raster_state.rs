@@ -15,7 +15,7 @@ unsafe impl Send for RasterState {}
 unsafe impl Sync for RasterState {}
 
 impl RasterState {
-    pub fn new_front(device: &Device) -> error::Result<RasterState> {
+    pub fn new_front(device: &Device) -> error::Result<Self> {
         unsafe {
             let desc = d3d11::D3D11_RASTERIZER_DESC {
                 CullMode: d3d11::D3D11_CULL_FRONT,
@@ -24,11 +24,11 @@ impl RasterState {
                 ..Default::default()
             };
 
-            get_output(|ptr| device.as_ref().CreateRasterizerState(&desc, ptr)).map(RasterState)
+            get_output(|ptr| device.as_ref().CreateRasterizerState(&desc, ptr)).map(Self)
         }
     }
 
-    pub fn new_back(device: &Device) -> error::Result<RasterState> {
+    pub fn new_back(device: &Device) -> error::Result<Self> {
         unsafe {
             let desc = d3d11::D3D11_RASTERIZER_DESC {
                 CullMode: d3d11::D3D11_CULL_BACK,
@@ -37,7 +37,7 @@ impl RasterState {
                 ..Default::default()
             };
 
-            get_output(|ptr| device.as_ref().CreateRasterizerState(&desc, ptr)).map(RasterState)
+            get_output(|ptr| device.as_ref().CreateRasterizerState(&desc, ptr)).map(Self)
         }
     }
 }

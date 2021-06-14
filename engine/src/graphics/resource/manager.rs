@@ -11,8 +11,8 @@ pub struct ResourceManager<R: Resource> {
 }
 
 impl<R: Resource> ResourceManager<R> {
-    pub fn new() -> ResourceManager<R> {
-        ResourceManager {
+    pub fn new() -> Self {
+        Self {
             map: HashMap::new(),
         }
     }

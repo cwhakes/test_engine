@@ -58,8 +58,8 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(position: impl Into<Vector3d>, radius: f32) -> Sphere {
-        Sphere {
+    pub fn new(position: impl Into<Vector3d>, radius: f32) -> Self {
+        Self {
             position: position.into(),
             radius,
         }
@@ -68,7 +68,7 @@ impl Sphere {
 
 impl Default for Sphere {
     fn default() -> Self {
-        Sphere::new([0.0; 3], 1.0)
+        Self::new([0.0; 3], 1.0)
     }
 }
 

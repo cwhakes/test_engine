@@ -69,7 +69,7 @@ impl Simplex {
     }
 
     /// Returns the sub-simplex that is nearest to the origin, along with the coordinates of the closest point
-    pub fn nearest_simplex(&self) -> Option<(Simplex, Vector3d)> {
+    pub fn nearest_simplex(&self) -> Option<(Self, Vector3d)> {
         // Early return if point is on simplex itself
         if let Some(vec) = self.nearest_point_within_simplex() {
             return Some((self.clone(), vec));

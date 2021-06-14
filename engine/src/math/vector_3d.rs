@@ -14,29 +14,29 @@ pub struct Vector3d {
 }
 
 impl Vector3d {
-    pub const ORIGIN: Vector3d = Vector3d {
+    pub const ORIGIN: Self = Self {
         x: 0.0,
         y: 0.0,
         z: 0.0,
     };
-    pub const RIGHT: Vector3d = Vector3d {
+    pub const RIGHT: Self = Self {
         x: 1.0,
         y: 0.0,
         z: 0.0,
     };
-    pub const UP: Vector3d = Vector3d {
+    pub const UP: Self = Self {
         x: 0.0,
         y: 0.0,
         z: 1.0,
     };
-    pub const FORWARD: Vector3d = Vector3d {
+    pub const FORWARD: Self = Self {
         x: 0.0,
         y: 0.0,
         z: 1.0,
     };
 
-    pub fn new(x: f32, y: f32, z: f32) -> Vector3d {
-        Vector3d { x, y, z }
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
+        Self { x, y, z }
     }
 
     pub fn magnitude(self) -> f32 {
@@ -47,7 +47,7 @@ impl Vector3d {
         self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
     }
 
-    pub fn normalize(self) -> Vector3d {
+    pub fn normalize(self) -> Self {
         let mag = self.magnitude();
         self / mag
     }
@@ -61,7 +61,7 @@ impl Vector3d {
         }
     }
 
-    pub fn set_component(&mut self, new_component: impl Into<Vector3d>) {
+    pub fn set_component(&mut self, new_component: impl Into<Self>) {
         let new_component = new_component.into();
         let new_mag = new_component.magnitude();
         if new_mag <= 0.0 {
@@ -74,7 +74,7 @@ impl Vector3d {
         *self += new_component;
     }
 
-    pub fn lerp(self, other: impl Into<Vector3d>, delta: f32) -> Vector3d {
+    pub fn lerp(self, other: impl Into<Self>, delta: f32) -> Vector3d {
         let other = other.into();
         Vector3d {
             x: self.x * (1.0 - delta) + other.x * delta,
@@ -83,21 +83,21 @@ impl Vector3d {
         }
     }
 
-    pub fn dot(self, rhs: impl Into<Vector3d>) -> f32 {
+    pub fn dot(self, rhs: impl Into<Self>) -> f32 {
         let rhs = rhs.into();
         self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 
-    pub fn cross(self, rhs: impl Into<Vector3d>) -> Vector3d {
+    pub fn cross(self, rhs: impl Into<Self>) -> Self {
         let rhs = rhs.into();
-        Vector3d {
+        Self {
             x: self.y * rhs.z - self.z * rhs.y,
             y: self.z * rhs.x - self.x * rhs.z,
             z: self.x * rhs.y - self.y * rhs.x,
         }
     }
 
-    pub fn distance_to_line(self, line: (Vector3d, Vector3d)) -> f32 {
+    pub fn distance_to_line(self, line: (Self, Self)) -> f32 {
         let line_length = (line.1 - line.0).magnitude();
         assert!(line_length > 0.0);
         let ray0 = line.0 - self;
@@ -109,19 +109,19 @@ impl Vector3d {
     /// Returns fraction of the distance between two points closest to self.
     /// Is outside the segment if less than 0 or greater than 1.
     /// Use with `lerp()` to find a point.
-    pub fn projection_along_1d(self, line: [Vector3d; 2]) -> f32 {
+    pub fn projection_along_1d(self, line: [Self; 2]) -> f32 {
         let len2 = (line[0] - line[1]).magnitude_squared();
         (self - line[0]).dot(line[1] - line[0]) / len2
     }
 
-    pub fn closest_point_on_plane(self, plane: (Vector3d, Vector3d, Vector3d)) -> Vector3d {
+    pub fn closest_point_on_plane(self, plane: (Self, Self, Self)) -> Self {
         let normal = (plane.1 - plane.0).cross(plane.2 - plane.0).normalize();
         let distance = (plane.0 - self).dot(normal);
         let projection = (plane.0 - self) - (normal * distance);
         plane.0 + projection
     }
 
-    pub fn projection_along_2d(self, plane: [Vector3d; 3]) -> (f32, f32) {
+    pub fn projection_along_2d(self, plane: [Self; 3]) -> (f32, f32) {
         // Get location of right triangle base along 0>1 vector
         let base_u = (plane[2]).projection_along_1d([plane[0], plane[1]]);
         let base = plane[0].lerp(plane[1], base_u);
@@ -135,7 +135,7 @@ impl Vector3d {
         (u, v)
     }
 
-    pub fn bounded_by_1d(self, line: [Vector3d; 2]) -> bool {
+    pub fn bounded_by_1d(self, line: [Self; 2]) -> bool {
         let area2_of_tri = (self - line[0])
             .cross(line[1] - line[0])
             .magnitude_squared();
@@ -144,7 +144,7 @@ impl Vector3d {
         approx_eq!(f32, 0.0, area2_of_tri) && 0.0 <= proj && proj <= 1.0
     }
 
-    pub fn bounded_by_2d(&self, plane: [Vector3d; 3]) -> bool {
+    pub fn bounded_by_2d(&self, plane: [Self; 3]) -> bool {
         let volume_of_cube = (plane[1] - plane[0])
             .cross(plane[1] - plane[0])
             .dot(*self - plane[0])
@@ -157,7 +157,7 @@ impl Vector3d {
             && approx_eq!(f32, 0.0, volume_of_cube)
     }
 
-    pub fn contained_by_3d(&self, tetrahedron: [Vector3d; 4]) -> bool {
+    pub fn contained_by_3d(&self, tetrahedron: [Self; 4]) -> bool {
         let t = tetrahedron;
         //Calculate normals
         let p0 = (t[1] - t[0]).cross(t[2] - t[0]);
@@ -193,8 +193,8 @@ impl convert::From<obj::Vertex> for Vector3d {
     }
 }
 
-impl<T: Into<Vector3d>> ops::Add<T> for Vector3d {
-    type Output = Vector3d;
+impl<T: Into<Self>> ops::Add<T> for Vector3d {
+    type Output = Self;
 
     fn add(mut self, rhs: T) -> Self::Output {
         self += rhs;
@@ -202,7 +202,7 @@ impl<T: Into<Vector3d>> ops::Add<T> for Vector3d {
     }
 }
 
-impl<T: Into<Vector3d>> ops::AddAssign<T> for Vector3d {
+impl<T: Into<Self>> ops::AddAssign<T> for Vector3d {
     fn add_assign(&mut self, rhs: T) {
         let rhs = rhs.into();
         self.x += rhs.x;
@@ -211,8 +211,8 @@ impl<T: Into<Vector3d>> ops::AddAssign<T> for Vector3d {
     }
 }
 
-impl<T: Into<Vector3d>> ops::Sub<T> for Vector3d {
-    type Output = Vector3d;
+impl<T: Into<Self>> ops::Sub<T> for Vector3d {
+    type Output = Self;
 
     fn sub(mut self, rhs: T) -> Self::Output {
         self -= rhs;
@@ -220,7 +220,7 @@ impl<T: Into<Vector3d>> ops::Sub<T> for Vector3d {
     }
 }
 
-impl<T: Into<Vector3d>> ops::SubAssign<T> for Vector3d {
+impl<T: Into<Self>> ops::SubAssign<T> for Vector3d {
     fn sub_assign(&mut self, rhs: T) {
         let rhs = rhs.into();
         self.x -= rhs.x;
@@ -233,7 +233,7 @@ impl ops::Neg for Vector3d {
     type Output = Self;
 
     fn neg(self) -> Self {
-        Vector3d {
+        Self {
             x: -self.x,
             y: -self.y,
             z: -self.z,
@@ -242,10 +242,10 @@ impl ops::Neg for Vector3d {
 }
 
 impl ops::Mul<f32> for Vector3d {
-    type Output = Vector3d;
+    type Output = Self;
 
     fn mul(self, rhs: f32) -> Self::Output {
-        Vector3d {
+        Self {
             x: self.x * rhs,
             y: self.y * rhs,
             z: self.z * rhs,
@@ -254,10 +254,10 @@ impl ops::Mul<f32> for Vector3d {
 }
 
 impl ops::Div<f32> for Vector3d {
-    type Output = Vector3d;
+    type Output = Self;
 
     fn div(self, rhs: f32) -> Self::Output {
-        Vector3d {
+        Self {
             x: self.x / rhs,
             y: self.y / rhs,
             z: self.z / rhs,

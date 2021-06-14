@@ -40,13 +40,13 @@ const DRIVER_TYPES: [d3dcommon::D3D_DRIVER_TYPE; 3] = [
 const FEATURE_LEVELS: [d3dcommon::D3D_FEATURE_LEVEL; 1] = [d3dcommon::D3D_FEATURE_LEVEL_11_0];
 
 impl Render {
-    pub fn new() -> error::Result<Render> {
+    pub fn new() -> error::Result<Self> {
         unsafe {
             let mut feature_level = Default::default();
             //Default to error
             let mut result = Err(error::Custom("No driver types specified".to_string()));
 
-            for &driver_type in DRIVER_TYPES.iter() {
+            for driver_type in std::array::IntoIter::new(DRIVER_TYPES) {
                 result = get_output2(|ptr1, ptr2| {
                     d3d11::D3D11CreateDevice(
                         null_mut(),
@@ -71,7 +71,7 @@ impl Render {
             let raster_front = RasterState::new_front(&device)?;
             let raster_back = RasterState::new_back(&device)?;
 
-            Ok(Render {
+            Ok(Self {
                 device,
                 _feature_level: feature_level,
                 context: Context::from_nonnull(context)?,
@@ -113,7 +113,7 @@ impl Render {
 
     pub fn draw_mesh_and_materials(&mut self, mesh: &Mesh, materials: &mut [Material]) {
         let mut mesh_inner = mesh.inner();
-        for material_id in mesh_inner.material_ids.clone().iter() {
+        for material_id in &mesh_inner.material_ids.clone() {
             if let Some(material) = materials.get_mut(material_id.id) {
                 self.set_material(material);
             } else {

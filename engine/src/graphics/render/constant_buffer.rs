@@ -5,7 +5,6 @@ use crate::error;
 use crate::util::get_output;
 
 use std::any::{Any, TypeId};
-use std::ffi::c_void;
 use std::ptr::{self, NonNull};
 
 use winapi::um::d3d11;
@@ -23,7 +22,7 @@ unsafe impl<C: ?Sized> Sync for ConstantBuffer<C> where C: Sync {}
 
 impl<C: ?Sized> ConstantBuffer<C> {
     /// Constructs a new ConstantBuffer.
-    pub fn new(device: &Device, constant: &mut C) -> error::Result<ConstantBuffer<C>> {
+    pub fn new(device: &Device, constant: &mut C) -> error::Result<Self> {
         unsafe {
             let buff_desc = d3d11::D3D11_BUFFER_DESC {
                 Usage: d3d11::D3D11_USAGE_DEFAULT,
@@ -36,13 +35,13 @@ impl<C: ?Sized> ConstantBuffer<C> {
             assert!(buff_desc.ByteWidth % 16 == 0);
 
             let data = d3d11::D3D11_SUBRESOURCE_DATA {
-                pSysMem: constant as *const _ as *const c_void,
+                pSysMem: (constant as *const C).cast(),
                 ..Default::default()
             };
 
             let buffer = get_output(|ptr| device.as_ref().CreateBuffer(&buff_desc, &data, ptr))?;
 
-            Ok(ConstantBuffer {
+            Ok(Self {
                 buffer,
                 _phantom: Default::default(),
             })
@@ -59,7 +58,7 @@ impl<C: ?Sized> ConstantBuffer<C> {
                 &**self.buffer.as_ref() as *const _ as *mut _,
                 0,
                 ptr::null_mut(),
-                constant as *mut C as *mut _,
+                (constant as *mut C).cast(),
                 0,
                 0,
             );

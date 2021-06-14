@@ -16,7 +16,7 @@ unsafe impl Send for IndexBuffer {}
 unsafe impl Sync for IndexBuffer {}
 
 impl IndexBuffer {
-    pub fn new(device: &Device, indices: &[u32]) -> error::Result<IndexBuffer> {
+    pub fn new(device: &Device, indices: &[u32]) -> error::Result<Self> {
         unsafe {
             let buff_desc = d3d11::D3D11_BUFFER_DESC {
                 Usage: d3d11::D3D11_USAGE_DEFAULT,
@@ -28,13 +28,13 @@ impl IndexBuffer {
             };
 
             let data = d3d11::D3D11_SUBRESOURCE_DATA {
-                pSysMem: indices.as_ptr() as *const _,
+                pSysMem: indices.as_ptr().cast(),
                 ..Default::default()
             };
 
             let buffer = get_output(|ptr| device.as_ref().CreateBuffer(&buff_desc, &data, ptr))?;
 
-            Ok(IndexBuffer {
+            Ok(Self {
                 len: indices.len(),
                 buffer,
             })

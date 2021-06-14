@@ -10,13 +10,13 @@ pub struct Vector2d {
 }
 
 impl Vector2d {
-    pub fn new(x: f32, y: f32) -> Vector2d {
-        Vector2d { x, y }
+    pub fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
     }
 
-    pub fn lerp(&self, other: impl Into<Vector2d>, delta: f32) -> Vector2d {
+    pub fn lerp(&self, other: impl Into<Self>, delta: f32) -> Self {
         let other = other.into();
-        Vector2d {
+        Self {
             x: self.x * (1.0 - delta) + other.x * delta,
             y: self.y * (1.0 - delta) + other.y * delta,
         }
@@ -25,7 +25,7 @@ impl Vector2d {
 
 impl convert::From<[f32; 2]> for Vector2d {
     fn from(array: [f32; 2]) -> Self {
-        Vector2d {
+        Self {
             x: array[0],
             y: array[1],
         }
@@ -34,18 +34,18 @@ impl convert::From<[f32; 2]> for Vector2d {
 
 impl convert::From<obj::TVertex> for Vector2d {
     fn from(vertex: obj::TVertex) -> Self {
-        Vector2d {
+        Self {
             x: vertex.u as f32,
             y: vertex.v as f32,
         }
     }
 }
 
-impl ops::Add<Vector2d> for Vector2d {
-    type Output = Vector2d;
+impl ops::Add for Vector2d {
+    type Output = Self;
 
-    fn add(self, rhs: Vector2d) -> Self::Output {
-        Vector2d {
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
         }
@@ -53,10 +53,10 @@ impl ops::Add<Vector2d> for Vector2d {
 }
 
 impl ops::Mul<f32> for Vector2d {
-    type Output = Vector2d;
+    type Output = Self;
 
     fn mul(self, rhs: f32) -> Self::Output {
-        Vector2d {
+        Self {
             x: self.x * rhs,
             y: self.y * rhs,
         }

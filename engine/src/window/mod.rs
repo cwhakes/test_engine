@@ -60,8 +60,8 @@ pub struct Window<A: Application> {
 }
 
 impl<A: Application> Window<A> {
-    pub fn new() -> Window<A> {
-        Window {
+    pub fn new() -> Self {
+        Self {
             running: AtomicBool::new(false),
             moving: AtomicBool::new(false),
             application: Mutex::new(None),

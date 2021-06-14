@@ -22,7 +22,7 @@ unsafe impl<V> Send for VertexBuffer<V> where V: Vertex + Send {}
 unsafe impl<V> Sync for VertexBuffer<V> where V: Vertex + Sync {}
 
 impl<V: Vertex> VertexBuffer<V> {
-    pub fn new(device: &Device, vertices: &[V], bytecode: &[u8]) -> error::Result<VertexBuffer<V>> {
+    pub fn new(device: &Device, vertices: &[V], bytecode: &[u8]) -> error::Result<Self> {
         unsafe {
 
             let buff_desc = d3d11::D3D11_BUFFER_DESC {
@@ -35,7 +35,7 @@ impl<V: Vertex> VertexBuffer<V> {
             };
 
             let data = d3d11::D3D11_SUBRESOURCE_DATA {
-                pSysMem: vertices.as_ptr() as *const _,
+                pSysMem: vertices.as_ptr().cast(),
                 ..Default::default()
             };
 
@@ -47,13 +47,13 @@ impl<V: Vertex> VertexBuffer<V> {
                 device.as_ref().CreateInputLayout(
                     layout_desc.as_ptr(),
                     layout_desc.len() as u32,
-                    bytecode.as_ptr() as *const _,
+                    bytecode.as_ptr().cast(),
                     bytecode.len(),
                     ptr,
                 )
             })?;
 
-            Ok(VertexBuffer {
+            Ok(Self {
                 len: vertices.len(),
                 buffer,
                 layout,

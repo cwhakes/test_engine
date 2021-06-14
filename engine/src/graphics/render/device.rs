@@ -22,8 +22,8 @@ impl Device {
     /// # Safety
     ///
     /// `device` must point to a valid ID3D11Device
-    pub unsafe fn from_nonnull(device: NonNull<d3d11::ID3D11Device>) -> error::Result<Device> {
-        Ok(Device(device))
+    pub unsafe fn from_nonnull(device: NonNull<d3d11::ID3D11Device>) -> error::Result<Self> {
+        Ok(Self(device))
     }
 
     pub fn new_swapchain(&mut self, hwnd: &Hwnd) -> error::Result<SwapChain> {

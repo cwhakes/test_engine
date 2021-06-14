@@ -23,8 +23,8 @@ impl Context {
     /// `context` must point to a valid ID3D11DeviceContext
     pub unsafe fn from_nonnull(
         context: NonNull<d3d11::ID3D11DeviceContext>,
-    ) -> error::Result<Context> {
-        Ok(Context(context))
+    ) -> error::Result<Self> {
+        Ok(Self(context))
     }
 
     pub fn clear_render_target_color(&self, swapchain: &mut SwapChain, color: impl Into<Color>) {

@@ -26,7 +26,7 @@ impl Vector4d {
         }
     }
 
-    pub fn cross(v1: &Vector4d, v2: &Vector4d, v3: &Vector4d) -> Vector4d {
+    pub fn cross(v1: &Self, v2: &Self, v3: &Self) -> Self {
         Vector4d {
             x: v1.y * (v2.z * v3.w - v3.z * v2.w) - v1.z * (v2.y * v3.w - v3.y * v2.w)
                 + v1.w * (v2.y * v3.z - v2.z * v3.y),
@@ -56,7 +56,7 @@ impl Vector4d {
         matrix
     }
 
-    pub fn outer(self, other: impl Into<Vector4d>) -> Matrix4x4 {
+    pub fn outer(self, other: impl Into<Self>) -> Matrix4x4 {
         let other = other.into();
 
         let mut matrix = Matrix4x4::default();
@@ -71,7 +71,7 @@ impl Vector4d {
 
 impl convert::From<[f32; 4]> for Vector4d {
     fn from(array: [f32; 4]) -> Self {
-        Vector4d {
+        Self {
             x: array[0],
             y: array[1],
             z: array[2],
@@ -82,7 +82,7 @@ impl convert::From<[f32; 4]> for Vector4d {
 
 impl convert::From<obj::Vertex> for Vector4d {
     fn from(vertex: obj::Vertex) -> Self {
-        Vector4d {
+        Self {
             x: vertex.x as f32,
             y: vertex.y as f32,
             z: vertex.z as f32,

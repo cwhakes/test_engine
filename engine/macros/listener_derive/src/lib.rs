@@ -129,7 +129,7 @@ fn find_parent_fns<'a>(
     attributes: impl IntoIterator<Item = &'a Attribute>,
 ) -> HashMap<String, TokenStream> {
     let mut map = HashMap::new();
-    for attribute in attributes.into_iter() {
+    for attribute in attributes {
         if attribute.path.is_ident("listener") {
             if let Meta::List(list) = attribute.parse_meta().unwrap() {
                 for nested_meta in list.nested.iter() {
