@@ -1,16 +1,2 @@
-[package]
-name = "test_engine"
-version = "0.1.0"
-authors = ["Will Hakes <info@cwilliamhakes.com>"]
-edition = "2018"
-
 [workspace]
-members = ["engine", "engine/macros/listener_derive", "engine/macros/vertex_derive"]
-
-[dependencies]
-engine = { path = "./engine" }
-env_logger = "0.8.2"
-lazy_static = "1.4.0"
-log = "0.4"
-listener_derive = { path = "./engine/macros/listener_derive" }
-vertex_derive = { path = "./engine/macros/vertex_derive" }
+members = ["apps/*", "engine", "engine/macros/listener_derive", "engine/macros/vertex_derive"]
