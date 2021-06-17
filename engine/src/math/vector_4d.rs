@@ -14,11 +14,11 @@ pub struct Vector4d {
 }
 
 impl Vector4d {
-    pub fn to_array(&self) -> [f32; 4] {
+    pub fn to_array(self) -> [f32; 4] {
         [self.x, self.y, self.z, self.w]
     }
 
-    pub fn to_3d_unchecked(&self) -> Vector3d {
+    pub fn to_3d_unchecked(self) -> Vector3d {
         Vector3d {
             x: self.x,
             y: self.y,
