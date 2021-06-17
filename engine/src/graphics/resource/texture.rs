@@ -20,7 +20,7 @@ pub struct Texture(Arc<TextureInner>);
 impl Resource for Texture {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
         unsafe {
-            let image = Reader::open(path.as_ref())?.decode()?.to_rgba();
+            let image = Reader::open(path.as_ref())?.decode()?.to_rgba8();
             let sample_desc = dxgitype::DXGI_SAMPLE_DESC {
                 Count: 1,
                 Quality: 0,

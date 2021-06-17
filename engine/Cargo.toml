@@ -14,7 +14,7 @@ image = { version = "0.23.10", default-features = false, features = [
 lazy_static = "1.4.0"
 log = "0.4"
 vertex_derive = { path = "./macros/vertex_derive" }
-wavefront_obj = "7.0.0"
+wavefront_obj = "10.0"
 winapi = { version = "0.3.9", features = [
     "d3d11",
     "d3d11sdklayers",
@@ -28,4 +28,4 @@ winapi = { version = "0.3.9", features = [
 ] }
 
 [dev-dependencies]
-rand = "0.7.3"
+rand = "0.8"
