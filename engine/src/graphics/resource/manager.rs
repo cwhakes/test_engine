@@ -35,6 +35,6 @@ impl<R: Resource> ResourceManager<R> {
 
 impl<R: Resource> Default for ResourceManager<R> {
     fn default() -> Self {
-        ResourceManager::new()
+        Self::new()
     }
 }

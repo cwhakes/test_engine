@@ -56,7 +56,7 @@ pub struct ShaderInner<T: ShaderType> {
 impl<T: ShaderType + Clone> Resource for Shader<T> {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
         let (inner, _) = ShaderInner::new(device, path)?;
-        Ok(Shader(Arc::new(inner)))
+        Ok(Self(Arc::new(inner)))
     }
 }
 

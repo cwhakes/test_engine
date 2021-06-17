@@ -87,7 +87,7 @@ impl Material {
 
 impl Clone for Material {
     fn clone(&self) -> Self {
-        Material {
+        Self {
             vs: self.vs.clone(),
             ps: self.ps.clone(),
             const_buffs: Vec::new(),

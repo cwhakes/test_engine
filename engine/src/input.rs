@@ -135,7 +135,7 @@ impl Input {
 
 impl Default for Input {
     fn default() -> Self {
-        Input {
+        Self {
             hashmap: Default::default(),
             keys_state: [0; 256],
             old_keys_state: [0; 256],

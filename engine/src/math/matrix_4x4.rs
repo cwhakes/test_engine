@@ -7,11 +7,11 @@ use std::{convert, ops};
 pub struct Matrix4x4(pub [[f32; 4]; 4]);
 
 impl Matrix4x4 {
-    pub fn zero() -> Matrix4x4 {
+    pub fn zero() -> Self {
         Self([[0.0; 4]; 4])
     }
 
-    pub fn identity() -> Matrix4x4 {
+    pub fn identity() -> Self {
         Self([
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
@@ -271,7 +271,7 @@ impl ops::MulAssign<f32> for Matrix4x4 {
 
 impl ops::MulAssign for Matrix4x4 {
     fn mul_assign(&mut self, rhs: Self) {
-        let mut new = Matrix4x4::default();
+        let mut new = Self::default();
         for i in 0..4 {
             for j in 0..4 {
                 new.0[i][j] = (0..4).map(|k| self.0[i][k] * rhs.0[k][j]).sum();

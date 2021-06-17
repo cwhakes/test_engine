@@ -74,9 +74,9 @@ impl Vector3d {
         *self += new_component;
     }
 
-    pub fn lerp(self, other: impl Into<Self>, delta: f32) -> Vector3d {
+    pub fn lerp(self, other: impl Into<Self>, delta: f32) -> Self {
         let other = other.into();
-        Vector3d {
+        Self {
             x: self.x * (1.0 - delta) + other.x * delta,
             y: self.y * (1.0 - delta) + other.y * delta,
             z: self.z * (1.0 - delta) + other.z * delta,
@@ -175,7 +175,7 @@ impl Vector3d {
 
 impl convert::From<[f32; 3]> for Vector3d {
     fn from(array: [f32; 3]) -> Self {
-        Vector3d {
+        Self {
             x: array[0],
             y: array[1],
             z: array[2],
@@ -185,7 +185,7 @@ impl convert::From<[f32; 3]> for Vector3d {
 
 impl convert::From<obj::Vertex> for Vector3d {
     fn from(vertex: obj::Vertex) -> Self {
-        Vector3d {
+        Self {
             x: vertex.x as f32,
             y: vertex.y as f32,
             z: vertex.z as f32,

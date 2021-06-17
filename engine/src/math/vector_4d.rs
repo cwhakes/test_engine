@@ -27,7 +27,7 @@ impl Vector4d {
     }
 
     pub fn cross(v1: &Self, v2: &Self, v3: &Self) -> Self {
-        Vector4d {
+        Self {
             x: v1.y * (v2.z * v3.w - v3.z * v2.w) - v1.z * (v2.y * v3.w - v3.y * v2.w)
                 + v1.w * (v2.y * v3.z - v2.z * v3.y),
             y: -(v1.x * (v2.z * v3.w - v3.z * v2.w) - v1.z * (v2.x * v3.w - v3.x * v2.w)

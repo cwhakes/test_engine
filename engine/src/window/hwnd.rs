@@ -11,8 +11,8 @@ impl Hwnd {
     /// # Safety
     ///
     /// `hwnd` must be a valid HWND
-    pub unsafe fn new(hwnd: HWND) -> Hwnd {
-        Hwnd(hwnd)
+    pub unsafe fn new(hwnd: HWND) -> Self {
+        Self(hwnd)
     }
 
     pub fn inner(&self) -> &HWND {

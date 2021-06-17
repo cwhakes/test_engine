@@ -190,7 +190,7 @@ impl Drop for BackBuffer {
 pub struct DepthBuffer(NonNull<d3d11::ID3D11DepthStencilView>);
 
 impl DepthBuffer {
-    fn new(swapchain: &SwapChain, device: &Device) -> error::Result<DepthBuffer> {
+    fn new(swapchain: &SwapChain, device: &Device) -> error::Result<Self> {
         unsafe {
             let mut sc_desc = dxgi::DXGI_SWAP_CHAIN_DESC::default();
             swapchain.inner.as_ref().GetDesc(&mut sc_desc);
@@ -228,7 +228,7 @@ impl DepthBuffer {
 
             buffer.as_ref().Release();
 
-            Ok(DepthBuffer(dsv))
+            Ok(Self(dsv))
         }
     }
 }

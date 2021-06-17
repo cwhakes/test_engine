@@ -27,7 +27,7 @@ impl DeltaT {
 
 impl Default for DeltaT {
     fn default() -> Self {
-        DeltaT {
+        Self {
             prev_time: Instant::now(),
             curr_time: Instant::now(),
         }
