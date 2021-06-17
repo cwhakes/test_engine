@@ -1,2 +1,2 @@
 [workspace]
-members = ["apps/*", "engine", "engine/macros/listener_derive", "engine/macros/vertex_derive"]
+members = ["apps/*", "libs/engine", "libs/engine/macros/listener_derive", "libs/engine/macros/vertex_derive"]
