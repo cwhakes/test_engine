@@ -10,6 +10,12 @@ lazy_static! {
     pub static ref INPUT: Mutex<Input> = Mutex::new(Input::default());
 }
 
+pub mod key {
+    use super::*;
+
+    pub const ESCAPE: u8 = winuser::VK_ESCAPE as u8;
+}
+
 pub trait Listener {
     fn name(&self) -> String;
     fn on_key_down(&mut self, _key: usize) {}

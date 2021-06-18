@@ -1,6 +1,6 @@
 mod world;
 
-use crate::shaders::point_light;
+use crate::shaders::directional_light;
 use world::{Entity, World};
 
 use engine::error::Result;
@@ -49,37 +49,24 @@ impl Application for AppWindow {
         let mut world = World::new();
 
         let material = graphics.new_material(
-            point_light::VERTEX_SHADER_PATH,
-            point_light::PIXEL_SHADER_PATH,
+            directional_light::VERTEX_SHADER_PATH,
+            directional_light::PIXEL_SHADER_PATH,
         )?;
 
-        let house = graphics.get_mesh_from_file("assets\\Meshes\\house.obj")?;
-        let plane = graphics.get_mesh_from_file("assets\\Meshes\\plane2.obj")?;
+        let spaceship = graphics.get_mesh_from_file("assets\\Meshes\\spaceship.obj")?;
 
-        let mut barrel = material.clone();
-        barrel.add_texture(&graphics.get_texture_from_file("assets\\Textures\\barrel.jpg")?);
-        let mut brick = material.clone();
-        brick.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_brick.jpg")?);
-        let mut windows = material.clone();
-        windows
-            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_windows.jpg")?);
-        let mut wood = material.clone();
-        wood.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_wood.jpg")?);
-        let house_textures = vec![barrel, brick, windows, wood];
-
-        let mut sand = material;
-        sand.add_texture(&graphics.get_texture_from_file("assets\\Textures\\sand.jpg")?);
+        let mut spaceship_mat = material.clone();
+        spaceship_mat.add_texture(&graphics.get_texture_from_file("assets\\Textures\\spaceship.jpg")?);
 
         world.add_entity(Entity::new(
-            house,
-            house_textures,
+            spaceship,
+            vec![spaceship_mat],
             Position::new(Matrix4x4::translation([0.0, 0.0, 0.0])),
         ));
-        world.add_entity(Entity::new(plane, Some(sand), Position::default()));
 
         let mut sky_material = graphics
             .new_material(
-                point_light::VERTEX_SHADER_PATH,
+                "shaders\\skybox\\vertex_shader.hlsl",
                 "shaders\\skybox\\pixel_shader.hlsl",
             )?
             .with_frontface_culling();
@@ -101,7 +88,7 @@ impl Application for AppWindow {
             variables: world,
         };
 
-        app_window.variables.set_screen_size(app_window.hwnd.rect().dims());
+        app_window.variables.set_screen_size(app_window.hwnd.rect());
 
         WINDOW.set_application(app_window);
         graphics.render.device().debug()?;
@@ -141,9 +128,19 @@ impl Application for AppWindow {
     }
 
     fn on_resize(&mut self) {
-        self.variables.set_screen_size(self.hwnd.rect().dims());
+        self.variables.set_screen_size(self.hwnd.rect());
+        if self.variables.is_playing() {
+            self.variables.center_cursor()
+        }
         let graphics = GRAPHICS.lock().unwrap();
         self.swapchain.resize(graphics.render.device()).unwrap();
+    }
+
+    fn on_move(&mut self) {
+        self.variables.set_screen_size(self.hwnd.rect());
+        if self.variables.is_playing() {
+            self.variables.center_cursor()
+        }
     }
 }
 

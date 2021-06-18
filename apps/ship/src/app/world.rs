@@ -3,26 +3,23 @@ use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
-use engine::input::{self, Listener};
-use engine::math::{Matrix4x4, Point, Vector3d};
+use engine::input::{self, key, Listener};
+use engine::math::{Matrix4x4, Point, Rect, Vector3d};
 use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::physics::Position;
 use engine::time::DeltaT;
 
-use crate::shaders::point_light::Environment;
+use crate::shaders::directional_light::Environment;
 
 static SPEED: f32 = 5.0;
 
 #[derive(Default)]
 pub struct World {
-    screen_width: f32,
-    screen_height: f32,
+    screen_rect: Rect<i32>,
 
     play_state: PlayState,
 
     delta_t: DeltaT,
-    pub scale_cube: f32,
-    world_matrix: Matrix4x4,
     pub camera: Camera,
     pub light_source: Matrix4x4,
 
@@ -38,21 +35,6 @@ pub struct World {
 enum PlayState {
     Playing,
     NotPlaying,
-}
-
-impl PlayState {
-    fn toggle(&mut self) {
-        match self {
-            Self::Playing => {
-                input::show_cursor(true);
-                *self = Self::NotPlaying;
-            }
-            Self::NotPlaying => {
-                input::show_cursor(false);
-                *self = Self::Playing;
-            }
-        }
-    }
 }
 
 impl Default for PlayState {
@@ -119,11 +101,9 @@ impl World {
         let mut camera = Camera::default();
         camera.move_forward(-2.0);
         camera.move_up(1.0);
-        //let light_source = Matrix4x4::rotation_x(-std::f32::consts::PI / 6.0);
-        let light_source = Matrix4x4::translation([100.0, 100.0, 100.0]);
+        let light_source = Matrix4x4::rotation_y(0.707);
 
         Self {
-            scale_cube: 1.0,
             camera,
             light_source,
             light_rad: 40000.0,
@@ -158,11 +138,8 @@ impl World {
     }
 
     pub fn environment(&self) -> Environment {
-        let mut world = self.world_matrix.clone();
-        world *= Matrix4x4::scaling(self.scale_cube);
-
         let view = self.camera.get_view();
-        let proj = self.camera.get_proj(self.screen_width / self.screen_height);
+        let proj = self.camera.get_proj(Rect::<f32>::from(&self.screen_rect).aspect());
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
         let camera_pos = self.camera.get_location();
@@ -180,9 +157,8 @@ impl World {
         }
     }
 
-    pub fn set_screen_size(&mut self, (width, height): (i32, i32)) {
-        self.screen_width = width as f32;
-        self.screen_height = height as f32;
+    pub fn set_screen_size(&mut self, rect: Rect<i32>) {
+        self.screen_rect = rect;
     }
 
     pub fn add_entity(&mut self, entity: Entity) {
@@ -212,6 +188,16 @@ impl World {
 
     pub fn add_sky_entity(&mut self, sky_entity: Entity) {
         self.sky_entity = Some(sky_entity)
+    }
+
+    pub fn center_cursor(&mut self) {
+        input::set_cursor_position(
+            (self.screen_rect.center_x(), self.screen_rect.center_y())
+        );
+    }
+
+    pub fn is_playing(&self) -> bool {
+        self.play_state == PlayState::Playing
     }
 }
 
@@ -249,32 +235,26 @@ impl Listener for World {
 
         let key = key as u8;
         match key {
-            b'G' => {
-                self.play_state.toggle();
+            key::ESCAPE => if self.play_state == PlayState::Playing {
+                input::show_cursor(true);
+                self.play_state = PlayState::NotPlaying;
             }
             _ => {}
         }
     }
     fn on_mouse_move(&mut self, pos: Point) {
         if self.play_state == PlayState::Playing {
-            let (width, height) = (self.screen_width as i32, self.screen_height as i32);
+            self.camera.tilt((pos.y - self.screen_rect.center_y()) as f32 * 0.002);
+            self.camera.pan((pos.x - self.screen_rect.center_x()) as f32 * 0.002);
 
-            self.camera.tilt((pos.y - height / 2) as f32 * 0.002);
-            self.camera.pan((pos.x - width / 2) as f32 * 0.002);
-
-            input::set_cursor_position((width / 2, height / 2));
+            self.center_cursor();
         }
     }
     fn on_left_mouse_down(&mut self) {
-        self.scale_cube = 0.5
-    }
-    fn on_right_mouse_down(&mut self) {
-        self.scale_cube = 1.5
-    }
-    fn on_left_mouse_up(&mut self) {
-        self.scale_cube = 1.0
-    }
-    fn on_right_mouse_up(&mut self) {
-        self.scale_cube = 1.0
+        if self.play_state == PlayState::NotPlaying {
+            input::show_cursor(false);
+            self.center_cursor();
+            self.play_state = PlayState::Playing;
+        }
     }
 }

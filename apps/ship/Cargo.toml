@@ -6,3 +6,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+engine = { path = "../../libs/engine" }
+env_logger = "0.8.2"
+lazy_static = "1.4.0"
+log = "0.4"
+listener_derive = { path = "../../libs/listener_derive" }
+vertex_derive = { path = "../../libs/vertex_derive" }

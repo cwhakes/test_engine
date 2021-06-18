@@ -50,6 +50,7 @@ pub trait Application: Send + Sync {
     {
     }
     fn on_resize(&mut self) {}
+    fn on_move(&mut self) {}
 }
 
 #[derive(Default)]
@@ -126,20 +127,19 @@ impl<A: Application> Window<A> {
     /// Engine event loop
     pub fn broadcast(&self) -> bool {
         unsafe {
+            INPUT.lock().unwrap().update();
+
             if let Some(app) = self.application.lock().unwrap().as_mut() {
                 app.on_update()
             }
-
-            INPUT.lock().unwrap().update();
 
             let mut msg = Default::default();
             while 0 < PeekMessageW(&mut msg, ptr::null_mut(), 0, 0, winuser::PM_REMOVE) {
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
-
+            
             hint::spin_loop();
-
             self.running.load(Ordering::Relaxed)
         }
     }
@@ -190,7 +190,7 @@ impl<A: Application> Window<A> {
                 }
                 0
             }
-            winuser::WM_MOVE => {
+            winuser::WM_MOVE | winuser::WM_MOVING => {
                 debug!("WM_MOVE");
 
                 let mut guard = match A::me().application.try_lock() {
@@ -200,6 +200,7 @@ impl<A: Application> Window<A> {
                 };
 
                 if let Some(window) = &mut *guard {
+                    window.on_move();
                     window.on_update();
                 }
                 0

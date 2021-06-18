@@ -6,6 +6,7 @@ use crate::util::get_output;
 use crate::window::Hwnd;
 
 use std::ptr::{self, NonNull};
+use std::u32;
 
 use winapi::shared::dxgi;
 use winapi::shared::dxgiformat;
@@ -26,13 +27,13 @@ unsafe impl Sync for SwapChain {}
 
 impl SwapChain {
     pub fn get_desc(hwnd: &Hwnd) -> dxgi::DXGI_SWAP_CHAIN_DESC {
-        let (width, height) = hwnd.rect();
+        let (width, height) = hwnd.rect().dims();
 
         dxgi::DXGI_SWAP_CHAIN_DESC {
             BufferCount: 1,
             BufferDesc: dxgitype::DXGI_MODE_DESC {
-                Width: width,
-                Height: height,
+                Width: width as u32,
+                Height: height as u32,
                 Format: dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM,
                 ..dxgitype::DXGI_MODE_DESC::default()
             },
