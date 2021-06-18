@@ -1,6 +1,6 @@
 mod world;
 
-use crate::shaders::point_light;
+use shader::point_light;
 use world::{Entity, World};
 
 use engine::error::Result;

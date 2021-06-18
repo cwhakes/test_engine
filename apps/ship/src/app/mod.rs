@@ -1,6 +1,6 @@
 mod world;
 
-use crate::shaders::directional_light;
+use shader::directional_light;
 use world::{Entity, World};
 
 use engine::error::Result;

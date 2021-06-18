@@ -9,7 +9,7 @@ use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::physics::Position;
 use engine::time::DeltaT;
 
-use crate::shaders::point_light::Environment;
+use shader::point_light::Environment;
 
 static SPEED: f32 = 5.0;
 
