@@ -32,8 +32,10 @@ impl Context {
         unsafe {
             if let Some(back_buffer) = swapchain.back_buffer_ptr() {
                 if let Some(depth_buffer) = swapchain.depth_buffer_mut() {
-                    self.as_ref()
-                        .ClearRenderTargetView(back_buffer, &[color.x(), color.y(), color.z(), 1.0]);
+                    self.as_ref().ClearRenderTargetView(
+                        back_buffer,
+                        &[color.x(), color.y(), color.z(), 1.0],
+                    );
                     self.as_ref().ClearDepthStencilView(
                         depth_buffer.as_mut(),
                         d3d11::D3D11_CLEAR_DEPTH | d3d11::D3D11_CLEAR_STENCIL,

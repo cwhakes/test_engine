@@ -52,7 +52,7 @@ impl Matrix4x4 {
     }
 
     pub fn scaling3(vec: impl Into<Vector3d>) -> Self {
-        let Vector([ x, y, z ]) = vec.into();
+        let Vector([x, y, z]) = vec.into();
         //let Vector3d { x, y, z } = vec.into();
         Self([
             [x, 0.0, 0.0, 0.0],
@@ -192,35 +192,19 @@ impl Matrix4x4 {
     }
 
     pub fn get_direction_x(&self) -> Vector3d {
-        Vector3d::new(
-            self.0[0][0],
-            self.0[0][1],
-            self.0[0][2],
-        )
+        Vector3d::new(self.0[0][0], self.0[0][1], self.0[0][2])
     }
 
     pub fn get_direction_y(&self) -> Vector3d {
-        Vector3d::new(
-            self.0[1][0],
-            self.0[1][1],
-            self.0[1][2],
-        )
+        Vector3d::new(self.0[1][0], self.0[1][1], self.0[1][2])
     }
 
     pub fn get_direction_z(&self) -> Vector3d {
-        Vector3d::new(
-            self.0[2][0],
-            self.0[2][1],
-            self.0[2][2],
-        )
+        Vector3d::new(self.0[2][0], self.0[2][1], self.0[2][2])
     }
 
     pub fn get_translation(&self) -> Vector3d {
-        Vector3d::new(
-            self.0[3][0],
-            self.0[3][1],
-            self.0[3][2],
-        )
+        Vector3d::new(self.0[3][0], self.0[3][1], self.0[3][2])
     }
 }
 

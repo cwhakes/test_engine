@@ -22,9 +22,6 @@ impl Vector2d {
 
 impl convert::From<obj::TVertex> for Vector2d {
     fn from(vertex: obj::TVertex) -> Self {
-        Self::new(
-            vertex.u as f32,
-            vertex.v as f32,
-        )
+        Self::new(vertex.u as f32, vertex.v as f32)
     }
 }

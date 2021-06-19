@@ -1,6 +1,6 @@
 use super::{Vector, Vector4d};
 
-use std::{convert, ops};
+use std::convert;
 
 use float_cmp::approx_eq;
 use wavefront_obj::obj;
@@ -50,26 +50,6 @@ impl Vector3d {
         }
     }
 
-    pub fn zero_component(&mut self, component: impl Into<Self>) {
-        let direction = component.into().normalize();
-        let old_mag = self.dot(direction);
-
-        *self -= direction * old_mag;
-    }
-
-    pub fn set_component(&mut self, direction: impl Into<Self>, magnitude: f32) {
-        let direction = direction.into().normalize();
-        let old_magnitude = self.dot(direction);
-
-        *self -= direction * old_magnitude;
-        *self += direction * magnitude;
-    }
-
-    pub fn dot(self, rhs: impl Into<Self>) -> f32 {
-        let rhs = rhs.into();
-        self.x() * rhs.x() + self.y() * rhs.y() + self.z() * rhs.z()
-    }
-
     pub fn cross(self, rhs: impl Into<Self>) -> Self {
         let rhs = rhs.into();
         Self([
@@ -88,33 +68,11 @@ impl Vector3d {
         area / line_length
     }
 
-    /// Returns fraction of the distance between two points closest to self.
-    /// Is outside the segment if less than 0 or greater than 1.
-    /// Use with `lerp()` to find a point.
-    pub fn projection_along_1d(self, line: [Self; 2]) -> f32 {
-        let len2 = (line[0] - line[1]).magnitude_squared();
-        (self - line[0]).dot(line[1] - line[0]) / len2
-    }
-
     pub fn closest_point_on_plane(self, plane: (Self, Self, Self)) -> Self {
         let normal = (plane.1 - plane.0).cross(plane.2 - plane.0).normalize();
         let distance = (plane.0 - self).dot(normal);
         let projection = (plane.0 - self) - (normal * distance);
         plane.0 + projection
-    }
-
-    pub fn projection_along_2d(self, plane: [Self; 3]) -> (f32, f32) {
-        // Get location of right triangle base along 0>1 vector
-        let base_u = (plane[2]).projection_along_1d([plane[0], plane[1]]);
-        let base = plane[0].lerp(plane[1], base_u);
-        // Projection along a line perependicular to 0>1 vector and equal to the height of the triangle.
-        // This is equal to the independent projection along 0>2
-        let v = self.projection_along_1d([base, plane[2]]);
-        // Remove the independent projection
-        let adjusted_point = self - ((plane[2] - plane[0]) * v);
-        // Find the second projection
-        let u = adjusted_point.projection_along_1d([plane[0], plane[1]]);
-        (u, v)
     }
 
     pub fn bounded_by_1d(self, line: [Self; 2]) -> bool {
@@ -123,7 +81,7 @@ impl Vector3d {
             .magnitude_squared();
         let proj = self.projection_along_1d(line);
 
-        approx_eq!(f32, 0.0, area2_of_tri) && 0.0 <= proj && proj <= 1.0
+        approx_eq!(f32, 0.0, area2_of_tri) && (0.0..=1.0).contains(&proj)
     }
 
     pub fn bounded_by_2d(&self, plane: [Self; 3]) -> bool {
@@ -157,23 +115,7 @@ impl Vector3d {
 
 impl convert::From<obj::Vertex> for Vector3d {
     fn from(vertex: obj::Vertex) -> Self {
-        Self([
-            vertex.x as f32,
-            vertex.y as f32,
-            vertex.z as f32,
-        ])
-    }
-}
-
-impl ops::Neg for Vector3d {
-    type Output = Self;
-
-    fn neg(self) -> Self {
-        Self([
-            -self.x(),
-            -self.y(),
-            -self.z(),
-        ])
+        Self([vertex.x as f32, vertex.y as f32, vertex.z as f32])
     }
 }
 
