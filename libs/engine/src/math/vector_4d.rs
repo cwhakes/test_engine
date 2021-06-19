@@ -19,11 +19,11 @@ impl Vector4d {
     }
 
     pub fn to_3d_unchecked(self) -> Vector3d {
-        Vector3d {
-            x: self.x,
-            y: self.y,
-            z: self.z,
-        }
+        Vector3d::new(
+            self.x,
+            self.y,
+            self.z,
+        )
     }
 
     pub fn cross(v1: &Self, v2: &Self, v3: &Self) -> Self {

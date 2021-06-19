@@ -37,13 +37,13 @@ pub trait ConvexCollider {
     fn support(&self, angle: Vector3d) -> Vector3d;
 
     fn bounding_box(&self) -> (Vector3d, Vector3d) {
-        let a_x = self.support([-1.0, 0.0, 0.0].into()).x;
-        let a_y = self.support([0.0, -1.0, 0.0].into()).y;
-        let a_z = self.support([0.0, 0.0, -1.0].into()).z;
+        let a_x = self.support([-1.0, 0.0, 0.0].into()).x();
+        let a_y = self.support([0.0, -1.0, 0.0].into()).y();
+        let a_z = self.support([0.0, 0.0, -1.0].into()).z();
 
-        let b_x = self.support([1.0, 0.0, 0.0].into()).x;
-        let b_y = self.support([0.0, 1.0, 0.0].into()).y;
-        let b_z = self.support([0.0, 0.0, 1.0].into()).z;
+        let b_x = self.support([1.0, 0.0, 0.0].into()).x();
+        let b_y = self.support([0.0, 1.0, 0.0].into()).y();
+        let b_z = self.support([0.0, 0.0, 1.0].into()).z();
 
         let a = Vector3d::new(a_x, a_y, a_z);
         let b = Vector3d::new(b_x, b_y, b_z);

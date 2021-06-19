@@ -18,7 +18,7 @@ impl Position {
     }
 
     pub fn with_gravity(mut self, gravity: f32) -> Self {
-        self.accelleration.y = -gravity;
+        *self.accelleration.y_mut() = -gravity;
         self
     }
 

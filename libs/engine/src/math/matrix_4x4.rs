@@ -1,4 +1,4 @@
-use super::{Vector3d, Vector4d};
+use super::{Vector, Vector3d, Vector4d};
 
 use std::{convert, ops};
 
@@ -21,7 +21,8 @@ impl Matrix4x4 {
     }
 
     pub fn translation(vec: impl Into<Vector3d>) -> Self {
-        let Vector3d { x, y, z } = vec.into();
+        let Vector([x, y, z]) = vec.into();
+        //let Vector3d { x, y, z } = vec.into();
         Self([
             [1.0, 0.0, 0.0, 0.0],
             [0.0, 1.0, 0.0, 0.0],
@@ -32,9 +33,9 @@ impl Matrix4x4 {
 
     pub fn set_translation(&mut self, vec: impl Into<Vector3d>) {
         let vec = vec.into();
-        self.0[3][0] = vec.x;
-        self.0[3][1] = vec.y;
-        self.0[3][2] = vec.z;
+        self.0[3][0] = vec.x();
+        self.0[3][1] = vec.y();
+        self.0[3][2] = vec.z();
     }
 
     pub fn translate(&mut self, vec: impl Into<Vector3d>) {
@@ -51,7 +52,8 @@ impl Matrix4x4 {
     }
 
     pub fn scaling3(vec: impl Into<Vector3d>) -> Self {
-        let Vector3d { x, y, z } = vec.into();
+        let Vector([ x, y, z ]) = vec.into();
+        //let Vector3d { x, y, z } = vec.into();
         Self([
             [x, 0.0, 0.0, 0.0],
             [0.0, y, 0.0, 0.0],
@@ -190,35 +192,35 @@ impl Matrix4x4 {
     }
 
     pub fn get_direction_x(&self) -> Vector3d {
-        Vector3d {
-            x: self.0[0][0],
-            y: self.0[0][1],
-            z: self.0[0][2],
-        }
+        Vector3d::new(
+            self.0[0][0],
+            self.0[0][1],
+            self.0[0][2],
+        )
     }
 
     pub fn get_direction_y(&self) -> Vector3d {
-        Vector3d {
-            x: self.0[1][0],
-            y: self.0[1][1],
-            z: self.0[1][2],
-        }
+        Vector3d::new(
+            self.0[1][0],
+            self.0[1][1],
+            self.0[1][2],
+        )
     }
 
     pub fn get_direction_z(&self) -> Vector3d {
-        Vector3d {
-            x: self.0[2][0],
-            y: self.0[2][1],
-            z: self.0[2][2],
-        }
+        Vector3d::new(
+            self.0[2][0],
+            self.0[2][1],
+            self.0[2][2],
+        )
     }
 
     pub fn get_translation(&self) -> Vector3d {
-        Vector3d {
-            x: self.0[3][0],
-            y: self.0[3][1],
-            z: self.0[3][2],
-        }
+        Vector3d::new(
+            self.0[3][0],
+            self.0[3][1],
+            self.0[3][2],
+        )
     }
 }
 

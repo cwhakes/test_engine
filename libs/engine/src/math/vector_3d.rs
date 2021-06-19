@@ -1,62 +1,51 @@
-use super::Vector4d;
+use super::{Vector, Vector4d};
 
 use std::{convert, ops};
 
 use float_cmp::approx_eq;
 use wavefront_obj::obj;
 
-#[repr(C)]
-#[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Vector3d {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-}
+pub type Vector3d = Vector<f32, 3>;
 
 impl Vector3d {
-    pub const ORIGIN: Self = Self {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-    };
-    pub const RIGHT: Self = Self {
-        x: 1.0,
-        y: 0.0,
-        z: 0.0,
-    };
-    pub const UP: Self = Self {
-        x: 0.0,
-        y: 0.0,
-        z: 1.0,
-    };
-    pub const FORWARD: Self = Self {
-        x: 0.0,
-        y: 0.0,
-        z: 1.0,
-    };
+    pub const ORIGIN: Self = Self([0.0, 0.0, 0.0]);
+    pub const RIGHT: Self = Self([1.0, 0.0, 0.0]);
+    pub const UP: Self = Self([0.0, 1.0, 0.0]);
+    pub const FORWARD: Self = Self([0.0, 0.0, 1.0]);
 
     pub fn new(x: f32, y: f32, z: f32) -> Self {
-        Self { x, y, z }
+        Self([x, y, z])
     }
 
-    pub fn magnitude(self) -> f32 {
-        self.magnitude_squared().sqrt()
+    pub fn x(&self) -> f32 {
+        self.0[0]
     }
 
-    pub fn magnitude_squared(self) -> f32 {
-        self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
+    pub fn x_mut(&mut self) -> &mut f32 {
+        &mut self.0[0]
     }
 
-    pub fn normalize(self) -> Self {
-        let mag = self.magnitude();
-        self / mag
+    pub fn y(&self) -> f32 {
+        self.0[1]
+    }
+
+    pub fn y_mut(&mut self) -> &mut f32 {
+        &mut self.0[1]
+    }
+
+    pub fn z(&self) -> f32 {
+        self.0[2]
+    }
+
+    pub fn z_mut(&mut self) -> &mut f32 {
+        &mut self.0[2]
     }
 
     pub fn to_4d(self, w: f32) -> Vector4d {
         Vector4d {
-            x: self.x,
-            y: self.y,
-            z: self.z,
+            x: self.x(),
+            y: self.y(),
+            z: self.z(),
             w,
         }
     }
@@ -76,27 +65,18 @@ impl Vector3d {
         *self += direction * magnitude;
     }
 
-    pub fn lerp(self, other: impl Into<Self>, delta: f32) -> Self {
-        let other = other.into();
-        Self {
-            x: self.x * (1.0 - delta) + other.x * delta,
-            y: self.y * (1.0 - delta) + other.y * delta,
-            z: self.z * (1.0 - delta) + other.z * delta,
-        }
-    }
-
     pub fn dot(self, rhs: impl Into<Self>) -> f32 {
         let rhs = rhs.into();
-        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
+        self.x() * rhs.x() + self.y() * rhs.y() + self.z() * rhs.z()
     }
 
     pub fn cross(self, rhs: impl Into<Self>) -> Self {
         let rhs = rhs.into();
-        Self {
-            x: self.y * rhs.z - self.z * rhs.y,
-            y: self.z * rhs.x - self.x * rhs.z,
-            z: self.x * rhs.y - self.y * rhs.x,
-        }
+        Self([
+            self.y() * rhs.z() - self.z() * rhs.y(),
+            self.z() * rhs.x() - self.x() * rhs.z(),
+            self.x() * rhs.y() - self.y() * rhs.x(),
+        ])
     }
 
     pub fn distance_to_line(self, line: (Self, Self)) -> f32 {
@@ -175,59 +155,13 @@ impl Vector3d {
     }
 }
 
-impl convert::From<[f32; 3]> for Vector3d {
-    fn from(array: [f32; 3]) -> Self {
-        Self {
-            x: array[0],
-            y: array[1],
-            z: array[2],
-        }
-    }
-}
-
 impl convert::From<obj::Vertex> for Vector3d {
     fn from(vertex: obj::Vertex) -> Self {
-        Self {
-            x: vertex.x as f32,
-            y: vertex.y as f32,
-            z: vertex.z as f32,
-        }
-    }
-}
-
-impl<T: Into<Self>> ops::Add<T> for Vector3d {
-    type Output = Self;
-
-    fn add(mut self, rhs: T) -> Self::Output {
-        self += rhs;
-        self
-    }
-}
-
-impl<T: Into<Self>> ops::AddAssign<T> for Vector3d {
-    fn add_assign(&mut self, rhs: T) {
-        let rhs = rhs.into();
-        self.x += rhs.x;
-        self.y += rhs.y;
-        self.z += rhs.z;
-    }
-}
-
-impl<T: Into<Self>> ops::Sub<T> for Vector3d {
-    type Output = Self;
-
-    fn sub(mut self, rhs: T) -> Self::Output {
-        self -= rhs;
-        self
-    }
-}
-
-impl<T: Into<Self>> ops::SubAssign<T> for Vector3d {
-    fn sub_assign(&mut self, rhs: T) {
-        let rhs = rhs.into();
-        self.x -= rhs.x;
-        self.y -= rhs.y;
-        self.z -= rhs.z;
+        Self([
+            vertex.x as f32,
+            vertex.y as f32,
+            vertex.z as f32,
+        ])
     }
 }
 
@@ -235,35 +169,11 @@ impl ops::Neg for Vector3d {
     type Output = Self;
 
     fn neg(self) -> Self {
-        Self {
-            x: -self.x,
-            y: -self.y,
-            z: -self.z,
-        }
-    }
-}
-
-impl ops::Mul<f32> for Vector3d {
-    type Output = Self;
-
-    fn mul(self, rhs: f32) -> Self::Output {
-        Self {
-            x: self.x * rhs,
-            y: self.y * rhs,
-            z: self.z * rhs,
-        }
-    }
-}
-
-impl ops::Div<f32> for Vector3d {
-    type Output = Self;
-
-    fn div(self, rhs: f32) -> Self::Output {
-        Self {
-            x: self.x / rhs,
-            y: self.y / rhs,
-            z: self.z / rhs,
-        }
+        Self([
+            -self.x(),
+            -self.y(),
+            -self.z(),
+        ])
     }
 }
 
