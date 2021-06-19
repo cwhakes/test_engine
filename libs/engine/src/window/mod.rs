@@ -138,7 +138,7 @@ impl<A: Application> Window<A> {
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
-            
+
             hint::spin_loop();
             self.running.load(Ordering::Relaxed)
         }

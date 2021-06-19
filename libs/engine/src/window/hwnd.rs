@@ -9,8 +9,6 @@ pub struct Hwnd(HWND);
 unsafe impl Send for Hwnd {}
 unsafe impl Sync for Hwnd {}
 
-
-
 impl Hwnd {
     /// # Safety
     ///
@@ -29,17 +27,20 @@ impl Hwnd {
             GetClientRect(self.0, &mut rect);
         }
 
-        let mut upper_left = POINT { x: rect.left, y: rect.top };
-        let mut lower_right = POINT { x: rect.right, y: rect.bottom };
-        unsafe  {
+        let mut upper_left = POINT {
+            x: rect.left,
+            y: rect.top,
+        };
+        let mut lower_right = POINT {
+            x: rect.right,
+            y: rect.bottom,
+        };
+        unsafe {
             ClientToScreen(self.0, &mut upper_left);
             ClientToScreen(self.0, &mut lower_right);
         }
-        
-        Rect([
-            upper_left.x..lower_right.x,
-            upper_left.y..lower_right.y,
-        ])
+
+        Rect([upper_left.x..lower_right.x, upper_left.y..lower_right.y])
     }
 }
 

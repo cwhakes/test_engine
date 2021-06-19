@@ -61,17 +61,19 @@ impl Vector3d {
         }
     }
 
-    pub fn set_component(&mut self, new_component: impl Into<Self>) {
-        let new_component = new_component.into();
-        let new_mag = new_component.magnitude();
-        if new_mag <= 0.0 {
-            return;
-        };
-
-        let direction = new_component.normalize();
+    pub fn zero_component(&mut self, component: impl Into<Self>) {
+        let direction = component.into().normalize();
         let old_mag = self.dot(direction);
+
         *self -= direction * old_mag;
-        *self += new_component;
+    }
+
+    pub fn set_component(&mut self, direction: impl Into<Self>, magnitude: f32) {
+        let direction = direction.into().normalize();
+        let old_magnitude = self.dot(direction);
+
+        *self -= direction * old_magnitude;
+        *self += direction * magnitude;
     }
 
     pub fn lerp(self, other: impl Into<Self>, delta: f32) -> Self {

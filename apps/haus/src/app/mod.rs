@@ -101,7 +101,9 @@ impl Application for AppWindow {
             variables: world,
         };
 
-        app_window.variables.set_screen_size(app_window.hwnd.rect().dims());
+        app_window
+            .variables
+            .set_screen_size(app_window.hwnd.rect().dims());
 
         WINDOW.set_application(app_window);
         graphics.render.device().debug()?;

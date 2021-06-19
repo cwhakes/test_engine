@@ -54,15 +54,32 @@ impl Application for AppWindow {
         )?;
 
         let spaceship = graphics.get_mesh_from_file("assets\\Meshes\\spaceship.obj")?;
-
         let mut spaceship_mat = material.clone();
-        spaceship_mat.add_texture(&graphics.get_texture_from_file("assets\\Textures\\spaceship.jpg")?);
+        spaceship_mat
+            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\spaceship.jpg")?);
 
-        world.add_entity(Entity::new(
-            spaceship,
-            vec![spaceship_mat],
-            Position::new(Matrix4x4::translation([0.0, 0.0, 0.0])),
-        ));
+        world.add_entity(
+            "ship",
+            Entity::new(
+                spaceship,
+                vec![spaceship_mat],
+                Position::new(Matrix4x4::translation([0.0, 0.0, 0.0])),
+            ),
+        );
+
+        let asteroid = graphics.get_mesh_from_file("assets\\Meshes\\asteroid.obj")?;
+        let mut asteroid_mat = material.clone();
+        asteroid_mat
+            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\asteroid.jpg")?);
+
+        world.add_entity(
+            "roid",
+            Entity::new(
+                asteroid,
+                vec![asteroid_mat],
+                Position::new(Matrix4x4::translation([0.0, 0.0, -25.0])),
+            ),
+        );
 
         let mut sky_material = graphics
             .new_material(

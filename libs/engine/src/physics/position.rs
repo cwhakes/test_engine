@@ -49,6 +49,10 @@ impl Position {
         self.position.get_translation()
     }
 
+    pub fn set_location(&mut self, loc: impl Into<Vector3d>) {
+        self.position.set_translation(loc)
+    }
+
     pub fn right(&self) -> Vector3d {
         self.position.get_direction_x().normalize()
     }
@@ -100,23 +104,25 @@ impl Position {
     }
 
     pub fn set_forward_velocity(&mut self, new_velocity: f32) -> &mut Self {
-        self.velocity.set_component(self.forward() * new_velocity);
+        self.velocity.set_component(self.forward(), new_velocity);
         self
     }
 
     pub fn set_rightward_velocity(&mut self, new_velocity: f32) -> &mut Self {
-        self.velocity.set_component(self.right() * new_velocity);
+        self.velocity.set_component(self.right(), new_velocity);
         self
     }
 
     pub fn set_pan_velocity(&mut self, new_angular: f32) -> &mut Self {
-        let upward_direction: Vector3d = [0.0, 1.0, 0.0].into();
-        self.velocity.set_component(upward_direction * new_angular);
+        let upward_direction = Vector3d::UP;
+        self.angular_velocity
+            .set_component(upward_direction, new_angular);
         self
     }
 
     pub fn set_tilt_velocity(&mut self, new_angular: f32) -> &mut Self {
-        self.velocity.set_component(self.right() * new_angular);
+        self.angular_velocity
+            .set_component(self.right(), new_angular);
         self
     }
 }

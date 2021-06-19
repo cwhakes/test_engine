@@ -21,9 +21,13 @@ impl Matrix4x4 {
     }
 
     pub fn translation(vec: impl Into<Vector3d>) -> Self {
-        let mut matrix = Self::identity();
-        matrix.set_translation(vec);
-        matrix
+        let Vector3d { x, y, z } = vec.into();
+        Self([
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [x, y, z, 1.0],
+        ])
     }
 
     pub fn set_translation(&mut self, vec: impl Into<Vector3d>) {
@@ -34,27 +38,26 @@ impl Matrix4x4 {
     }
 
     pub fn translate(&mut self, vec: impl Into<Vector3d>) {
-        let vec = vec.into();
-        self.0[3][0] += vec.x;
-        self.0[3][1] += vec.y;
-        self.0[3][2] += vec.z;
+        *self *= Self::translation(vec);
     }
 
     pub fn scaling(scale: f32) -> Self {
-        let mut matrix = Self::identity();
-        matrix.0[0][0] = scale;
-        matrix.0[1][1] = scale;
-        matrix.0[2][2] = scale;
-        matrix
+        Self([
+            [scale, 0.0, 0.0, 0.0],
+            [0.0, scale, 0.0, 0.0],
+            [0.0, 0.0, scale, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
     }
 
     pub fn scaling3(vec: impl Into<Vector3d>) -> Self {
-        let mut matrix = Self::identity();
-        let vec = vec.into();
-        matrix.0[0][0] = vec.x;
-        matrix.0[1][1] = vec.y;
-        matrix.0[2][2] = vec.z;
-        matrix
+        let Vector3d { x, y, z } = vec.into();
+        Self([
+            [x, 0.0, 0.0, 0.0],
+            [0.0, y, 0.0, 0.0],
+            [0.0, 0.0, z, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ])
     }
 
     pub fn orthoganal(width: f32, height: f32, near_plane: f32, far_plane: f32) -> Self {

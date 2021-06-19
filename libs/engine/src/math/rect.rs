@@ -3,7 +3,7 @@ use std::ops::{Range, Sub};
 #[derive(Clone, Debug, Default)]
 pub struct Rect<T>(pub [Range<T>; 2]);
 
-impl <T: Copy> Rect<T> {
+impl<T: Copy> Rect<T> {
     pub fn left(&self) -> T {
         self.0[0].start
     }
@@ -12,7 +12,6 @@ impl <T: Copy> Rect<T> {
         self.0[1].start
     }
 }
-
 
 impl<T: Sub + Copy> Rect<T> {
     pub fn width(&self) -> <T as Sub>::Output {
