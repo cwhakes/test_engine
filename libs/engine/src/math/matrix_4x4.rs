@@ -152,18 +152,18 @@ impl Matrix4x4 {
                     if j > i {
                         a -= 1;
                     }
-                    vec[a].x = self.0[j][0];
-                    vec[a].y = self.0[j][1];
-                    vec[a].z = self.0[j][2];
-                    vec[a].w = self.0[j][3];
+                    *vec[a].x_mut() = self.0[j][0];
+                    *vec[a].y_mut() = self.0[j][1];
+                    *vec[a].z_mut() = self.0[j][2];
+                    *vec[a].w_mut() = self.0[j][3];
                 }
             }
             let v = Vector4d::cross(&vec[0], &vec[1], &vec[2]);
 
-            out.0[0][i] = (-1.0_f32).powi(i as i32) * v.x / det;
-            out.0[1][i] = (-1.0_f32).powi(i as i32) * v.y / det;
-            out.0[2][i] = (-1.0_f32).powi(i as i32) * v.z / det;
-            out.0[3][i] = (-1.0_f32).powi(i as i32) * v.w / det;
+            out.0[0][i] = (-1.0_f32).powi(i as i32) * v.x() / det;
+            out.0[1][i] = (-1.0_f32).powi(i as i32) * v.y() / det;
+            out.0[2][i] = (-1.0_f32).powi(i as i32) * v.z() / det;
+            out.0[3][i] = (-1.0_f32).powi(i as i32) * v.w() / det;
         }
 
         Some(out)
@@ -175,20 +175,20 @@ impl Matrix4x4 {
         let v3: Vector4d = self.column(2);
 
         let minor = Vector4d::cross(&v1, &v2, &v3);
-        -(self.0[0][3] * minor.x
-            + self.0[1][3] * minor.y
-            + self.0[2][3] * minor.z
-            + self.0[3][3] * minor.w)
+        -(self.0[0][3] * minor.x()
+            + self.0[1][3] * minor.y()
+            + self.0[2][3] * minor.z()
+            + self.0[3][3] * minor.w())
     }
 
     pub fn column(&self, i: usize) -> Vector4d {
         assert!((0..4).contains(&i));
-        Vector4d {
-            x: self.0[0][i],
-            y: self.0[1][i],
-            z: self.0[2][i],
-            w: self.0[3][i],
-        }
+        Vector([
+            self.0[0][i],
+            self.0[1][i],
+            self.0[2][i],
+            self.0[3][i],
+        ])
     }
 
     pub fn get_direction_x(&self) -> Vector3d {
