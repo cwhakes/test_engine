@@ -39,24 +39,24 @@ impl Vector4d {
         &mut self.0[3]
     }
 
-
-    pub fn to_array(self) -> [f32; 4] {
-        self.0.clone()
-    }
-
     pub fn to_3d_unchecked(self) -> Vector3d {
-        Vector3d::new(self.x(), self.y(), self.z())
+        let Vector([x, y, z, ..]) = self;
+        Vector3d::new(x, y, z)
     }
 
     pub fn cross(v1: &Self, v2: &Self, v3: &Self) -> Self {
         Self([
-            v1.y() * (v2.z() * v3.w() - v3.z() * v2.w()) - v1.z() * (v2.y() * v3.w() - v3.y() * v2.w())
+            v1.y() * (v2.z() * v3.w() - v3.z() * v2.w())
+                - v1.z() * (v2.y() * v3.w() - v3.y() * v2.w())
                 + v1.w() * (v2.y() * v3.z() - v2.z() * v3.y()),
-            -(v1.x() * (v2.z() * v3.w() - v3.z() * v2.w()) - v1.z() * (v2.x() * v3.w() - v3.x() * v2.w())
+            -(v1.x() * (v2.z() * v3.w() - v3.z() * v2.w())
+                - v1.z() * (v2.x() * v3.w() - v3.x() * v2.w())
                 + v1.w() * (v2.x() * v3.z() - v3.x() * v2.z())),
-            v1.x() * (v2.y() * v3.w() - v3.y() * v2.w()) - v1.y() * (v2.x() * v3.w() - v3.x() * v2.w())
+            v1.x() * (v2.y() * v3.w() - v3.y() * v2.w())
+                - v1.y() * (v2.x() * v3.w() - v3.x() * v2.w())
                 + v1.w() * (v2.x() * v3.y() - v3.x() * v2.y()),
-            -(v1.x() * (v2.y() * v3.z() - v3.y() * v2.z()) - v1.y() * (v2.x() * v3.z() - v3.x() * v2.z())
+            -(v1.x() * (v2.y() * v3.z() - v3.y() * v2.z())
+                - v1.y() * (v2.x() * v3.z() - v3.x() * v2.z())
                 + v1.z() * (v2.x() * v3.y() - v3.x() * v2.y())),
         ])
     }
@@ -82,8 +82,8 @@ impl Vector4d {
         let other = other.into();
 
         let mut matrix = Matrix4x4::default();
-        for (i, u) in self.to_array().iter().enumerate() {
-            for (j, v) in other.to_array().iter().enumerate() {
+        for (i, u) in std::array::IntoIter::new(self.0).enumerate() {
+            for (j, v) in std::array::IntoIter::new(other.0).enumerate() {
                 matrix.0[i][j] = u * v;
             }
         }
@@ -93,11 +93,6 @@ impl Vector4d {
 
 impl convert::From<obj::Vertex> for Vector4d {
     fn from(vertex: obj::Vertex) -> Self {
-        Self([
-            vertex.x as f32,
-            vertex.y as f32,
-            vertex.z as f32,
-            1.0,
-        ])
+        Self([vertex.x as f32, vertex.y as f32, vertex.z as f32, 1.0])
     }
 }

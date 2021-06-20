@@ -42,12 +42,7 @@ impl Vector3d {
     }
 
     pub fn to_4d(self, w: f32) -> Vector4d {
-        Vector([
-            self.x(),
-            self.y(),
-            self.z(),
-            w,
-        ])
+        Vector([self.x(), self.y(), self.z(), w])
     }
 
     pub fn cross(self, rhs: impl Into<Self>) -> Self {

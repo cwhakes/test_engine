@@ -183,12 +183,7 @@ impl Matrix4x4 {
 
     pub fn column(&self, i: usize) -> Vector4d {
         assert!((0..4).contains(&i));
-        Vector([
-            self.0[0][i],
-            self.0[1][i],
-            self.0[2][i],
-            self.0[3][i],
-        ])
+        Vector([self.0[0][i], self.0[1][i], self.0[2][i], self.0[3][i]])
     }
 
     pub fn get_direction_x(&self) -> Vector3d {
