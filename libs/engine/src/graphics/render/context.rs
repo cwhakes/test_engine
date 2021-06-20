@@ -20,7 +20,7 @@ unsafe impl Send for Context {}
 impl Context {
     /// # Safety
     ///
-    /// `context` must point to a valid ID3D11DeviceContext
+    /// `context` must point to a valid `ID3D11DeviceContext`
     pub unsafe fn from_nonnull(
         context: NonNull<d3d11::ID3D11DeviceContext>,
     ) -> error::Result<Self> {

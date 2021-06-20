@@ -31,7 +31,7 @@ pub trait ConvexCollision: ConvexCollider {
 
 impl<T: ConvexCollider> ConvexCollision for T {}
 
-/// Trait to implement GJK https://cse442-17f.github.io/Gilbert-Johnson-Keerthi-Distance-Algorithm/
+/// Trait to implement GJK <https://cse442-17f.github.io/Gilbert-Johnson-Keerthi-Distance-Algorithm/>
 pub trait ConvexCollider {
     /// Given an angle, find a point that is furthest away from the shape's origin.
     fn support(&self, angle: Vector3d) -> Vector3d;

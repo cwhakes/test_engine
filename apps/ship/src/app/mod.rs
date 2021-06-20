@@ -68,7 +68,7 @@ impl Application for AppWindow {
         );
 
         let asteroid = graphics.get_mesh_from_file("assets\\Meshes\\asteroid.obj")?;
-        let mut asteroid_mat = material.clone();
+        let mut asteroid_mat = material;
         asteroid_mat
             .add_texture(&graphics.get_texture_from_file("assets\\Textures\\asteroid.jpg")?);
 

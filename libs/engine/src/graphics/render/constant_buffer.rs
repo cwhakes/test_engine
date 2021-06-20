@@ -21,7 +21,7 @@ unsafe impl<C: ?Sized> Send for ConstantBuffer<C> where C: Send {}
 unsafe impl<C: ?Sized> Sync for ConstantBuffer<C> where C: Sync {}
 
 impl<C: ?Sized> ConstantBuffer<C> {
-    /// Constructs a new ConstantBuffer.
+    /// Constructs a new `ConstantBuffer`.
     pub fn new(device: &Device, constant: &mut C) -> error::Result<Self> {
         unsafe {
             let buff_desc = d3d11::D3D11_BUFFER_DESC {

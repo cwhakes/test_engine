@@ -99,7 +99,7 @@ impl Entity {
         &'a mut self,
         render: &'b Render,
     ) -> (&'a mut Mesh, &'a mut [Material]) {
-        for material in self.materials.iter_mut() {
+        for material in &mut self.materials {
             //Datum 1 is position. How to label?
             material
                 .set_data(render, 1, &mut self.position.get_matrix())
@@ -135,7 +135,7 @@ impl World {
         let delta_t = self.delta_t.update().get();
         self.camera.update(delta_t);
 
-        for entity in self.entities.iter_mut() {
+        for entity in &mut self.entities {
             entity.update(delta_t);
 
             let position = entity.position.get_location();
@@ -204,7 +204,7 @@ impl World {
 
     pub fn set_environment_data(&mut self, render: &Render, data: &mut Environment) {
         for entity in self.entities.iter_mut().chain(self.sky_entity.as_mut()) {
-            for material in entity.materials.iter_mut() {
+            for material in &mut entity.materials {
                 material.set_data(render, 0, data).unwrap();
             }
         }

@@ -69,14 +69,14 @@ impl Simplex {
     }
 
     /// Returns the sub-simplex that is nearest to the origin, along with the coordinates of the closest point
-    pub fn nearest_simplex(&self) -> Option<(Self, Vector3d)> {
+    pub fn nearest_simplex(self) -> Option<(Self, Vector3d)> {
         // Early return if point is on simplex itself
         if let Some(vec) = self.nearest_point_within_simplex() {
-            return Some((self.clone(), vec));
+            return Some((self, vec));
         }
 
         self.subsimplexes()
-            .flat_map(|s| s.nearest_simplex())
+            .filter_map(Self::nearest_simplex)
             .partial_min_by_key(|(_, v)| v.magnitude_squared())
     }
 
@@ -153,7 +153,7 @@ mod test {
         simplex.add_point([1.0, 1.0, 0.0]);
         simplex.add_point([-1.0, 1.0, 0.0]);
 
-        let (new_simplex, close_point) = simplex.nearest_simplex().unwrap();
+        let (new_simplex, close_point) = simplex.clone().nearest_simplex().unwrap();
         assert_eq!(new_simplex, simplex);
         assert_eq!(close_point, [0.0, 1.0, 0.0].into());
     }

@@ -112,7 +112,7 @@ impl Matrix4x4 {
         matrix
     }
 
-    /// https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle
+    /// <https://en.wikipedia.org/wiki/Rotation_matrix#Rotation_matrix_from_axis_and_angle/>
     pub fn rotation_vec(angle: impl Into<Vector3d>) -> Self {
         let angle = angle.into();
         let mag = angle.magnitude();

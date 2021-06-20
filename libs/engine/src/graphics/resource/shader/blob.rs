@@ -9,7 +9,7 @@ pub struct Blob(NonNull<ID3DBlob>);
 impl Blob {
     /// # Safety
     ///
-    /// `blob` must point to a valid ID3DBlob
+    /// `blob` must point to a valid `ID3DBlob`
     pub unsafe fn new(blob: *mut ID3DBlob) -> error::Result<Self> {
         match NonNull::new(blob) {
             Some(inner) => Ok(Self(inner)),
@@ -51,7 +51,7 @@ impl ops::DerefMut for Blob {
     fn deref_mut(&mut self) -> &mut Self::Target {
         unsafe {
             std::slice::from_raw_parts_mut(
-                self.0.as_mut().GetBufferPointer() as *mut u8,
+                self.0.as_mut().GetBufferPointer().cast(),
                 self.0.as_mut().GetBufferSize(),
             )
         }

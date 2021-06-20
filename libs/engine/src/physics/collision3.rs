@@ -38,7 +38,7 @@ impl CollisionEngine for GjkEngine {
     }
 }
 
-/// Trait to implement GJK https://cse442-17f.github.io/Gilbert-Johnson-Keerthi-Distance-Algorithm/
+/// Trait to implement GJK <https://cse442-17f.github.io/Gilbert-Johnson-Keerthi-Distance-Algorithm/>
 pub trait GjkCollider {
     /// Given an angle, find a point that is furthest away from the shape's origin.
     fn support(&self, angle: Vector3d) -> Vector3d;

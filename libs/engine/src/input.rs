@@ -30,11 +30,7 @@ pub trait Listener {
 
 impl<T: Listener> Listener for Option<T> {
     fn name(&self) -> String {
-        if let Some(lis) = self {
-            lis.name()
-        } else {
-            "".to_string()
-        }
+        self.as_ref().map_or_else(String::new, T::name)
     }
     fn on_key_down(&mut self, key: usize) {
         if let Some(lis) = self {

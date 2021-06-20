@@ -25,7 +25,7 @@ where
     }
 }
 
-/// Trait to define on colliders. Can be replaced with CollidesWith once specialization is a thing.
+/// Trait to define on colliders. Can be replaced with `CollidesWith` once specialization is a thing.
 pub trait CollidesWith2<T> {
     fn collides_with(&self, other: &T) -> bool;
 }

@@ -61,7 +61,7 @@ impl Vector4d {
         ])
     }
 
-    /// https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication
+    /// <https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication/>
     pub fn cross_matrix(&self) -> Matrix4x4 {
         let mut matrix = Matrix4x4::zero();
 

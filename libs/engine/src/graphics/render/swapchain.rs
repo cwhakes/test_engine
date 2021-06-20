@@ -52,7 +52,7 @@ impl SwapChain {
 
     /// # Safety
     ///
-    /// `swapchain` must point to a valid IDXGISwapChain
+    /// `swapchain` must point to a valid `IDXGISwapChain`
     pub unsafe fn new(
         swapchain: NonNull<dxgi::IDXGISwapChain>,
         device: &Device,

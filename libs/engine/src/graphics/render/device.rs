@@ -21,7 +21,7 @@ unsafe impl Sync for Device {}
 impl Device {
     /// # Safety
     ///
-    /// `device` must point to a valid ID3D11Device
+    /// `device` must point to a valid `ID3D11Device`
     pub unsafe fn from_nonnull(device: NonNull<d3d11::ID3D11Device>) -> error::Result<Self> {
         Ok(Self(device))
     }

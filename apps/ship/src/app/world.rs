@@ -81,7 +81,7 @@ impl Entity {
         &'a mut self,
         render: &'b Render,
     ) -> (&'a mut Mesh, &'a mut [Material]) {
-        for material in self.materials.iter_mut() {
+        for material in &mut self.materials {
             //Datum 1 is position. How to label?
             material
                 .set_data(render, 1, &mut self.position.get_matrix())
@@ -183,7 +183,7 @@ impl World {
 
     pub fn set_environment_data(&mut self, render: &Render, data: &mut Environment) {
         for entity in self.entities.values_mut() {
-            for material in entity.materials.iter_mut() {
+            for material in &mut entity.materials {
                 material.set_data(render, 0, data).unwrap();
             }
         }
