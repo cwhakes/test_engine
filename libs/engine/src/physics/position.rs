@@ -53,6 +53,14 @@ impl Position {
         self.position.set_translation(loc)
     }
 
+    pub fn set_pitch_and_yaw(&mut self, pitch: f32, yaw: f32) {
+        let mut new_position = Matrix4x4::identity();
+        new_position *= Matrix4x4::rotation_x(pitch);
+        new_position *= Matrix4x4::rotation_y(yaw);
+        new_position.translate(self.position.get_translation());
+        self.position = new_position;
+    }
+
     pub fn right(&self) -> Vector3d {
         self.position.get_direction_x().normalize()
     }

@@ -50,7 +50,7 @@ VS_OUTPUT vsmain( VS_INPUT input )
     output.pos = mul(output.pos, m_proj);
 
     output.tex_coord = input.tex_coord;
-    output.normal = input.normal;
+    output.normal = normalize(mul(input.normal, m_world));
 
     return output;
 }

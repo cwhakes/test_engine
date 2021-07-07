@@ -1,4 +1,4 @@
-use crate::math::{Matrix4x4, Vector4d};
+use crate::math::{Matrix4x4, Vector3d, Vector4d};
 use crate::physics::collision3::{InheritedCollider, Sphere};
 use crate::physics::position::Position;
 
@@ -19,6 +19,10 @@ impl Camera {
 
     pub fn get_location(&self) -> Vector4d {
         self.position.get_location().to_4d(1.0)
+    }
+
+    pub fn set_location(&mut self, loc: Vector3d) {
+        self.position.set_location(loc)
     }
 
     pub fn get_skysphere(&self) -> Matrix4x4 {

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use engine::components::ThirdPersonCamera;
+use engine::components::{Camera0, SpaceShip};
 use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
@@ -13,7 +13,7 @@ use engine::time::DeltaT;
 
 use shader::directional_light::Environment;
 
-static SPEED: f32 = 5.0;
+static SPEED: f32 = 125.0;
 
 #[derive(Default)]
 pub struct World {
@@ -22,8 +22,13 @@ pub struct World {
     play_state: PlayState,
 
     delta_t: DeltaT,
-    pub camera: ThirdPersonCamera,
+    //pub camera: ThirdPersonCamera,
+    pub camera: Camera0,
+    pub spaceship: SpaceShip,
     pub light_source: Matrix4x4,
+
+    delta_mouse_x: f32,
+    delta_mouse_y: f32,
 
     time: f32,
 
@@ -98,9 +103,9 @@ impl Entity {
 
 impl World {
     pub fn new() -> Self {
-        let mut camera = ThirdPersonCamera::default();
-        camera.move_forward(-2.0);
-        camera.move_up(1.0);
+        let mut camera = Camera0::new();
+        camera.world_cam.set_translation([0.0, 0.0, -1.0]);
+
         let mut light_source = Matrix4x4::identity();
         light_source *= Matrix4x4::rotation_x(-0.707);
         light_source *= Matrix4x4::rotation_y(0.707);
@@ -115,7 +120,6 @@ impl World {
 
     pub fn update(&mut self) {
         let delta_t = self.delta_t.update().get();
-        self.camera.update(delta_t);
 
         for entity in self.entities.values_mut() {
             entity.update(delta_t);
@@ -129,6 +133,21 @@ impl World {
             // };
         }
 
+        self.spaceship
+            .update(delta_t, self.delta_mouse_x, self.delta_mouse_y);
+        self.camera.cam_pos = self.spaceship.spaceship_pos;
+
+        if let Some(ship) = self.entities.get_mut("ship") {
+            ship.position.set_location(self.spaceship.spaceship_pos);
+            ship.position.set_pitch_and_yaw(
+                self.spaceship.spaceship_rot.x(),
+                self.spaceship.spaceship_rot.y(),
+            );
+        }
+
+        self.camera
+            .update(delta_t, self.delta_mouse_x, self.delta_mouse_y);
+
         // Update Skysphere
         if let Some(entity) = self.entities.get_mut("skybox") {
             let position = self.camera.get_skysphere();
@@ -140,13 +159,11 @@ impl World {
     }
 
     pub fn environment(&self) -> Environment {
-        let view = self.camera.get_view();
-        let proj = self
-            .camera
-            .get_proj(Rect::<f32>::from(&self.screen_rect).aspect());
+        let view = self.camera.view_cam.clone();
+        let proj = self.camera.proj_cam(Rect::<f32>::from(&self.screen_rect));
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
-        let camera_pos = self.camera.get_location().to_4d(0.0);
+        let camera_pos = self.camera.world_cam.get_translation().to_4d(0.0);
         let light_pos = self.light_source.get_translation().to_4d(1.0);
 
         Environment {
@@ -211,22 +228,22 @@ impl Listener for World {
         let key = key as u8;
         match key {
             b'W' => {
-                if let Some(spaceship) = self.entities.get_mut("ship") {
-                    spaceship.position.set_forward_velocity(SPEED);
-                }
-                //self.camera.moving_forward(SPEED);
+                // if let Some(spaceship) = self.entities.get_mut("ship") {
+                //     spaceship.position.set_forward_velocity(SPEED);
+                // }
+                self.spaceship.forward = SPEED;
             }
             b'S' => {
-                if let Some(spaceship) = self.entities.get_mut("ship") {
-                    spaceship.position.set_forward_velocity(-SPEED);
-                }
-                //self.camera.moving_forward(-SPEED);
+                // if let Some(spaceship) = self.entities.get_mut("ship") {
+                //     spaceship.position.set_forward_velocity(-SPEED);
+                // }
+                self.spaceship.forward = -SPEED;
             }
             b'A' => {
-                self.camera.moving_rightward(-SPEED);
+                // self.camera.rightward = -SPEED;
             }
             b'D' => {
-                self.camera.moving_rightward(SPEED);
+                // self.camera.rightward = SPEED;
             }
             b'O' => {
                 self.light_rad -= 5.0 * self.delta_t.get();
@@ -238,7 +255,7 @@ impl Listener for World {
         }
     }
     fn on_key_up(&mut self, key: usize) {
-        self.camera.reset_velocity();
+        self.spaceship.reset_velocity();
         if let Some(spaceship) = self.entities.get_mut("ship") {
             spaceship.position.set_forward_velocity(0.0);
         }
@@ -256,10 +273,8 @@ impl Listener for World {
     }
     fn on_mouse_move(&mut self, pos: Point) {
         if self.play_state == PlayState::Playing {
-            self.camera
-                .tilt((pos.y - self.screen_rect.center_y()) as f32 * 0.002);
-            self.camera
-                .pan((pos.x - self.screen_rect.center_x()) as f32 * 0.002);
+            self.delta_mouse_x = (pos.x - self.screen_rect.center_x()) as f32;
+            self.delta_mouse_y = (pos.y - self.screen_rect.center_y()) as f32;
 
             self.center_cursor();
         }

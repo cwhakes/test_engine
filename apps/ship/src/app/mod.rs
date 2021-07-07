@@ -77,7 +77,7 @@ impl Application for AppWindow {
             Entity::new(
                 asteroid,
                 vec![asteroid_mat],
-                Position::new(Matrix4x4::translation([0.0, 0.0, -25.0])),
+                Position::new(Matrix4x4::translation([0.0, 0.0, 25.0])),
             ),
         );
 
