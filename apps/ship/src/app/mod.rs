@@ -1,5 +1,6 @@
 mod world;
 
+use rand::{prelude::*, distributions::uniform::Uniform};
 use shader::directional_light;
 use world::{Entity, World};
 
@@ -8,7 +9,7 @@ use engine::graphics::color;
 use engine::graphics::render::{SwapChain, WindowState};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
-use engine::math::{Matrix4x4, Point};
+use engine::math::{Matrix4x4, Point, Vector3d};
 use engine::physics::Position;
 use engine::window::{Application, Hwnd, Window};
 
@@ -26,6 +27,8 @@ pub struct AppWindow {
     window_state: WindowState,
     #[listener]
     variables: World,
+
+    asteroids_pos: Vec<(Vector3d, Vector3d, Vector3d)>,
 }
 
 impl Application for AppWindow {
@@ -59,7 +62,7 @@ impl Application for AppWindow {
             .add_texture(&graphics.get_texture_from_file("assets\\Textures\\spaceship.jpg")?);
 
         world.add_entity(
-            "ship",
+            "ship".into(),
             Entity::new(
                 spaceship,
                 vec![spaceship_mat],
@@ -67,19 +70,7 @@ impl Application for AppWindow {
             ),
         );
 
-        let asteroid = graphics.get_mesh_from_file("assets\\Meshes\\asteroid.obj")?;
-        let mut asteroid_mat = material;
-        asteroid_mat
-            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\asteroid.jpg")?);
 
-        world.add_entity(
-            "roid",
-            Entity::new(
-                asteroid,
-                vec![asteroid_mat],
-                Position::new(Matrix4x4::translation([0.0, 0.0, 25.0])),
-            ),
-        );
 
         let mut sky_material = graphics
             .new_material(
@@ -98,11 +89,44 @@ impl Application for AppWindow {
             Position::default(),
         ));
 
+        let mut asteroids_pos = Vec::new();
+
+        let asteroid = graphics.get_mesh_from_file("assets\\Meshes\\asteroid.obj")?;
+        let mut asteroid_mat = material;
+        asteroid_mat
+            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\asteroid.jpg")?);
+
+        let mut rng = rand::thread_rng();
+        let loc_range = Uniform::new(-2000.0, 2000.0);
+        let rot_range = Uniform::new(0.0, 6.28);
+        let scale_range = Uniform::new(1.0, 10.0);
+        for i in 0..200 {
+            let loc = Vector3d::new(rng.sample(&loc_range), rng.sample(&loc_range), rng.sample(&loc_range));
+            let rot = Vector3d::new(rng.sample(&rot_range), rng.sample(&rot_range), rng.sample(&rot_range));
+            let scale = rng.sample(&scale_range);
+            let scale = Vector3d::new(scale, scale, scale);
+
+            let mut pos= Position::default();
+            pos.set_postition(scale, rot, loc);
+
+            world.add_entity(
+                format!("asteroid_{}", i).into(),
+                Entity::new(
+                    asteroid.clone(),
+                    vec![asteroid_mat.clone()],
+                    pos,
+                ),
+            );
+
+            asteroids_pos.push((loc, rot, scale));
+        }
+
         let mut app_window = Self {
             hwnd,
             swapchain,
             window_state: WindowState::default(),
             variables: world,
+            asteroids_pos,
         };
 
         app_window.variables.set_screen_size(app_window.hwnd.rect());

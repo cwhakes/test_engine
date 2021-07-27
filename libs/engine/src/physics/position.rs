@@ -52,13 +52,14 @@ impl Position {
     pub fn set_location(&mut self, loc: impl Into<Vector3d>) {
         self.position.set_translation(loc)
     }
-
-    pub fn set_pitch_and_yaw(&mut self, pitch: f32, yaw: f32) {
-        let mut new_position = Matrix4x4::identity();
-        new_position *= Matrix4x4::rotation_x(pitch);
-        new_position *= Matrix4x4::rotation_y(yaw);
-        new_position.translate(self.position.get_translation());
-        self.position = new_position;
+    
+    pub fn set_postition(&mut self, scale: impl Into<Vector3d>, rot: impl Into<Vector3d>, loc: impl Into<Vector3d>) {
+        self.position = Matrix4x4::scaling3(scale);
+        let rot = rot.into();
+        self.position *= Matrix4x4::rotation_z(rot.z());
+        self.position *= Matrix4x4::rotation_x(rot.x());
+        self.position *= Matrix4x4::rotation_y(rot.y());
+        self.position *= Matrix4x4::translation(loc);
     }
 
     pub fn right(&self) -> Vector3d {

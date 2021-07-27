@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 
 use engine::components::{Camera0, SpaceShip};
@@ -32,7 +33,7 @@ pub struct World {
 
     time: f32,
 
-    entities: HashMap<&'static str, Entity>,
+    entities: HashMap<Cow<'static, str>, Entity>,
     light_rad: f32,
 }
 
@@ -135,14 +136,10 @@ impl World {
 
         self.spaceship
             .update(delta_t, self.delta_mouse_x, self.delta_mouse_y);
-        self.camera.cam_pos = self.spaceship.spaceship_pos;
+        self.camera.cam_pos = self.spaceship.current_spaceship_pos;
 
         if let Some(ship) = self.entities.get_mut("ship") {
-            ship.position.set_location(self.spaceship.spaceship_pos);
-            ship.position.set_pitch_and_yaw(
-                self.spaceship.spaceship_rot.x(),
-                self.spaceship.spaceship_rot.y(),
-            );
+            ship.position.set_postition([1.0, 1.0, 1.0], self.spaceship.current_spaceship_rot, self.spaceship.current_spaceship_pos);
         }
 
         self.camera
@@ -163,7 +160,7 @@ impl World {
         let proj = self.camera.proj_cam(Rect::<f32>::from(&self.screen_rect));
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
-        let camera_pos = self.camera.world_cam.get_translation().to_4d(0.0);
+        let camera_pos = self.camera.world_cam.get_translation().to_4d(1.0);
         let light_pos = self.light_source.get_translation().to_4d(1.0);
 
         Environment {
@@ -182,7 +179,7 @@ impl World {
         self.screen_rect = rect;
     }
 
-    pub fn add_entity(&mut self, name: &'static str, entity: Entity) {
+    pub fn add_entity(&mut self, name: Cow<'static, str>, entity: Entity) {
         self.entities.insert(name, entity);
     }
 
@@ -207,7 +204,7 @@ impl World {
     }
 
     pub fn add_sky_entity(&mut self, sky_entity: Entity) {
-        self.entities.insert("skybox", sky_entity);
+        self.entities.insert("skybox".into(), sky_entity);
     }
 
     pub fn center_cursor(&mut self) {
