@@ -57,6 +57,7 @@ pub trait Application: Send + Sync {
 pub struct Window<A: Application> {
     pub running: AtomicBool,
     pub moving: AtomicBool,
+    pub resizing: AtomicBool,
     pub application: Mutex<Option<A>>,
 }
 
@@ -65,6 +66,7 @@ impl<A: Application> Window<A> {
         Self {
             running: AtomicBool::new(false),
             moving: AtomicBool::new(false),
+            resizing: AtomicBool::new(false),
             application: Mutex::new(None),
         }
     }
@@ -130,7 +132,13 @@ impl<A: Application> Window<A> {
             INPUT.lock().unwrap().update();
 
             if let Some(app) = self.application.lock().unwrap().as_mut() {
-                app.on_update()
+                if self.resizing.swap(false, Ordering::Relaxed) {
+                    app.on_resize();
+                }
+                if self.moving.swap(false, Ordering::Relaxed) {
+                    app.on_move();
+                }
+                app.on_update();
             }
 
             let mut msg = Default::default();
@@ -180,7 +188,10 @@ impl<A: Application> Window<A> {
                 debug!("WM_SIZE");
                 let mut guard = match A::me().application.try_lock() {
                     Ok(guard) => guard,
-                    Err(std::sync::TryLockError::WouldBlock) => return 0,
+                    Err(std::sync::TryLockError::WouldBlock) => {
+                        A::me().resizing.store(true, Ordering::Relaxed);
+                        return 0;
+                    }
                     Err(std::sync::TryLockError::Poisoned(_)) => panic!("Poison error"),
                 };
 
@@ -195,7 +206,10 @@ impl<A: Application> Window<A> {
 
                 let mut guard = match A::me().application.try_lock() {
                     Ok(guard) => guard,
-                    Err(std::sync::TryLockError::WouldBlock) => return 0,
+                    Err(std::sync::TryLockError::WouldBlock) => {
+                        A::me().moving.store(true, Ordering::Relaxed);
+                        return 0;
+                    },
                     Err(std::sync::TryLockError::Poisoned(_)) => panic!("Poison error"),
                 };
 
