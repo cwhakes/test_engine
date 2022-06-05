@@ -5,7 +5,19 @@ use log::error;
 
 pub trait CollisionEngine {
     type Collider: ?Sized;
-    fn collision_between(&self, obj0: &Self::Collider, obj1: &Self::Collider) -> bool;
+    fn collision_between(&mut self, obj0: &Self::Collider, obj1: &Self::Collider) -> bool;
+    
+    fn collisions<'a, 'b>(&mut self, objs: &'a [&'b Self::Collider]) -> Vec<(&'b Self::Collider, &'b Self::Collider)> {
+        let mut collisions = Vec::new();
+        for i in 0..objs.len() {
+            for j in (i + 1)..objs.len() {
+                if self.collision_between(objs[i], objs[j]) {
+                    collisions.push((objs[i], objs[j]));
+                }
+            }
+        }
+        collisions
+    }
 }
 
 pub struct GjkEngine;
@@ -13,7 +25,7 @@ pub struct GjkEngine;
 impl CollisionEngine for GjkEngine {
     type Collider = dyn GjkCollider;
 
-    fn collision_between(&self, obj0: &Self::Collider, obj1: &Self::Collider) -> bool {
+    fn collision_between(&mut self, obj0: &Self::Collider, obj1: &Self::Collider) -> bool {
         let initial_dir = Vector3d::RIGHT;
         let mut point = obj0.support(initial_dir) - obj1.support(-initial_dir);
         let mut simplex = Simplex::new();
@@ -118,7 +130,7 @@ mod test {
 
     #[test]
     fn sphere_collision() {
-        let gjk = GjkEngine;
+        let mut gjk = GjkEngine;
 
         let s0 = Sphere::new([0.0, 0.0, 0.0], 0.6);
         let s1 = Sphere::new([1.0, 0.0, 0.0], 0.6);
