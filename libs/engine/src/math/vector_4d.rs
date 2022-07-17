@@ -82,8 +82,8 @@ impl Vector4d {
         let other = other.into();
 
         let mut matrix = Matrix4x4::default();
-        for (i, u) in std::array::IntoIter::new(self.0).enumerate() {
-            for (j, v) in std::array::IntoIter::new(other.0).enumerate() {
+        for (i, u) in self.0.into_iter().enumerate() {
+            for (j, v) in other.0.into_iter().enumerate() {
                 matrix.0[i][j] = u * v;
             }
         }

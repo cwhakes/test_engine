@@ -46,7 +46,7 @@ impl Render {
             //Default to error
             let mut result = Err(error::Custom("No driver types specified".to_string()));
 
-            for driver_type in std::array::IntoIter::new(DRIVER_TYPES) {
+            for driver_type in DRIVER_TYPES {
                 result = get_output2(|ptr1, ptr2| {
                     d3d11::D3D11CreateDevice(
                         null_mut(),

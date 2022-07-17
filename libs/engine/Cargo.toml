@@ -2,7 +2,7 @@
 name = "engine"
 version = "0.1.0"
 authors = ["Will Hakes <info@cwilliamhakes.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 float-cmp = "0.8.0"

@@ -14,7 +14,7 @@ impl<const N: usize> Vector<f32, N> {
     }
 
     pub fn magnitude_squared(self) -> f32 {
-        std::array::IntoIter::new(self.0).map(|f| f * f).sum()
+        self.0.into_iter().map(|f| f * f).sum()
     }
 
     pub fn magnitude(self) -> f32 {
@@ -27,7 +27,7 @@ impl<const N: usize> Vector<f32, N> {
     }
 
     pub fn dot(self, rhs: impl Into<Self>) -> f32 {
-        std::array::IntoIter::new(self.0)
+        self.0.into_iter()
             .zip(rhs.into().0)
             .map(|(s, r)| s * r)
             .sum()

@@ -106,7 +106,7 @@ impl Resource for Mesh {
                     obj::Primitive::Triangle(a, b, c) => {
                         //in case no normal exists
                         let normal = calc_normal(object, [&a, &b, &c]);
-                        for i_vtn in std::array::IntoIter::new([a, b, c]) {
+                        for i_vtn in [a, b, c] {
                             let global_index = i_vtn.0 + offset;
                             let metadata = &mut vertex_metadata[global_index];
                             if metadata.finalized {
