@@ -104,8 +104,7 @@ impl Entity {
 
 impl World {
     pub fn new() -> Self {
-        let mut camera = Camera0::new();
-        camera.world_cam.set_translation([0.0, 0.0, -1.0]);
+        let camera = Camera0::new([0.0, 0.0, -1.0]);
 
         let mut light_source = Matrix4x4::identity();
         light_source *= Matrix4x4::rotation_x(-0.707);
@@ -136,7 +135,7 @@ impl World {
 
         self.spaceship
             .update(delta_t, self.delta_mouse_x, self.delta_mouse_y);
-        self.camera.cam_pos = self.spaceship.current_spaceship_pos;
+        self.camera.set_cam_pos(self.spaceship.current_spaceship_pos);
 
         if let Some(ship) = self.entities.get_mut("ship") {
             ship.position.set_postition([1.0, 1.0, 1.0], self.spaceship.current_spaceship_rot, self.spaceship.current_spaceship_pos);
@@ -156,11 +155,11 @@ impl World {
     }
 
     pub fn environment(&self) -> Environment {
-        let view = self.camera.view_cam.clone();
+        let view = self.camera.view_cam();
         let proj = self.camera.proj_cam(Rect::<f32>::from(&self.screen_rect));
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
-        let camera_pos = self.camera.world_cam.get_translation().to_4d(1.0);
+        let camera_pos = self.camera.get_cam_pos().to_4d(1.0);
         let light_pos = self.light_source.get_translation().to_4d(1.0);
 
         Environment {

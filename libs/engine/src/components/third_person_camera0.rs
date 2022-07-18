@@ -6,29 +6,33 @@ const FOV: f32 = std::f32::consts::PI / 4.0;
 
 #[derive(Default)]
 pub struct Camera {
-    pub world_cam: Matrix4x4,
-    pub view_cam: Matrix4x4,
+    world_cam: Matrix4x4,
+    
+    current_cam_rot: Vector3d,
+    cam_rot: Vector3d,
+    cam_pos: Vector3d,
 
-    pub current_cam_rot: Vector3d,
-    pub cam_rot: Vector3d,
-    pub cam_pos: Vector3d,
-    pub target_pos: Vector3d,
+    cam_distance: f32,
 
-    pub cam_distance: f32,
-
-    pub rot_x: f32,
-    pub rot_y: f32,
-
-    pub forward: f32,
-    pub rightward: f32,
+    forward: f32,
+    rightward: f32,
 }
 
 impl Camera {
-    pub fn new() -> Self {
+    pub fn new(translation: [f32; 3]) -> Self {
         Self {
+            world_cam: Matrix4x4::translation(translation),
             cam_distance: 14.0,
             ..Self::default()
         }
+    }
+
+    pub fn set_cam_pos(&mut self, pos: Vector3d) {
+        self.cam_pos = pos
+    }
+
+    pub fn get_cam_pos(&self) -> Vector3d {
+        self.world_cam.get_translation()
     }
 
     pub fn update(&mut self, delta_t: f32, delta_mouse_x: f32, delta_mouse_y: f32) {
@@ -48,7 +52,10 @@ impl Camera {
 
         world_cam.set_translation(new_pos);
         self.world_cam = world_cam.clone();
-        self.view_cam = world_cam.inverse().unwrap();
+    }
+
+    pub fn view_cam(&self) -> Matrix4x4 {
+        self.world_cam.inverse().unwrap()
     }
 
     pub fn proj_cam(&self, rect: Rect<f32>) -> Matrix4x4 {
