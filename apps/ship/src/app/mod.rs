@@ -28,7 +28,7 @@ pub struct AppWindow {
     #[listener]
     variables: World,
 
-    asteroids_pos: Vec<(Vector3d, Vector3d, Vector3d)>,
+    _asteroids_pos: Vec<(Vector3d, Vector3d, Vector3d)>,
 }
 
 impl Application for AppWindow {
@@ -97,7 +97,7 @@ impl Application for AppWindow {
         let mut rng = rand::thread_rng();
         let loc_range = Uniform::new(-2000.0, 2000.0);
         let rot_range = Uniform::new(0.0, std::f32::consts::TAU);
-        let scale_range = Uniform::new(1.0, 10.0);
+        let scale_range = Uniform::new(6.0, 30.0);
         for i in 0..200 {
             let loc = Vector3d::new(
                 rng.sample(&loc_range),
@@ -128,7 +128,7 @@ impl Application for AppWindow {
             swapchain,
             window_state: WindowState::default(),
             variables: world,
-            asteroids_pos,
+            _asteroids_pos: asteroids_pos,
         };
 
         app_window.variables.set_screen_size(app_window.hwnd.rect());
