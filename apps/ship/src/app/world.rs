@@ -104,7 +104,7 @@ impl Entity {
 
 impl World {
     pub fn new() -> Self {
-        let camera = Camera0::new([0.0, 0.0, -1.0]);
+        let camera = Camera0::new();
 
         let mut light_source = Matrix4x4::identity();
         light_source *= Matrix4x4::rotation_x(-0.707);
@@ -135,14 +135,20 @@ impl World {
 
         self.spaceship
             .update(delta_t, self.delta_mouse_x, self.delta_mouse_y);
-        self.camera.set_cam_pos(self.spaceship.current_spaceship_pos);
+        self.camera.set_focus(
+            self.spaceship.current_spaceship_pos,
+            self.spaceship.spaceship_rot,
+        );
 
         if let Some(ship) = self.entities.get_mut("ship") {
-            ship.position.set_postition([1.0, 1.0, 1.0], self.spaceship.current_spaceship_rot, self.spaceship.current_spaceship_pos);
+            ship.position.set_postition(
+                [1.0, 1.0, 1.0],
+                self.spaceship.current_spaceship_rot,
+                self.spaceship.current_spaceship_pos,
+            );
         }
 
-        self.camera
-            .update(delta_t, self.delta_mouse_x, self.delta_mouse_y);
+        self.camera.update(delta_t);
 
         // Update Skysphere
         if let Some(entity) = self.entities.get_mut("skybox") {

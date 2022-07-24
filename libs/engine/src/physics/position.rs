@@ -52,8 +52,13 @@ impl Position {
     pub fn set_location(&mut self, loc: impl Into<Vector3d>) {
         self.position.set_translation(loc)
     }
-    
-    pub fn set_postition(&mut self, scale: impl Into<Vector3d>, rot: impl Into<Vector3d>, loc: impl Into<Vector3d>) {
+
+    pub fn set_postition(
+        &mut self,
+        scale: impl Into<Vector3d>,
+        rot: impl Into<Vector3d>,
+        loc: impl Into<Vector3d>,
+    ) {
         self.position = Matrix4x4::scaling3(scale);
         let rot = rot.into();
         self.position *= Matrix4x4::rotation_z(rot.z());

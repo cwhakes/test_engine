@@ -6,8 +6,11 @@ use log::error;
 pub trait CollisionEngine {
     type Collider: ?Sized;
     fn collision_between(&mut self, obj0: &Self::Collider, obj1: &Self::Collider) -> bool;
-    
-    fn collisions<'a, 'b>(&mut self, objs: &'a [&'b Self::Collider]) -> Vec<(&'b Self::Collider, &'b Self::Collider)> {
+
+    fn collisions<'a, 'b>(
+        &mut self,
+        objs: &'a [&'b Self::Collider],
+    ) -> Vec<(&'b Self::Collider, &'b Self::Collider)> {
         let mut collisions = Vec::new();
         for i in 0..objs.len() {
             for j in (i + 1)..objs.len() {

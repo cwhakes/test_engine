@@ -209,7 +209,7 @@ impl<A: Application> Window<A> {
                     Err(std::sync::TryLockError::WouldBlock) => {
                         A::me().moving.store(true, Ordering::Relaxed);
                         return 0;
-                    },
+                    }
                     Err(std::sync::TryLockError::Poisoned(_)) => panic!("Poison error"),
                 };
 

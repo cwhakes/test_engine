@@ -27,7 +27,8 @@ impl<const N: usize> Vector<f32, N> {
     }
 
     pub fn dot(self, rhs: impl Into<Self>) -> f32 {
-        self.0.into_iter()
+        self.0
+            .into_iter()
             .zip(rhs.into().0)
             .map(|(s, r)| s * r)
             .sum()

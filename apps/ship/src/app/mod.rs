@@ -1,6 +1,6 @@
 mod world;
 
-use rand::{prelude::*, distributions::uniform::Uniform};
+use rand::{distributions::uniform::Uniform, prelude::*};
 use shader::directional_light;
 use world::{Entity, World};
 
@@ -70,8 +70,6 @@ impl Application for AppWindow {
             ),
         );
 
-
-
         let mut sky_material = graphics
             .new_material(
                 "shaders\\skybox\\vertex_shader.hlsl",
@@ -101,21 +99,25 @@ impl Application for AppWindow {
         let rot_range = Uniform::new(0.0, 6.28);
         let scale_range = Uniform::new(1.0, 10.0);
         for i in 0..200 {
-            let loc = Vector3d::new(rng.sample(&loc_range), rng.sample(&loc_range), rng.sample(&loc_range));
-            let rot = Vector3d::new(rng.sample(&rot_range), rng.sample(&rot_range), rng.sample(&rot_range));
+            let loc = Vector3d::new(
+                rng.sample(&loc_range),
+                rng.sample(&loc_range),
+                rng.sample(&loc_range),
+            );
+            let rot = Vector3d::new(
+                rng.sample(&rot_range),
+                rng.sample(&rot_range),
+                rng.sample(&rot_range),
+            );
             let scale = rng.sample(&scale_range);
             let scale = Vector3d::new(scale, scale, scale);
 
-            let mut pos= Position::default();
+            let mut pos = Position::default();
             pos.set_postition(scale, rot, loc);
 
             world.add_entity(
                 format!("asteroid_{}", i).into(),
-                Entity::new(
-                    asteroid.clone(),
-                    vec![asteroid_mat.clone()],
-                    pos,
-                ),
+                Entity::new(asteroid.clone(), vec![asteroid_mat.clone()], pos),
             );
 
             asteroids_pos.push((loc, rot, scale));
