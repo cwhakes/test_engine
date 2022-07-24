@@ -142,8 +142,18 @@ impl Application for AppWindow {
 
     fn on_resize(&mut self) {
         self.variables.screen.set_size(self.hwnd.rect());
+        if self.variables.is_playing() {
+            self.variables.screen.center_cursor();
+        }
         let graphics = GRAPHICS.lock().unwrap();
         self.swapchain.resize(graphics.render.device()).unwrap();
+    }
+
+    fn on_move(&mut self) {
+        self.variables.screen.set_size(self.hwnd.rect());
+        if self.variables.is_playing() {
+            self.variables.screen.center_cursor();
+        }
     }
 }
 

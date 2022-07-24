@@ -21,7 +21,6 @@ pub struct World {
 
     delta_t: DeltaT,
     pub scale_cube: f32,
-    world_matrix: Matrix4x4,
     pub camera: Camera,
     pub light_source: Matrix4x4,
 
@@ -130,9 +129,6 @@ impl World {
     }
 
     pub fn environment(&self) -> Environment {
-        let mut world = self.world_matrix.clone();
-        world *= Matrix4x4::scaling(self.scale_cube);
-
         let view = self.camera.get_view();
         let proj = self.camera.get_proj(self.screen.aspect_ratio());
 
@@ -180,6 +176,10 @@ impl World {
     pub fn add_sky_entity(&mut self, sky_entity: Entity) {
         self.sky_entity = Some(sky_entity);
     }
+
+    pub fn is_playing(&self) -> bool {
+        self.play_state.is_playing()
+    }
 }
 
 impl Listener for World {
@@ -217,9 +217,8 @@ impl Listener for World {
         let key = key as u8;
         match key {
             input::key::ESCAPE => {
-                if self.play_state == PlayState::Playing {
-                    input::show_cursor(true);
-                    self.play_state = PlayState::NotPlaying;
+                if self.play_state.is_playing() {
+                    self.play_state.set_not_playing()
                 }
             }
             // b'G' => {
@@ -230,18 +229,18 @@ impl Listener for World {
     }
     fn on_mouse_move(&mut self, pos: Point) {
         if self.play_state == PlayState::Playing {
-            let (width, height) = (self.screen.rect.width(), self.screen.rect.height());
+            self.camera
+                .tilt((pos.y - self.screen.rect.center_y()) as f32 * 0.002);
+            self.camera
+                .pan((pos.x - self.screen.rect.center_x()) as f32 * 0.002);
 
-            self.camera.tilt((pos.y - height / 2) as f32 * 0.002);
-            self.camera.pan((pos.x - width / 2) as f32 * 0.002);
-
-            input::set_cursor_position((width / 2, height / 2));
+            self.screen.center_cursor();
         }
     }
     fn on_left_mouse_down(&mut self) {
-        if self.play_state == PlayState::NotPlaying {
-            input::show_cursor(false);
-            self.play_state = PlayState::Playing;
+        if self.play_state.is_not_playing() {
+            self.play_state.set_playing();
+            self.screen.center_cursor();
         }
     }
 }

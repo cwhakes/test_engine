@@ -3,7 +3,7 @@ use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
-use engine::input::{self, Listener};
+use engine::input::Listener;
 use engine::math::{Matrix4x4, Point, Vector3d};
 use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::physics::Position;
@@ -180,6 +180,10 @@ impl World {
     pub fn add_sky_entity(&mut self, sky_entity: Entity) {
         self.sky_entity = Some(sky_entity);
     }
+
+    pub fn is_playing(&self) -> bool {
+        self.play_state.is_playing()
+    }
 }
 
 impl Listener for World {
@@ -218,18 +222,19 @@ impl Listener for World {
         match key {
             b'G' => {
                 self.play_state.toggle();
+                self.screen.center_cursor();
             }
             _ => {}
         }
     }
     fn on_mouse_move(&mut self, pos: Point) {
         if self.play_state == PlayState::Playing {
-            let (width, height) = (self.screen.rect.width(), self.screen.rect.height());
+            self.camera
+                .tilt((pos.y - self.screen.rect.center_y()) as f32 * 0.002);
+            self.camera
+                .pan((pos.x - self.screen.rect.center_x()) as f32 * 0.002);
 
-            self.camera.tilt((pos.y - height / 2) as f32 * 0.002);
-            self.camera.pan((pos.x - width / 2) as f32 * 0.002);
-
-            input::set_cursor_position((width / 2, height / 2));
+            self.screen.center_cursor();
         }
     }
     fn on_left_mouse_down(&mut self) {

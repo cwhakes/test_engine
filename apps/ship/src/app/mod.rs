@@ -197,9 +197,9 @@ impl AppWindow {
                 self.swapchain
                     .set_windowed_state(GRAPHICS.lock().unwrap().render.device(), state)
                     .unwrap();
+                self.on_resize();
             }
             _ => {}
         }
-        self.on_resize();
     }
 }

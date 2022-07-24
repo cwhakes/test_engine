@@ -53,35 +53,12 @@ impl Application for AppWindow {
             point_light::PIXEL_SHADER_PATH,
         )?;
 
-        //let house = graphics.get_mesh_from_file("assets\\Meshes\\house.obj")?;
-        //let plane = graphics.get_mesh_from_file("assets\\Meshes\\plane2.obj")?;
         let sphere = graphics.get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
 
         let mut brick_d = material.clone();
         brick_d.add_texture(&graphics.get_texture_from_file("assets\\Textures\\brick_d.jpg")?);
 
         world.add_entity(Entity::new(sphere, Some(brick_d), Position::default()));
-
-        // let mut barrel = material.clone();
-        // barrel.add_texture(&graphics.get_texture_from_file("assets\\Textures\\barrel.jpg")?);
-        // let mut brick = material.clone();
-        // brick.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_brick.jpg")?);
-        // let mut windows = material.clone();
-        // windows
-        //     .add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_windows.jpg")?);
-        // let mut wood = material.clone();
-        // wood.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_wood.jpg")?);
-        // let house_textures = vec![barrel, brick, windows, wood];
-
-        // let mut sand = material;
-        // sand.add_texture(&graphics.get_texture_from_file("assets\\Textures\\sand.jpg")?);
-
-        // world.add_entity(Entity::new(
-        //     house,
-        //     house_textures,
-        //     Position::new(Matrix4x4::translation([0.0, 0.0, 0.0])),
-        // ));
-        // world.add_entity(Entity::new(plane, Some(sand), Position::default()));
 
         let mut sky_material = graphics
             .new_material(
@@ -148,8 +125,18 @@ impl Application for AppWindow {
 
     fn on_resize(&mut self) {
         self.variables.screen.set_size(self.hwnd.rect());
+        if self.variables.is_playing() {
+            self.variables.screen.center_cursor();
+        }
         let graphics = GRAPHICS.lock().unwrap();
         self.swapchain.resize(graphics.render.device()).unwrap();
+    }
+
+    fn on_move(&mut self) {
+        self.variables.screen.set_size(self.hwnd.rect());
+        if self.variables.is_playing() {
+            self.variables.screen.center_cursor();
+        }
     }
 }
 

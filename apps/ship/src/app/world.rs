@@ -201,7 +201,7 @@ impl World {
     }
 
     pub fn is_playing(&self) -> bool {
-        self.play_state == PlayState::Playing
+        self.play_state.is_playing()
     }
 }
 
@@ -252,9 +252,8 @@ impl Listener for World {
         let key = key as u8;
         match key {
             input::key::ESCAPE => {
-                if self.play_state == PlayState::Playing {
-                    input::show_cursor(true);
-                    self.play_state = PlayState::NotPlaying;
+                if self.play_state.is_playing() {
+                    self.play_state.set_not_playing();
                 }
             }
             input::key::SHIFT => {
@@ -264,7 +263,7 @@ impl Listener for World {
         }
     }
     fn on_mouse_move(&mut self, pos: Point) {
-        if self.play_state == PlayState::Playing {
+        if self.play_state.is_playing() {
             self.delta_mouse_x = (pos.x - self.screen.rect.center_x()) as f32;
             self.delta_mouse_y = (pos.y - self.screen.rect.center_y()) as f32;
 
@@ -272,10 +271,9 @@ impl Listener for World {
         }
     }
     fn on_left_mouse_down(&mut self) {
-        if self.play_state == PlayState::NotPlaying {
-            input::show_cursor(false);
+        if self.play_state.is_not_playing() {
+            self.play_state.set_playing();
             self.screen.center_cursor();
-            self.play_state = PlayState::Playing;
         }
     }
 }
