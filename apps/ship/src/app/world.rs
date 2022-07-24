@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use engine::components::{Camera0, PlayState, SpaceShip};
+use engine::components::{Camera0, PlayState, Screen, SpaceShip};
 use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
@@ -16,7 +16,7 @@ use shader::directional_light::Environment;
 
 #[derive(Default)]
 pub struct World {
-    screen_rect: Rect<i32>,
+    pub screen: Screen,
 
     play_state: PlayState,
 
@@ -150,7 +150,7 @@ impl World {
 
     pub fn environment(&self) -> Environment {
         let view = self.camera.view_cam();
-        let proj = self.camera.proj_cam(Rect::<f32>::from(&self.screen_rect));
+        let proj = self.camera.proj_cam(Rect::<f32>::from(&self.screen.rect));
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
         let camera_pos = self.camera.get_cam_pos().to_4d(1.0);
@@ -169,7 +169,7 @@ impl World {
     }
 
     pub fn set_screen_size(&mut self, rect: Rect<i32>) {
-        self.screen_rect = rect;
+        self.screen.set_size(rect);
     }
 
     pub fn add_entity(&mut self, name: Cow<'static, str>, entity: Entity) {
@@ -198,10 +198,6 @@ impl World {
 
     pub fn add_sky_entity(&mut self, sky_entity: Entity) {
         self.entities.insert("skybox".into(), sky_entity);
-    }
-
-    pub fn center_cursor(&mut self) {
-        input::set_cursor_position((self.screen_rect.center_x(), self.screen_rect.center_y()));
     }
 
     pub fn is_playing(&self) -> bool {
@@ -269,16 +265,16 @@ impl Listener for World {
     }
     fn on_mouse_move(&mut self, pos: Point) {
         if self.play_state == PlayState::Playing {
-            self.delta_mouse_x = (pos.x - self.screen_rect.center_x()) as f32;
-            self.delta_mouse_y = (pos.y - self.screen_rect.center_y()) as f32;
+            self.delta_mouse_x = (pos.x - self.screen.rect.center_x()) as f32;
+            self.delta_mouse_y = (pos.y - self.screen.rect.center_y()) as f32;
 
-            self.center_cursor();
+            self.screen.center_cursor();
         }
     }
     fn on_left_mouse_down(&mut self) {
         if self.play_state == PlayState::NotPlaying {
             input::show_cursor(false);
-            self.center_cursor();
+            self.screen.center_cursor();
             self.play_state = PlayState::Playing;
         }
     }

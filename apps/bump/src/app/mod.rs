@@ -107,9 +107,7 @@ impl Application for AppWindow {
             variables: world,
         };
 
-        app_window
-            .variables
-            .set_screen_size(app_window.hwnd.rect().dims());
+        app_window.variables.screen.set_size(app_window.hwnd.rect());
 
         WINDOW.set_application(app_window);
         graphics.render.device().debug()?;
@@ -149,7 +147,7 @@ impl Application for AppWindow {
     }
 
     fn on_resize(&mut self) {
-        self.variables.set_screen_size(self.hwnd.rect().dims());
+        self.variables.screen.set_size(self.hwnd.rect());
         let graphics = GRAPHICS.lock().unwrap();
         self.swapchain.resize(graphics.render.device()).unwrap();
     }

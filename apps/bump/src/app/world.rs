@@ -1,4 +1,4 @@
-use engine::components::{Camera, PlayState};
+use engine::components::{Camera, PlayState, Screen};
 use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
@@ -15,8 +15,7 @@ static SPEED: f32 = 5.0;
 
 #[derive(Default)]
 pub struct World {
-    screen_width: f32,
-    screen_height: f32,
+    pub screen: Screen,
 
     play_state: PlayState,
 
@@ -135,7 +134,7 @@ impl World {
         world *= Matrix4x4::scaling(self.scale_cube);
 
         let view = self.camera.get_view();
-        let proj = self.camera.get_proj(self.screen_width / self.screen_height);
+        let proj = self.camera.get_proj(self.screen.aspect_ratio());
 
         let light_dir = self.light_source.get_direction_z().to_4d(0.0);
         let camera_pos = self.camera.get_location();
@@ -151,11 +150,6 @@ impl World {
             time: self.time,
             light_rad: self.light_rad,
         }
-    }
-
-    pub fn set_screen_size(&mut self, (width, height): (i32, i32)) {
-        self.screen_width = width as f32;
-        self.screen_height = height as f32;
     }
 
     pub fn add_entity(&mut self, entity: Entity) {
@@ -236,7 +230,7 @@ impl Listener for World {
     }
     fn on_mouse_move(&mut self, pos: Point) {
         if self.play_state == PlayState::Playing {
-            let (width, height) = (self.screen_width as i32, self.screen_height as i32);
+            let (width, height) = (self.screen.rect.width(), self.screen.rect.height());
 
             self.camera.tilt((pos.y - height / 2) as f32 * 0.002);
             self.camera.pan((pos.x - width / 2) as f32 * 0.002);
