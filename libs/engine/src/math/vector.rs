@@ -1,8 +1,25 @@
+use std::mem::{self, MaybeUninit};
 use std::{convert, ops};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Vector<T, const N: usize>(pub [T; N]);
+
+impl<T, const N: usize> Vector<T, N> {
+    pub fn uninit() -> Vector<MaybeUninit<T>, N> {
+        // SAFETY: An uninitialized `[MaybeUninit<_>; LEN]` is valid.
+        unsafe { Vector(MaybeUninit::<[MaybeUninit<T>; N]>::uninit().assume_init()) }
+    }
+}
+
+impl<T, const N: usize> Vector<MaybeUninit<T>, N> {
+    /// SAFETY: Caller must make sure Vector is initialized
+    pub unsafe fn assume_init(self) -> Vector<T, N> {
+        let ret = (&self as *const _ as *const Vector<T, N>).read();
+        mem::forget(self);
+        ret
+    }
+}
 
 impl<const N: usize> Vector<f32, N> {
     pub fn zero() -> Self {

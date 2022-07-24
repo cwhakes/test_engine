@@ -3,10 +3,6 @@ use super::Matrix;
 pub type Matrix2x2 = Matrix<f32, 2, 2>;
 
 impl Matrix2x2 {
-    pub fn identity() -> Self {
-        Self([[1.0, 0.0], [0.0, 1.0]])
-    }
-
     pub fn inverse(&self) -> Self {
         Self([[self[(1, 1)], -self[(0, 1)]], [-self[(1, 0)], self[(0, 0)]]]) / self.determinant()
     }
