@@ -11,11 +11,18 @@ pub struct SpaceShip {
 
     pub forward: f32,
     pub rightward: f32,
+
+    pub speed: f32,
 }
 
 impl SpaceShip {
+    pub const DEFAULT_SPEED: f32 = 125.0;
+
     pub fn new() -> Self {
-        Self { ..Self::default() }
+        Self {
+            speed: Self::DEFAULT_SPEED,
+            ..Self::default()
+        }
     }
 
     pub fn update(&mut self, delta_t: f32, delta_mouse_x: f32, delta_mouse_y: f32) {

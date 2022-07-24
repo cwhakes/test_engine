@@ -11,9 +11,10 @@ lazy_static! {
 }
 
 pub mod key {
-    use super::*;
+    use winapi::um::winuser;
 
     pub const ESCAPE: u8 = winuser::VK_ESCAPE as u8;
+    pub const SHIFT: u8 = winuser::VK_SHIFT as u8;
 }
 
 pub trait Listener {

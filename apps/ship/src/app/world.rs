@@ -6,15 +6,13 @@ use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
-use engine::input::{self, key, Listener};
+use engine::input::{self, Listener};
 use engine::math::{Matrix4x4, Point, Rect, Vector3d};
 //use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::physics::Position;
 use engine::time::DeltaT;
 
 use shader::directional_light::Environment;
-
-static SPEED: f32 = 125.0;
 
 #[derive(Default)]
 pub struct World {
@@ -105,6 +103,7 @@ impl Entity {
 impl World {
     pub fn new() -> Self {
         let camera = Camera0::new();
+        let spaceship = SpaceShip::new();
 
         let mut light_source = Matrix4x4::identity();
         light_source *= Matrix4x4::rotation_x(-0.707);
@@ -112,6 +111,7 @@ impl World {
 
         Self {
             camera,
+            spaceship,
             light_source,
             light_rad: 40000.0,
             ..Default::default()
@@ -233,13 +233,13 @@ impl Listener for World {
                 // if let Some(spaceship) = self.entities.get_mut("ship") {
                 //     spaceship.position.set_forward_velocity(SPEED);
                 // }
-                self.spaceship.forward = SPEED;
+                self.spaceship.forward = self.spaceship.speed;
             }
             b'S' => {
                 // if let Some(spaceship) = self.entities.get_mut("ship") {
                 //     spaceship.position.set_forward_velocity(-SPEED);
                 // }
-                self.spaceship.forward = -SPEED;
+                self.spaceship.forward = -self.spaceship.speed;
             }
             b'A' => {
                 // self.camera.rightward = -SPEED;
@@ -253,6 +253,9 @@ impl Listener for World {
             b'P' => {
                 self.light_rad += 5.0 * self.delta_t.get();
             }
+            input::key::SHIFT => {
+                self.spaceship.speed = SpaceShip::DEFAULT_SPEED * 5.0;
+            }
             _ => {}
         }
     }
@@ -264,11 +267,14 @@ impl Listener for World {
 
         let key = key as u8;
         match key {
-            key::ESCAPE => {
+            input::key::ESCAPE => {
                 if self.play_state == PlayState::Playing {
                     input::show_cursor(true);
                     self.play_state = PlayState::NotPlaying;
                 }
+            }
+            input::key::SHIFT => {
+                self.spaceship.speed = SpaceShip::DEFAULT_SPEED;
             }
             _ => {}
         }
