@@ -56,13 +56,11 @@ impl Application for AppWindow {
         //let house = graphics.get_mesh_from_file("assets\\Meshes\\house.obj")?;
         //let plane = graphics.get_mesh_from_file("assets\\Meshes\\plane2.obj")?;
         let sphere = graphics.get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
-        
+
         let mut brick_d = material.clone();
         brick_d.add_texture(&graphics.get_texture_from_file("assets\\Textures\\brick_d.jpg")?);
 
         world.add_entity(Entity::new(sphere, Some(brick_d), Position::default()));
-
-
 
         // let mut barrel = material.clone();
         // barrel.add_texture(&graphics.get_texture_from_file("assets\\Textures\\barrel.jpg")?);

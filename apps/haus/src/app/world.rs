@@ -1,4 +1,4 @@
-use engine::components::Camera;
+use engine::components::{Camera, PlayState};
 use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
@@ -32,33 +32,6 @@ pub struct World {
     sky_entity: Option<Entity>,
 
     light_rad: f32,
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum PlayState {
-    Playing,
-    NotPlaying,
-}
-
-impl PlayState {
-    fn toggle(&mut self) {
-        match self {
-            Self::Playing => {
-                input::show_cursor(true);
-                *self = Self::NotPlaying;
-            }
-            Self::NotPlaying => {
-                input::show_cursor(false);
-                *self = Self::Playing;
-            }
-        }
-    }
-}
-
-impl Default for PlayState {
-    fn default() -> Self {
-        Self::NotPlaying
-    }
 }
 
 #[derive(Default, Debug)]

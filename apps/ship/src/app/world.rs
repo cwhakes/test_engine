@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use engine::components::{Camera0, SpaceShip};
+use engine::components::{Camera0, PlayState, SpaceShip};
 use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
@@ -33,18 +33,6 @@ pub struct World {
 
     entities: HashMap<Cow<'static, str>, Entity>,
     light_rad: f32,
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-enum PlayState {
-    Playing,
-    NotPlaying,
-}
-
-impl Default for PlayState {
-    fn default() -> Self {
-        Self::NotPlaying
-    }
 }
 
 #[derive(Default, Debug)]
