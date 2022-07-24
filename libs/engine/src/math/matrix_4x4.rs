@@ -1,16 +1,10 @@
-use super::{Vector, Vector3d, Vector4d};
+use super::{Matrix, Vector, Vector3d, Vector4d};
 
 use std::{convert, ops};
 
-#[repr(C)]
-#[derive(Clone, Debug, PartialEq)]
-pub struct Matrix4x4(pub [[f32; 4]; 4]);
+pub type Matrix4x4 = Matrix<f32, 4, 4>;
 
 impl Matrix4x4 {
-    pub fn zero() -> Self {
-        Self([[0.0; 4]; 4])
-    }
-
     pub fn identity() -> Self {
         Self([
             [1.0, 0.0, 0.0, 0.0],

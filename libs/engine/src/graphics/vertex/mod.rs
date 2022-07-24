@@ -34,6 +34,18 @@ vertex_generate!(
     dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT
 );
 vertex_generate!(
+    Tangent,
+    Vector3d,
+    b"TANGENT\0",
+    dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT
+);
+vertex_generate!(
+    BiNormal,
+    Vector3d,
+    b"BINormal\0",
+    dxgiformat::DXGI_FORMAT_R32G32B32_FLOAT
+);
+vertex_generate!(
     Position,
     Vector4d,
     b"POSITION\0",

@@ -3,7 +3,7 @@ use super::{shader, Resource, ResourceManager};
 use crate::error;
 use crate::graphics::render::{Device, IndexBuffer, VertexBuffer};
 use crate::graphics::vertex;
-use crate::math::Vector3d;
+use crate::math::{Matrix, Vector2d, Vector3d};
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -177,6 +177,31 @@ fn calc_normal(object: &obj::Object, indices: [&obj::VTNIndex; 3]) -> vertex::No
     let b: Vector3d = object.vertices[indices[1].0].into();
     let c: Vector3d = object.vertices[indices[2].0].into();
     (b - a).cross(c - a).normalize().into()
+}
+
+fn _calc_tex_tangents(
+    object: &obj::Object,
+    indices: [&obj::VTNIndex; 3],
+) -> (vertex::Tangent, vertex::BiNormal) {
+    let p0: Vector3d = object.vertices[indices[0].0].into();
+    let p1: Vector3d = object.vertices[indices[1].0].into();
+    let p2: Vector3d = object.vertices[indices[2].0].into();
+
+    // Requires texture coordinates to work
+    let t0: Vector2d = object.tex_vertices[indices[0].1.unwrap()].into();
+    let t1: Vector2d = object.tex_vertices[indices[1].1.unwrap()].into();
+    let t2: Vector2d = object.tex_vertices[indices[2].1.unwrap()].into();
+
+    let e0 = p1 - p0;
+    let e1 = p2 - p0;
+    let delta_t0 = t1 - t0;
+    let delta_t1 = t2 - t0;
+
+    let e = Matrix([e0.into(), e1.into()]);
+    let delta_t = Matrix([delta_t0.into(), delta_t1.into()]);
+
+    let Matrix([tangent, binormal]) = delta_t.inverse() * e;
+    (tangent.into(), binormal.into())
 }
 
 impl Mesh {

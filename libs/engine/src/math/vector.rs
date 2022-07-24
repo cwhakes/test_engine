@@ -5,6 +5,10 @@ use std::{convert, ops};
 pub struct Vector<T, const N: usize>(pub [T; N]);
 
 impl<const N: usize> Vector<f32, N> {
+    pub fn zero() -> Self {
+        Self([0.0; N])
+    }
+
     pub fn lerp(mut self, rhs: impl Into<Self>, delta: f32) -> Self {
         let rhs = rhs.into();
         for (s, r) in self.0.iter_mut().zip(rhs.0) {
@@ -68,6 +72,12 @@ impl<const N: usize> Vector<f32, N> {
 impl<T, const N: usize> convert::From<[T; N]> for Vector<T, N> {
     fn from(array: [T; N]) -> Self {
         Self(array)
+    }
+}
+
+impl<T, const N: usize> convert::From<Vector<T, N>> for [T; N] {
+    fn from(vector: Vector<T, N>) -> Self {
+        vector.0
     }
 }
 

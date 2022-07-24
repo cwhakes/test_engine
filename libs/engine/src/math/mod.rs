@@ -1,3 +1,5 @@
+mod matrix;
+mod matrix_2x2;
 mod matrix_4x4;
 mod point;
 mod rect;
@@ -6,6 +8,8 @@ mod vector_2d;
 mod vector_3d;
 mod vector_4d;
 
+pub use matrix::Matrix;
+pub use matrix_2x2::Matrix2x2;
 pub use matrix_4x4::Matrix4x4;
 pub use point::Point;
 pub use rect::Rect;

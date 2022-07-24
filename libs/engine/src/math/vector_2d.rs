@@ -11,11 +11,11 @@ impl Vector2d {
         Self([x, y])
     }
 
-    pub fn x(&self) -> f32 {
+    pub fn u(&self) -> f32 {
         self.0[0]
     }
 
-    pub fn y(&self) -> f32 {
+    pub fn v(&self) -> f32 {
         self.0[1]
     }
 }
