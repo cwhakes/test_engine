@@ -91,7 +91,7 @@ where
         let rhs = rhs.into();
 
         for (s, r) in self.0.iter_mut().zip(rhs.0) {
-            *s += r
+            *s += r;
         }
     }
 }
@@ -116,7 +116,7 @@ where
         let rhs = rhs.into();
 
         for (s, r) in self.0.iter_mut().zip(rhs.0) {
-            *s -= r
+            *s -= r;
         }
     }
 }
@@ -141,7 +141,7 @@ where
 {
     fn mul_assign(&mut self, rhs: Rhs) {
         for element in &mut self.0 {
-            *element *= rhs.clone()
+            *element *= rhs.clone();
         }
     }
 }

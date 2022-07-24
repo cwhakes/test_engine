@@ -31,8 +31,7 @@ impl SpaceShip {
         world_model *= Matrix4x4::rotation_x(self.current_spaceship_rot.x());
         world_model *= Matrix4x4::rotation_y(self.current_spaceship_rot.y());
 
-        self.spaceship_pos =
-            self.spaceship_pos + world_model.get_direction_z() * (self.forward) * delta_t;
+        self.spaceship_pos += world_model.get_direction_z() * (self.forward) * delta_t;
 
         self.current_spaceship_pos = self
             .current_spaceship_pos

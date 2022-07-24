@@ -20,7 +20,7 @@ impl ThirdPersonCamera {
     }
 
     pub fn set_location(&mut self, loc: impl Into<Vector3d>) {
-        self.position.set_location(loc)
+        self.position.set_location(loc);
     }
 
     pub fn get_skysphere(&self) -> Matrix4x4 {

@@ -72,7 +72,7 @@ impl Material {
             let context = render.immediate_context();
             const_buff.update(context, data);
             //context.set_constant_buffer(idx as u32, &mut const_buff);
-            self.const_buffs[idx] = Some((const_buff, type_id))
+            self.const_buffs[idx] = Some((const_buff, type_id));
         } else {
             let const_buff = render
                 .device()

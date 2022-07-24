@@ -73,7 +73,7 @@ impl Context {
                 &(std::mem::size_of::<V>() as u32),
                 &0,
             );
-            self.as_ref().IASetInputLayout(vertex_buffer.as_mut())
+            self.as_ref().IASetInputLayout(vertex_buffer.as_mut());
         }
     }
 

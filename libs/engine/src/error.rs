@@ -111,6 +111,6 @@ impl HResultToResult for winnt::HRESULT {
 #[macro_export]
 macro_rules! null_ptr_err {
     () => {
-        crate::error::Error::NullPointer(file!(), line!(), column!())
+        $crate::error::Error::NullPointer(file!(), line!(), column!())
     };
 }

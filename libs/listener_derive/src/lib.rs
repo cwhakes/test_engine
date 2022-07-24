@@ -144,7 +144,7 @@ fn find_parent_fns<'a>(
                     }
                 }
             } else {
-                panic!("Incorrect listener calling convention")
+                panic!("Incorrect listener calling convention");
             }
         }
     }

@@ -157,6 +157,10 @@ impl Drop for SwapChain {
 
 struct BackBuffer(NonNull<d3d11::ID3D11RenderTargetView>);
 
+//TODO FIXME Verify
+unsafe impl Send for BackBuffer {}
+unsafe impl Sync for BackBuffer {}
+
 impl BackBuffer {
     fn new(swapchain: &SwapChain, device: &Device) -> error::Result<Self> {
         unsafe {
@@ -189,6 +193,10 @@ impl Drop for BackBuffer {
 }
 
 pub struct DepthBuffer(NonNull<d3d11::ID3D11DepthStencilView>);
+
+//TODO FIXME Verify
+unsafe impl Send for DepthBuffer {}
+unsafe impl Sync for DepthBuffer {}
 
 impl DepthBuffer {
     fn new(swapchain: &SwapChain, device: &Device) -> error::Result<Self> {

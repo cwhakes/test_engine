@@ -162,6 +162,6 @@ impl AppWindow {
             }
             _ => {}
         }
-        self.on_resize()
+        self.on_resize();
     }
 }

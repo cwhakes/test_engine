@@ -143,7 +143,7 @@ impl World {
             entity.color = color::WHITE.into();
             let sphere = Sphere::new(position, 0.5);
             if GjkEngine.collision_between(&self.camera, &sphere) {
-                entity.color = color::RED.into()
+                entity.color = color::RED.into();
             };
         }
 
@@ -186,7 +186,7 @@ impl World {
     }
 
     pub fn add_entity(&mut self, entity: Entity) {
-        self.entities.push(entity)
+        self.entities.push(entity);
     }
 
     pub fn meshes_and_materials<'a, 'b>(
@@ -211,7 +211,7 @@ impl World {
     }
 
     pub fn add_sky_entity(&mut self, sky_entity: Entity) {
-        self.sky_entity = Some(sky_entity)
+        self.sky_entity = Some(sky_entity);
     }
 }
 
@@ -266,15 +266,15 @@ impl Listener for World {
         }
     }
     fn on_left_mouse_down(&mut self) {
-        self.scale_cube = 0.5
+        self.scale_cube = 0.5;
     }
     fn on_right_mouse_down(&mut self) {
-        self.scale_cube = 1.5
+        self.scale_cube = 1.5;
     }
     fn on_left_mouse_up(&mut self) {
-        self.scale_cube = 1.0
+        self.scale_cube = 1.0;
     }
     fn on_right_mouse_up(&mut self) {
-        self.scale_cube = 1.0
+        self.scale_cube = 1.0;
     }
 }

@@ -6,7 +6,7 @@ use crate::graphics::vertex::Vertex;
 use crate::util::get_output;
 use crate::window::Hwnd;
 
-use std::ptr::NonNull;
+use std::ptr::{self, NonNull};
 
 use winapi::shared::dxgi;
 use winapi::um::d3d11;
@@ -36,7 +36,7 @@ impl Device {
 
             let swapchain = get_output(|ptr| {
                 dxgi_factory.as_ref().CreateSwapChain(
-                    &**self.as_mut() as *const _ as *mut _,
+                    ptr::addr_of!(**self.as_mut()) as *mut _,
                     &mut desc,
                     ptr,
                 )

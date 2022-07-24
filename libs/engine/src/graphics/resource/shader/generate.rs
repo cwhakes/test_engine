@@ -23,7 +23,7 @@ macro_rules! shader_generate {
                 unsafe {
                     get_output(|shader| {
                         device.as_ref().$create_shader(
-                            bytecode.as_ptr() as *const _,
+                            bytecode.as_ptr().cast(),
                             bytecode.len(),
                             std::ptr::null_mut(),
                             shader,

@@ -42,7 +42,7 @@ impl Position {
     }
 
     pub fn set_matrix(&mut self, matrix: Matrix4x4) {
-        self.position = matrix
+        self.position = matrix;
     }
 
     pub fn get_location(&self) -> Vector3d {
@@ -50,7 +50,7 @@ impl Position {
     }
 
     pub fn set_location(&mut self, loc: impl Into<Vector3d>) {
-        self.position.set_translation(loc)
+        self.position.set_translation(loc);
     }
 
     pub fn set_postition(

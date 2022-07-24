@@ -6,7 +6,6 @@ const FOV: f32 = std::f32::consts::PI / 4.0;
 
 #[derive(Default)]
 pub struct Camera {
-    //world_cam: Matrix4x4,
     focus_pos: Vector3d,
     focus_rot: Vector3d,
 
@@ -40,26 +39,8 @@ impl Camera {
     }
 
     pub fn update(&mut self, delta_t: f32) {
-        //*self.target_cam_rot.x_mut() += delta_mouse_y * delta_t * 0.1;
-        //*self.target_cam_rot.x_mut() = self.target_cam_rot.x().clamp(-1.57, 1.57);
-        //*self.target_cam_rot.y_mut() += delta_mouse_x * delta_t * 0.1;
-
         self.cam_pos = self.cam_pos.lerp(self.focus_pos, 3.0 * delta_t);
         self.cam_rot = self.cam_rot.lerp(self.focus_rot, 3.0 * delta_t);
-
-        // let mut world_cam = Matrix4x4::identity();
-        // world_cam *= Matrix4x4::rotation_x(self.current_cam_rot.x());
-        // world_cam *= Matrix4x4::rotation_y(self.current_cam_rot.y());
-
-        // //let mut target_position = self.focus_pos;
-        // //target_position += dbg!(self.focus_rot).normalize() * (-self.cam_distance);
-
-        // let mut new_pos = self.focus_pos;
-        // new_pos += world_cam.get_direction_z() * (-self.cam_distance);
-        // new_pos += world_cam.get_direction_y() * (5.0);
-
-        // world_cam.set_translation(new_pos);
-        // self.world_cam = world_cam.clone();
     }
 
     pub fn world_cam(&self) -> Matrix4x4 {

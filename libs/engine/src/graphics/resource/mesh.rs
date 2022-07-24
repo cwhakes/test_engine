@@ -38,7 +38,7 @@ impl Resource for Mesh {
                 warn!(
                     "Looked for {}",
                     path.as_ref().parent().unwrap().join(mtl_file).display()
-                )
+                );
             }
         }
 
@@ -213,7 +213,7 @@ impl MaterialMap {
     fn id_of(&self, name: &Option<String>) -> usize {
         name.as_ref()
             .and_then(|name| self.0.get(name))
-            .cloned()
+            .copied()
             //Default ID to number of materials
             .unwrap_or_else(|| self.0.len())
     }

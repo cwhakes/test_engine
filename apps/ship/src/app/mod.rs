@@ -96,7 +96,7 @@ impl Application for AppWindow {
 
         let mut rng = rand::thread_rng();
         let loc_range = Uniform::new(-2000.0, 2000.0);
-        let rot_range = Uniform::new(0.0, 6.28);
+        let rot_range = Uniform::new(0.0, std::f32::consts::TAU);
         let scale_range = Uniform::new(1.0, 10.0);
         for i in 0..200 {
             let loc = Vector3d::new(
@@ -173,7 +173,7 @@ impl Application for AppWindow {
     fn on_resize(&mut self) {
         self.variables.set_screen_size(self.hwnd.rect());
         if self.variables.is_playing() {
-            self.variables.center_cursor()
+            self.variables.center_cursor();
         }
         let graphics = GRAPHICS.lock().unwrap();
         self.swapchain.resize(graphics.render.device()).unwrap();
@@ -182,7 +182,7 @@ impl Application for AppWindow {
     fn on_move(&mut self) {
         self.variables.set_screen_size(self.hwnd.rect());
         if self.variables.is_playing() {
-            self.variables.center_cursor()
+            self.variables.center_cursor();
         }
     }
 }
@@ -200,6 +200,6 @@ impl AppWindow {
             }
             _ => {}
         }
-        self.on_resize()
+        self.on_resize();
     }
 }

@@ -28,9 +28,9 @@ impl fmt::Debug for Blob {
 
 impl fmt::Display for Blob {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let string = String::from_utf8_lossy(&self);
+        let string = String::from_utf8_lossy(self);
 
-        write! {f, "{}", string}
+        write!(f, "{}", string)
     }
 }
 
