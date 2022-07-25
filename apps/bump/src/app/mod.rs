@@ -1,6 +1,6 @@
 mod world;
 
-use shader::point_light;
+use shader::{dir_light_bump_map, point_light};
 use world::{Entity, World};
 
 use engine::error::Result;
@@ -49,14 +49,15 @@ impl Application for AppWindow {
         let mut world = World::new();
 
         let material = graphics.new_material(
-            point_light::VERTEX_SHADER_PATH,
-            point_light::PIXEL_SHADER_PATH,
+            dir_light_bump_map::VERTEX_SHADER_PATH,
+            dir_light_bump_map::PIXEL_SHADER_PATH,
         )?;
 
         let sphere = graphics.get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
 
         let mut brick_d = material.clone();
         brick_d.add_texture(&graphics.get_texture_from_file("assets\\Textures\\brick_d.jpg")?);
+        brick_d.add_texture(&graphics.get_texture_from_file("assets\\Textures\\brick_n.jpg")?);
 
         world.add_entity(Entity::new(sphere, Some(brick_d), Position::default()));
 

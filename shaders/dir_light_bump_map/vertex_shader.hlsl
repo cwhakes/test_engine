@@ -11,8 +11,8 @@ struct VS_OUTPUT
 {
     float4 pos: SV_POSITION;
     float2 tex_coord: TEXCOORD0;
-    float3 normal: NORMAL0;
     float3 cam_dir: CAMDIR;
+    row_major float3x3 tbn: TBN;
 };
 
 cbuffer constant: register(b0)
@@ -52,7 +52,10 @@ VS_OUTPUT vsmain( VS_INPUT input )
     output.pos = mul(output.pos, m_proj);
 
     output.tex_coord = input.tex_coord;
-    output.normal = input.normal;
+    
+    output.tbn[0] = normalize(mul(input.tangent, m_world));
+    output.tbn[1] = normalize(mul(input.binormal, m_world));
+    output.tbn[2] = normalize(mul(input.normal, m_world));
 
     return output;
 }

@@ -106,6 +106,8 @@ impl Resource for Mesh {
                     obj::Primitive::Triangle(a, b, c) => {
                         //in case no normal exists
                         let normal = calc_normal(object, [&a, &b, &c]);
+                        let (tangent, binormal) = calc_tangents(object, [&a, &b, &c])
+                            .unwrap_or(([1.0, 0.0, 0.0].into(), [0.0, 1.0, 0.0].into()));
                         for i_vtn in [a, b, c] {
                             let global_index = i_vtn.0 + offset;
                             let metadata = &mut vertex_metadata[global_index];
@@ -113,22 +115,35 @@ impl Resource for Mesh {
                                 if metadata.i_tex == i_vtn.1 && metadata.i_nor == i_vtn.2 {
                                     indices.push(global_index as u32);
                                 } else {
-                                    vertices.push(MeshVertex::from_index(object, &i_vtn));
+                                    vertices.push(MeshVertex::from_index(
+                                        object,
+                                        &i_vtn,
+                                        tangent.clone(),
+                                        binormal.clone(),
+                                    ));
                                     indices.push((vertices.len() - 1) as u32);
                                 }
                             } else {
                                 let mesh_vertex = &mut vertices[global_index];
                                 if let Some(i_tex) = i_vtn.1 {
-                                    mesh_vertex.1 = object.tex_vertices[i_tex].into();
+                                    mesh_vertex.texture = object.tex_vertices[i_tex].into();
                                     metadata.i_tex = Some(i_tex);
                                 } else {
-                                    mesh_vertex.1 = [0.0, 0.0].into();
+                                    mesh_vertex.texture = [0.0, 0.0].into();
                                 }
                                 if let Some(i_nor) = i_vtn.2 {
-                                    mesh_vertex.2 = object.normals[i_nor].into();
+                                    let normal: vertex::Normal = object.normals[i_nor].into();
+                                    let binormal: vertex::BiNormal =
+                                        normal.clone().cross(*tangent).into();
+                                    let tangent = binormal.clone().cross(*normal).into();
+                                    mesh_vertex.tangent = tangent;
+                                    mesh_vertex.binormal = binormal;
+                                    mesh_vertex.normal = normal;
                                     metadata.i_nor = Some(i_nor);
                                 } else {
-                                    mesh_vertex.2 = normal.clone();
+                                    mesh_vertex.tangent = tangent.clone();
+                                    mesh_vertex.binormal = binormal.clone();
+                                    mesh_vertex.normal = normal.clone();
                                 }
                                 metadata.finalized = true;
                                 indices.push(global_index as u32);
@@ -179,18 +194,18 @@ fn calc_normal(object: &obj::Object, indices: [&obj::VTNIndex; 3]) -> vertex::No
     (b - a).cross(c - a).normalize().into()
 }
 
-fn _calc_tex_tangents(
+fn calc_tangents(
     object: &obj::Object,
     indices: [&obj::VTNIndex; 3],
-) -> (vertex::Tangent, vertex::BiNormal) {
+) -> Option<(vertex::Tangent, vertex::BiNormal)> {
     let p0: Vector3d = object.vertices[indices[0].0].into();
     let p1: Vector3d = object.vertices[indices[1].0].into();
     let p2: Vector3d = object.vertices[indices[2].0].into();
 
     // Requires texture coordinates to work
-    let t0: Vector2d = object.tex_vertices[indices[0].1.unwrap()].into();
-    let t1: Vector2d = object.tex_vertices[indices[1].1.unwrap()].into();
-    let t2: Vector2d = object.tex_vertices[indices[2].1.unwrap()].into();
+    let t0: Vector2d = object.tex_vertices[indices[0].1?].into();
+    let t1: Vector2d = object.tex_vertices[indices[1].1?].into();
+    let t2: Vector2d = object.tex_vertices[indices[2].1?].into();
 
     let e0 = p1 - p0;
     let e1 = p2 - p0;
@@ -201,7 +216,9 @@ fn _calc_tex_tangents(
     let delta_t = Matrix([delta_t0.into(), delta_t1.into()]);
 
     let Matrix([tangent, binormal]) = delta_t.inverse() * e;
-    (tangent.into(), binormal.into())
+    let tangent = Vector3d::from(tangent).normalize();
+    let binormal = Vector3d::from(binormal).normalize();
+    Some((tangent.into(), binormal.into()))
 }
 
 impl Mesh {
@@ -218,6 +235,7 @@ impl PartialEq for Mesh {
 
 impl Eq for Mesh {}
 
+/// Used to track duplicate verticies
 #[derive(Clone, Default)]
 struct VertexMetadata {
     finalized: bool,
@@ -248,10 +266,21 @@ impl MaterialMap {
 use crate::{self as engine};
 #[derive(Debug, Vertex)]
 #[repr(C)]
-pub struct MeshVertex(vertex::Position, vertex::TexCoord, vertex::Normal);
+pub struct MeshVertex {
+    position: vertex::Position,
+    texture: vertex::TexCoord,
+    tangent: vertex::Tangent,
+    binormal: vertex::BiNormal,
+    normal: vertex::Normal,
+}
 
 impl MeshVertex {
-    fn from_index(object: &obj::Object, index: &obj::VTNIndex) -> Self {
+    fn from_index(
+        object: &obj::Object,
+        index: &obj::VTNIndex,
+        tangent: vertex::Tangent,
+        binormal: vertex::BiNormal,
+    ) -> Self {
         let position = object.vertices[index.0].into();
         let texture = index.1.map_or([0.0, 0.0].into(), |tex_index| {
             object.tex_vertices[tex_index].into()
@@ -260,14 +289,28 @@ impl MeshVertex {
             object.normals[norm_index].into()
         });
 
-        Self(position, texture, normal)
+        Self {
+            position,
+            texture,
+            normal,
+            tangent,
+            binormal,
+        }
     }
 
     fn from_vertex(vertex: &obj::Vertex) -> Self {
         let position = (*vertex).into();
         let texture = [0.0, 0.0].into();
-        let normal = [0.0, 0.0, 0.0].into();
-        Self(position, texture, normal)
+        let tangent = [1.0, 0.0, 0.0].into();
+        let binormal = [0.0, 1.0, 0.0].into();
+        let normal = [0.0, 0.0, 1.0].into();
+        Self {
+            position,
+            texture,
+            tangent,
+            binormal,
+            normal,
+        }
     }
 }
 
