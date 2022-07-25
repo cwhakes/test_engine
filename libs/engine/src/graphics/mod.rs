@@ -64,11 +64,7 @@ impl Graphics {
             .get_resource_from_file(self.render.device(), path)
     }
 
-    pub fn new_material(
-        &mut self,
-        vs: impl AsRef<Path>,
-        ps: impl AsRef<Path>,
-    ) -> error::Result<Material> {
-        Material::new(self, vs, ps)
+    pub fn new_material<T: material::Template>(&mut self) -> error::Result<Material> {
+        Material::new::<T>(self)
     }
 }

@@ -10,7 +10,7 @@ use engine::math::{Matrix4x4, Point, Rect};
 //use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::time::DeltaT;
 
-use shader::directional_light::Environment;
+use shader::Environment;
 
 #[derive(Default)]
 pub struct World {

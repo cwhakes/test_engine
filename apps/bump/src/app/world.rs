@@ -8,7 +8,7 @@ use engine::math::{Matrix4x4, Point};
 use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::time::DeltaT;
 
-use shader::point_light::Environment;
+use shader::Environment;
 
 static SPEED: f32 = 5.0;
 

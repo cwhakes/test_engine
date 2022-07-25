@@ -8,7 +8,6 @@ use crate::graphics::resource::shader::{self, Shader};
 use crate::graphics::resource::Texture;
 use crate::graphics::Graphics;
 use std::any::{Any, TypeId};
-use std::path::Path;
 
 pub struct Material {
     pub vs: Shader<shader::Vertex>,
@@ -25,13 +24,9 @@ pub enum CullMode {
 }
 
 impl Material {
-    pub fn new(
-        graphics: &mut Graphics,
-        vs: impl AsRef<Path>,
-        ps: impl AsRef<Path>,
-    ) -> Result<Self> {
-        let vertex_shader = graphics.get_vertex_shader_from_file(vs)?;
-        let pixel_shader = graphics.get_pixel_shader_from_file(ps)?;
+    pub fn new<T: Template>(graphics: &mut Graphics) -> Result<Self> {
+        let vertex_shader = graphics.get_vertex_shader_from_file(T::VERTEX_SHADER_PATH)?;
+        let pixel_shader = graphics.get_pixel_shader_from_file(T::PIXEL_SHADER_PATH)?;
 
         Ok(Self {
             vs: vertex_shader,

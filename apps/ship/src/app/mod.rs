@@ -7,7 +7,6 @@ use world::World;
 use engine::components::Entity;
 use engine::error::Result;
 use engine::graphics::color;
-use engine::graphics::material::Template;
 use engine::graphics::render::{SwapChain, WindowState};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
@@ -53,10 +52,7 @@ impl Application for AppWindow {
 
         let mut world = World::new();
 
-        let material = graphics.new_material(
-            DirectionalLight::VERTEX_SHADER_PATH,
-            DirectionalLight::PIXEL_SHADER_PATH,
-        )?;
+        let material = graphics.new_material::<DirectionalLight>()?;
 
         let spaceship = graphics.get_mesh_from_file("assets\\Meshes\\spaceship.obj")?;
         let mut spaceship_mat = material.clone();
@@ -72,9 +68,7 @@ impl Application for AppWindow {
             ),
         );
 
-        let mut sky_material = graphics
-            .new_material(Skybox::VERTEX_SHADER_PATH, Skybox::PIXEL_SHADER_PATH)?
-            .with_frontface_culling();
+        let mut sky_material = graphics.new_material::<Skybox>()?.with_frontface_culling();
         sky_material
             .add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
 
