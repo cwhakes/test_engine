@@ -1,3 +1,7 @@
+pub mod template;
+
+pub use template::Template;
+
 use crate::error::Result;
 use crate::graphics::render::{ConstantBuffer, Render};
 use crate::graphics::resource::shader::{self, Shader};

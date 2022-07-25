@@ -1,15 +1,13 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 
-use engine::components::{Camera0, PlayState, Screen, SpaceShip};
-use engine::graphics::color;
+use engine::components::{Camera0, Entity, PlayState, Screen, SpaceShip};
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
-use engine::math::{Matrix4x4, Point, Rect, Vector3d};
+use engine::math::{Matrix4x4, Point, Rect};
 //use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
-use engine::physics::Position;
 use engine::time::DeltaT;
 
 use shader::directional_light::Environment;
@@ -33,59 +31,6 @@ pub struct World {
 
     entities: HashMap<Cow<'static, str>, Entity>,
     light_rad: f32,
-}
-
-#[derive(Default, Debug)]
-#[repr(C, align(16))]
-pub struct MeshInfo {
-    pub color: Vector3d,
-}
-
-#[derive(Clone)]
-pub struct Entity {
-    pub mesh: Mesh,
-    pub materials: Vec<Material>,
-
-    pub position: Position,
-    pub color: Vector3d,
-}
-
-impl Entity {
-    pub fn new(
-        mesh: Mesh,
-        materials: impl IntoIterator<Item = Material>,
-        position: Position,
-    ) -> Self {
-        let materials: Vec<_> = materials.into_iter().collect();
-        Self {
-            mesh,
-            materials,
-            position,
-            color: color::WHITE.into(),
-        }
-    }
-
-    pub fn update(&mut self, delta_t: f32) {
-        self.position.update(delta_t);
-    }
-
-    pub fn get_mesh_and_materials<'a, 'b>(
-        &'a mut self,
-        render: &'b Render,
-    ) -> (&'a mut Mesh, &'a mut [Material]) {
-        for material in &mut self.materials {
-            //Datum 1 is position. How to label?
-            material
-                .set_data(render, 1, &mut self.position.get_matrix())
-                .unwrap();
-            //Datum 2 is color. Mostly unused
-            material
-                .set_data(render, 2, &mut MeshInfo { color: self.color })
-                .unwrap();
-        }
-
-        (&mut self.mesh, &mut self.materials)
-    }
 }
 
 impl World {

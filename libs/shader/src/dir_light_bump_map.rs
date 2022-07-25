@@ -1,7 +1,14 @@
+use engine::graphics::material;
 use engine::math::{Matrix4x4, Vector4d};
 
-pub const PIXEL_SHADER_PATH: &str = "shaders\\dir_light_bump_map\\pixel_shader.hlsl";
-pub const VERTEX_SHADER_PATH: &str = "shaders\\dir_light_bump_map\\vertex_shader.hlsl";
+pub struct DirLightBumpMap;
+
+impl material::Template for DirLightBumpMap {
+    const PIXEL_SHADER_PATH: &'static str = "shaders\\dir_light_bump_map\\pixel_shader.hlsl";
+    const VERTEX_SHADER_PATH: &'static str = "shaders\\dir_light_bump_map\\vertex_shader.hlsl";
+
+    type Environment = Environment;
+}
 
 #[derive(Default, Debug)]
 #[repr(C, align(16))]

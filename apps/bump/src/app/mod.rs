@@ -1,10 +1,12 @@
 mod world;
 
-use shader::{dir_light_bump_map, point_light};
-use world::{Entity, World};
+use shader::{DirLightBumpMap, Skybox};
+use world::World;
 
+use engine::components::Entity;
 use engine::error::Result;
 use engine::graphics::color;
+use engine::graphics::material::Template;
 use engine::graphics::render::{SwapChain, WindowState};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
@@ -49,8 +51,8 @@ impl Application for AppWindow {
         let mut world = World::new();
 
         let material = graphics.new_material(
-            dir_light_bump_map::VERTEX_SHADER_PATH,
-            dir_light_bump_map::PIXEL_SHADER_PATH,
+            DirLightBumpMap::VERTEX_SHADER_PATH,
+            DirLightBumpMap::PIXEL_SHADER_PATH,
         )?;
 
         let sphere = graphics.get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
@@ -62,10 +64,7 @@ impl Application for AppWindow {
         world.add_entity(Entity::new(sphere, Some(brick_d), Position::default()));
 
         let mut sky_material = graphics
-            .new_material(
-                point_light::VERTEX_SHADER_PATH,
-                "shaders\\skybox\\pixel_shader.hlsl",
-            )?
+            .new_material(Skybox::VERTEX_SHADER_PATH, Skybox::PIXEL_SHADER_PATH)?
             .with_frontface_culling();
         sky_material
             .add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);

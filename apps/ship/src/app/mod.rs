@@ -1,11 +1,13 @@
 mod world;
 
 use rand::{distributions::uniform::Uniform, prelude::*};
-use shader::directional_light;
-use world::{Entity, World};
+use shader::{DirectionalLight, Skybox};
+use world::World;
 
+use engine::components::Entity;
 use engine::error::Result;
 use engine::graphics::color;
+use engine::graphics::material::Template;
 use engine::graphics::render::{SwapChain, WindowState};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
@@ -52,8 +54,8 @@ impl Application for AppWindow {
         let mut world = World::new();
 
         let material = graphics.new_material(
-            directional_light::VERTEX_SHADER_PATH,
-            directional_light::PIXEL_SHADER_PATH,
+            DirectionalLight::VERTEX_SHADER_PATH,
+            DirectionalLight::PIXEL_SHADER_PATH,
         )?;
 
         let spaceship = graphics.get_mesh_from_file("assets\\Meshes\\spaceship.obj")?;
@@ -71,10 +73,7 @@ impl Application for AppWindow {
         );
 
         let mut sky_material = graphics
-            .new_material(
-                "shaders\\skybox\\vertex_shader.hlsl",
-                "shaders\\skybox\\pixel_shader.hlsl",
-            )?
+            .new_material(Skybox::VERTEX_SHADER_PATH, Skybox::PIXEL_SHADER_PATH)?
             .with_frontface_culling();
         sky_material
             .add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
