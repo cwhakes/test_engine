@@ -1,5 +1,5 @@
 [package]
-name = "fram"
+name = "mini"
 version = "0.1.0"
 authors = ["Will Hakes <info@cwilliamhakes.com>"]
 edition = "2021"
