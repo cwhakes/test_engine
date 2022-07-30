@@ -8,6 +8,7 @@ extern crate listener_derive;
 //extern crate vertex_derive;
 
 mod app;
+mod minigame;
 
 use engine::window::Window;
 use log::info;
