@@ -16,14 +16,10 @@ use winapi::um::d3d11;
 use winapi::Interface;
 
 pub struct SwapChain {
-    inner: NonNull<dxgi::IDXGISwapChain>,
+    inner: SwapChainInner,
     back_buffer: Option<BackBuffer>,
     depth_buffer: Option<DepthBuffer>,
 }
-
-//TODO FIXME Verify
-unsafe impl Send for SwapChain {}
-unsafe impl Sync for SwapChain {}
 
 impl SwapChain {
     pub fn get_desc(hwnd: &Hwnd) -> dxgi::DXGI_SWAP_CHAIN_DESC {
@@ -57,7 +53,7 @@ impl SwapChain {
         swapchain: NonNull<dxgi::IDXGISwapChain>,
         device: &Device,
     ) -> error::Result<Self> {
-        let inner = swapchain;
+        let inner = SwapChainInner::new(swapchain);
         let mut swapchain = Self {
             inner,
             back_buffer: None,
@@ -72,7 +68,7 @@ impl SwapChain {
     }
 
     fn inner(&self) -> &dxgi::IDXGISwapChain {
-        unsafe { self.inner.as_ref() }
+        self.inner.as_ref()
     }
 
     pub fn back_buffer_ptr(&self) -> Option<*mut d3d11::ID3D11RenderTargetView> {
@@ -105,11 +101,6 @@ impl SwapChain {
 
     pub fn set_windowed_state(&mut self, device: &Device, state: WindowState) -> error::Result<()> {
         unsafe {
-            //self.back_buffer.take();
-            //self.depth_buffer.take();
-
-            //self.inner().ResizeBuffers(1, 0, 0, dxgiformat::DXGI_FORMAT_R8G8B8A8_UNORM, 0).result()?;
-
             let output = get_output(|ptr| self.inner().GetContainingOutput(ptr))?;
 
             match state {
@@ -126,15 +117,7 @@ impl SwapChain {
                 }
             };
 
-            self.back_buffer.take();
-            self.depth_buffer.take();
-
-            self.inner()
-                .ResizeBuffers(0, 0, 0, dxgiformat::DXGI_FORMAT_UNKNOWN, 0)
-                .result()?;
-
-            self.back_buffer = Some(BackBuffer::new(self, device)?);
-            self.depth_buffer = Some(DepthBuffer::new(self, device)?);
+            self.resize(device)?;
 
             Ok(())
         }
@@ -147,10 +130,34 @@ impl SwapChain {
     }
 }
 
-impl Drop for SwapChain {
+struct SwapChainInner(NonNull<dxgi::IDXGISwapChain>);
+
+//TODO FIXME Verify
+unsafe impl Send for SwapChainInner {}
+unsafe impl Sync for SwapChainInner {}
+
+impl SwapChainInner {
+    unsafe fn new(swapchain: NonNull<dxgi::IDXGISwapChain>) -> Self {
+        Self(swapchain)
+    }
+}
+
+impl AsRef<dxgi::IDXGISwapChain> for SwapChainInner {
+    fn as_ref(&self) -> &dxgi::IDXGISwapChain {
+        unsafe { self.0.as_ref() }
+    }
+}
+
+impl AsMut<dxgi::IDXGISwapChain> for SwapChainInner {
+    fn as_mut(&mut self) -> &mut dxgi::IDXGISwapChain {
+        unsafe { self.0.as_mut() }
+    }
+}
+
+impl Drop for SwapChainInner {
     fn drop(&mut self) {
         unsafe {
-            self.inner().Release();
+            self.0.as_ref().Release();
         }
     }
 }
