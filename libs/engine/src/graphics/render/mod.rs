@@ -3,6 +3,7 @@ mod context;
 mod device;
 mod index_buffer;
 mod raster_state;
+pub mod rendered_texture;
 mod swapchain;
 mod vertex_buffer;
 
@@ -11,6 +12,7 @@ pub use context::Context;
 pub use device::Device;
 pub use index_buffer::IndexBuffer;
 use raster_state::RasterState;
+pub use rendered_texture::RenderedTexture;
 pub use swapchain::{SwapChain, WindowState};
 pub use vertex_buffer::VertexBuffer;
 
