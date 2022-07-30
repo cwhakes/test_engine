@@ -139,6 +139,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "fram"
+version = "0.1.0"
+dependencies = [
+ "engine",
+ "env_logger",
+ "lazy_static",
+ "listener_derive",
+ "log",
+ "shader",
+ "vertex_derive",
+]
+
+[[package]]
 name = "getrandom"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
