@@ -6,7 +6,7 @@ use engine::graphics::material::Material;
 use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
-use engine::math::{Matrix4x4, Point};
+use engine::math::Matrix4x4;
 use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::time::DeltaT;
 
@@ -135,29 +135,23 @@ impl Listener for World {
         "World".to_string()
     }
 
-    fn on_key_down(&mut self, _key: usize) {
-        // let key = key as u8;
-        // match key {
-        //     b'W' => {
-        //         self.camera.moving_forward(SPEED);
-        //     }
-        //     b'S' => {
-        //         self.camera.moving_forward(-SPEED);
-        //     }
-        //     b'A' => {
-        //         self.camera.moving_rightward(-SPEED);
-        //     }
-        //     b'D' => {
-        //         self.camera.moving_rightward(SPEED);
-        //     }
-        //     b'O' => {
-        //         self.light_rad -= 5.0 * self.delta_t.get();
-        //     }
-        //     b'P' => {
-        //         self.light_rad += 5.0 * self.delta_t.get();
-        //     }
-        //     _ => {}
-        // }
+    fn on_key_down(&mut self, key: usize) {
+        let key = key as u8;
+        match key {
+            b'W' => {
+                self.camera.moving_forward(SPEED);
+            }
+            b'S' => {
+                self.camera.moving_forward(-SPEED);
+            }
+            b'A' => {
+                self.camera.moving_rightward(-SPEED);
+            }
+            b'D' => {
+                self.camera.moving_rightward(SPEED);
+            }
+            _ => {}
+        }
     }
     fn on_key_up(&mut self, key: usize) {
         self.camera.reset_velocity();
@@ -166,27 +160,16 @@ impl Listener for World {
         match key {
             input::key::ESCAPE => {
                 if self.play_state.is_playing() {
+                    input::show_cursor(true);
                     self.play_state.set_not_playing()
                 }
             }
-            // b'G' => {
-            //     self.play_state.toggle();
-            // }
             _ => {}
         }
     }
-    fn on_mouse_move(&mut self, _pos: Point) {
-        // if self.play_state == PlayState::Playing {
-        //     self.camera
-        //         .tilt((pos.y - self.screen.rect.center_y()) as f32 * 0.002);
-        //     self.camera
-        //         .pan((pos.x - self.screen.rect.center_x()) as f32 * 0.002);
-
-        //     self.screen.center_cursor();
-        // }
-    }
     fn on_left_mouse_down(&mut self) {
         if self.play_state.is_not_playing() {
+            input::show_cursor(false);
             self.play_state.set_playing();
             self.screen.center_cursor();
         }

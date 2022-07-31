@@ -7,23 +7,20 @@ use world::World;
 
 use engine::components::Entity;
 use engine::error::Result;
-use engine::graphics::color;
-use engine::graphics::render::{RenderedTexture, WindowState};
+use engine::graphics::render::RenderedTexture;
 use engine::graphics::GRAPHICS;
-use engine::input::INPUT;
+use engine::graphics::{color, Graphics};
 use engine::math::{Matrix4x4, Point, Rect, Vector3d};
 use engine::physics::Position;
 
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 #[derive(Listener)]
-#[listener(on_key_up)]
 pub struct MiniGame {
     rect: Rect<i32>,
     pub render_target: Arc<RenderedTexture>,
     depth_stencil: Arc<RenderedTexture>,
 
-    window_state: WindowState,
     #[listener]
     pub variables: World,
 
@@ -31,8 +28,7 @@ pub struct MiniGame {
 }
 
 impl MiniGame {
-    pub fn new(rect: Rect<i32>) -> Result<Self> {
-        let mut graphics = GRAPHICS.lock().unwrap();
+    pub fn new(rect: Rect<i32>, graphics: &mut Graphics) -> Result<Self> {
         let device = &mut graphics.render.device_mut();
 
         let render_target =
@@ -109,7 +105,6 @@ impl MiniGame {
             rect,
             render_target: Arc::new(render_target),
             depth_stencil: Arc::new(depth_stencil),
-            window_state: WindowState::default(),
             variables: world,
             _asteroids_pos: asteroids_pos,
         };
@@ -142,53 +137,13 @@ impl MiniGame {
         for (mesh, materials) in self.variables.meshes_and_materials(&g.render) {
             g.render.draw_mesh_and_materials(mesh, materials);
         }
-
-        //self.swapchain.present(0);
-    }
-
-    pub fn _on_destroy(&mut self) {
-        //GRAPHICS.lock().unwrap().destroy();
-    }
-
-    pub fn _on_focus(window: &'static Mutex<Option<Self>>) {
-        INPUT.lock().unwrap().add_listener(window);
-    }
-
-    pub fn _on_kill_focus(window: &'static Mutex<Option<Self>>) {
-        INPUT.lock().unwrap().remove_listener(window);
     }
 
     pub fn _on_resize(&mut self) {
         self.variables
             .set_screen_size(self.rect.clone() as Rect<i32>);
-        if self.variables._is_playing() {
+        if self.variables.play_state.is_playing() {
             self.variables.screen.center_cursor();
-        }
-        // let graphics = GRAPHICS.lock().unwrap();
-        // self.swapchain.resize(graphics.render.device()).unwrap();
-    }
-
-    pub fn _on_move(&mut self) {
-        self.variables.set_screen_size(self.rect.clone());
-        if self.variables._is_playing() {
-            self.variables.screen.center_cursor();
-        }
-    }
-}
-
-impl MiniGame {
-    fn on_key_up(&mut self, key: usize) {
-        let key = key as u8;
-        match key {
-            b'F' => {
-                self.window_state.toggle();
-                // let state = self.window_state;
-                // self.swapchain
-                //     .set_windowed_state(GRAPHICS.lock().unwrap().render.device(), state)
-                //     .unwrap();
-                //self.on_resize();
-            }
-            _ => {}
         }
     }
 }

@@ -5,7 +5,7 @@ use engine::graphics::color;
 use engine::graphics::material::Material;
 use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
-use engine::input::Listener;
+use engine::input::{self, Listener};
 use engine::math::{Matrix4x4, Point};
 use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::time::DeltaT;
@@ -169,7 +169,16 @@ impl Listener for World {
         let key = key as u8;
         match key {
             b'G' => {
-                self.play_state.toggle();
+                match self.play_state {
+                    PlayState::Playing => {
+                        input::show_cursor(true);
+                        self.play_state = PlayState::NotPlaying;
+                    }
+                    PlayState::NotPlaying => {
+                        input::show_cursor(false);
+                        self.play_state = PlayState::Playing;
+                    }
+                }
                 self.screen.center_cursor();
             }
             _ => {}

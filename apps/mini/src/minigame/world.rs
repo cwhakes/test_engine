@@ -7,7 +7,7 @@ use engine::graphics::material::Material;
 use engine::graphics::render::Render;
 use engine::graphics::resource::mesh::Mesh;
 use engine::input::{self, Listener};
-use engine::math::{Matrix4x4, Point, Rect};
+use engine::math::{Matrix4x4, Rect};
 //use engine::physics::collision3::{CollisionEngine, GjkEngine, Sphere};
 use engine::time::DeltaT;
 
@@ -48,6 +48,7 @@ impl World {
             spaceship,
             light_source,
             light_rad: 40000.0,
+            play_state: PlayState::Playing,
             ..Default::default()
         }
     }
@@ -145,15 +146,11 @@ impl World {
     pub fn add_sky_entity(&mut self, sky_entity: Entity) {
         self.entities.insert("skybox".into(), sky_entity);
     }
-
-    pub fn _is_playing(&self) -> bool {
-        self.play_state.is_playing()
-    }
 }
 
 impl Listener for World {
     fn name(&self) -> String {
-        "World".to_string()
+        "Minigame World".to_string()
     }
 
     fn on_key_down(&mut self, key: usize) {
@@ -161,28 +158,10 @@ impl Listener for World {
             let key = key as u8;
             match key {
                 b'W' => {
-                    // if let Some(spaceship) = self.entities.get_mut("ship") {
-                    //     spaceship.position.set_forward_velocity(SPEED);
-                    // }
                     self.spaceship.forward = self.spaceship.speed;
                 }
                 b'S' => {
-                    // if let Some(spaceship) = self.entities.get_mut("ship") {
-                    //     spaceship.position.set_forward_velocity(-SPEED);
-                    // }
                     self.spaceship.forward = -self.spaceship.speed;
-                }
-                b'A' => {
-                    // self.camera.rightward = -SPEED;
-                }
-                b'D' => {
-                    // self.camera.rightward = SPEED;
-                }
-                b'O' => {
-                    self.light_rad -= 5.0 * self.delta_t.get();
-                }
-                b'P' => {
-                    self.light_rad += 5.0 * self.delta_t.get();
                 }
                 input::key::SHIFT => {
                     self.spaceship.speed = SpaceShip::DEFAULT_SPEED * 5.0;
@@ -204,20 +183,6 @@ impl Listener for World {
                 self.spaceship.speed = SpaceShip::DEFAULT_SPEED;
             }
             _ => {}
-        }
-    }
-    fn on_mouse_move(&mut self, _pos: Point) {
-        // if self.play_state.is_playing() {
-        //     self.delta_mouse_x = (pos.x - self.screen.rect.center_x()) as f32;
-        //     self.delta_mouse_y = (pos.y - self.screen.rect.center_y()) as f32;
-
-        //     self.screen.center_cursor();
-        // }
-    }
-    fn on_left_mouse_down(&mut self) {
-        if self.play_state.is_not_playing() {
-            self.play_state.set_playing();
-            //self.screen.center_cursor();
         }
     }
 }

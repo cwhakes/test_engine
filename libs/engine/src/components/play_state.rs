@@ -1,5 +1,3 @@
-use crate::input;
-
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum PlayState {
     Playing,
@@ -17,12 +15,10 @@ impl PlayState {
     }
 
     pub fn set_playing(&mut self) {
-        input::show_cursor(false);
         *self = Self::Playing;
     }
 
     pub fn set_not_playing(&mut self) {
-        input::show_cursor(true);
         *self = Self::NotPlaying;
     }
 

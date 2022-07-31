@@ -166,6 +166,7 @@ impl Listener for World {
         match key {
             input::key::ESCAPE => {
                 if self.play_state.is_playing() {
+                    input::show_cursor(true);
                     self.play_state.set_not_playing()
                 }
             }
@@ -187,6 +188,7 @@ impl Listener for World {
     }
     fn on_left_mouse_down(&mut self) {
         if self.play_state.is_not_playing() {
+            input::show_cursor(false);
             self.play_state.set_playing();
             self.screen.center_cursor();
         }

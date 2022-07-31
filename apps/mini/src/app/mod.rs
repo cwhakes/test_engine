@@ -8,7 +8,7 @@ use engine::error::Result;
 use engine::graphics::color;
 use engine::graphics::render::{SwapChain, WindowState};
 use engine::graphics::GRAPHICS;
-use engine::input::{self, INPUT};
+use engine::input::{self, Listener, INPUT};
 use engine::math::{Matrix4x4, Point, Rect};
 use engine::physics::Position;
 use engine::window::{Application, Hwnd, Window};
@@ -21,15 +21,11 @@ lazy_static! {
     pub static ref WINDOW: Window<AppWindow> = Window::new();
 }
 
-#[derive(Listener)]
-#[listener(on_key_down, on_key_up, on_mouse_move, on_left_mouse_down)]
 pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
     window_state: WindowState,
-    #[listener]
     variables: World,
-    #[listener]
     minigame: MiniGame,
 }
 
@@ -47,10 +43,10 @@ impl Application for AppWindow {
     }
 
     fn on_create(hwnd: Hwnd) -> Result<()> {
-        let mut world = World::new();
-        let minigame = MiniGame::new(Rect([0..1280, 0..720]))?;
-
         let mut graphics = GRAPHICS.lock().unwrap();
+        let mut world = World::new();
+        let minigame = MiniGame::new(Rect([0..1280, 0..720]), &mut *graphics)?;
+
         let device = &mut graphics.render.device_mut();
         let swapchain = device.new_swapchain(&hwnd).unwrap();
 
@@ -146,34 +142,28 @@ impl Application for AppWindow {
     }
 }
 
-impl AppWindow {
+impl Listener for AppWindow {
+    fn name(&self) -> String {
+        "AppWindow".into()
+    }
+
     fn on_key_down(&mut self, key: usize) {
-        if self.minigame.variables.play_state.is_not_playing() {
-            let key = key as u8;
-            match key {
-                b'W' => {
-                    self.variables.camera.moving_forward(world::SPEED);
-                }
-                b'S' => {
-                    self.variables.camera.moving_forward(-world::SPEED);
-                }
-                b'A' => {
-                    self.variables.camera.moving_rightward(-world::SPEED);
-                }
-                b'D' => {
-                    self.variables.camera.moving_rightward(world::SPEED);
-                }
-                _ => {}
-            }
+        if self.minigame.variables.play_state.is_playing() {
+            self.minigame.on_key_down(key);
+        } else {
+            self.variables.on_key_down(key);
         }
     }
     fn on_key_up(&mut self, key: usize) {
+        self.minigame.on_key_up(key);
+        self.variables.on_key_up(key);
         self.variables.camera.reset_velocity();
 
         let key = key as u8;
         match key {
             input::key::ESCAPE => {
                 if self.variables.play_state.is_playing() {
+                    input::show_cursor(true);
                     self.variables.play_state.set_not_playing()
                 }
             }
@@ -209,12 +199,13 @@ impl AppWindow {
                 self.variables.screen.center_cursor();
             }
         }
+
+        self.minigame.on_mouse_move(pos);
+        self.variables.on_mouse_move(pos);
     }
 
     fn on_left_mouse_down(&mut self) {
-        if self.variables.play_state.is_not_playing() {
-            self.variables.play_state.set_playing();
-            self.variables.screen.center_cursor();
-        }
+        self.minigame.on_left_mouse_down();
+        self.variables.on_left_mouse_down();
     }
 }
