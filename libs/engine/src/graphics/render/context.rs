@@ -81,7 +81,7 @@ impl Context {
         S::set_shader(self, shader.as_ref());
     }
 
-    pub fn set_textures<S: ShaderType>(&self, textures: &mut [Option<Texture>]) {
+    pub fn set_textures<S: ShaderType>(&self, textures: &mut [Option<Box<Texture>>]) {
         S::set_textures(self, textures);
     }
 

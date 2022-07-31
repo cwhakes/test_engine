@@ -33,7 +33,7 @@ pub trait ShaderType {
     ) -> error::Result<NonNull<Self::ShaderInterface>>;
 
     fn set_shader(context: &Context, shader: &Self::ShaderInterface);
-    fn set_textures(context: &Context, textures: &mut [Option<Texture>]);
+    fn set_textures(context: &Context, textures: &mut [Option<Box<Texture>>]);
 
     fn set_constant_buffer<C: ?Sized>(
         context: &Context,

@@ -42,7 +42,7 @@ macro_rules! shader_generate {
 
             fn set_textures(
                 context: &Context,
-                textures: &mut [Option<crate::graphics::resource::texture::Texture>],
+                textures: &mut [Option<Box<crate::graphics::resource::texture::Texture>>],
             ) {
                 unsafe {
                     let texture_pointers: Vec<_> = textures

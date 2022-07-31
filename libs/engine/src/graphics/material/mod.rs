@@ -13,7 +13,7 @@ pub struct Material {
     pub vs: Shader<shader::Vertex>,
     pub ps: Shader<shader::Pixel>,
     pub const_buffs: Vec<Option<(ConstantBuffer<dyn Any + Send + Sync>, TypeId)>>,
-    pub textures: Vec<Option<Texture>>,
+    pub textures: Vec<Option<Box<Texture>>>,
     pub cull_mode: CullMode,
 }
 
@@ -43,7 +43,7 @@ impl Material {
     }
 
     pub fn add_texture(&mut self, texture: &Texture) -> usize {
-        self.textures.push(Some(texture.clone()));
+        self.textures.push(Some(Box::new(texture.clone())));
         self.textures.len() - 1
     }
 
