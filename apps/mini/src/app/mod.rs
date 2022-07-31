@@ -1,6 +1,6 @@
 mod world;
 
-use shader::{DirLightBumpMap, Skybox};
+use shader::{DirectionalLight, Skybox};
 use world::World;
 
 use engine::components::Entity;
@@ -9,7 +9,7 @@ use engine::graphics::color;
 use engine::graphics::render::{SwapChain, WindowState};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
-use engine::math::Point;
+use engine::math::{Matrix4x4, Point};
 use engine::physics::Position;
 use engine::window::{Application, Hwnd, Window};
 
@@ -49,15 +49,18 @@ impl Application for AppWindow {
 
         let mut world = World::new();
 
-        let material = graphics.new_material::<DirLightBumpMap>()?;
+        let monitor_mesh = graphics.get_mesh_from_file("assets\\Meshes\\monitor.obj")?;
 
-        let sphere = graphics.get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
+        let mut monitor_mat = graphics.new_material::<DirectionalLight>()?;
+        monitor_mat.add_texture(graphics.get_texture_from_file("assets\\Textures\\brick_d.jpg")?);
+        let mut screen_mat = graphics.new_material::<DirectionalLight>()?;
+        screen_mat.add_texture(graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
 
-        let mut brick_d = material.clone();
-        brick_d.add_texture(graphics.get_texture_from_file("assets\\Textures\\brick_d.jpg")?);
-        brick_d.add_texture(graphics.get_texture_from_file("assets\\Textures\\brick_n.jpg")?);
-
-        world.add_entity(Entity::new(sphere, Some(brick_d), Position::default()));
+        world.add_entity(Entity::new(
+            monitor_mesh,
+            [monitor_mat, screen_mat],
+            Position::new(Matrix4x4::rotation_y(std::f32::consts::PI)),
+        ));
 
         let mut sky_material = graphics.new_material::<Skybox>()?.with_frontface_culling();
         sky_material

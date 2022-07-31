@@ -1,3 +1,4 @@
+use crate::graphics::material;
 use crate::math::Rect;
 
 use crate::error;
@@ -21,11 +22,14 @@ pub enum Flavor {
 pub struct RenderedTexture {
     pub flavor: Flavor,
     texture: Option<NonNull<d3d11::ID3D11Resource>>,
+    sampler_state: Option<NonNull<d3d11::ID3D11SamplerState>>,
     shader_res_view: Option<NonNull<d3d11::ID3D11ShaderResourceView>>,
     render_target_view: Option<NonNull<d3d11::ID3D11RenderTargetView>>,
     depth_stencil_view: Option<NonNull<d3d11::ID3D11DepthStencilView>>,
-    sampler_state: Option<NonNull<d3d11::ID3D11SamplerState>>,
 }
+
+unsafe impl Send for RenderedTexture {}
+unsafe impl Sync for RenderedTexture {}
 
 impl RenderedTexture {
     pub fn new(rect: Rect<u32>, flavor: Flavor, device: &Device) -> error::Result<Self> {
@@ -64,6 +68,19 @@ impl RenderedTexture {
             })?
             .cast::<d3d11::ID3D11Resource>();
 
+            let sampler_desc = d3d11::D3D11_SAMPLER_DESC {
+                AddressU: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+                AddressV: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+                AddressW: d3d11::D3D11_TEXTURE_ADDRESS_WRAP,
+                Filter: d3d11::D3D11_FILTER_ANISOTROPIC,
+                MinLOD: 0.0,
+                MaxLOD: 1.0,
+                ..d3d11::D3D11_SAMPLER_DESC::default()
+            };
+
+            let sampler_state =
+                get_output(|ptr| device.as_ref().CreateSamplerState(&sampler_desc, ptr))?;
+
             match flavor {
                 Flavor::Normal => {
                     let srv = get_output(|ptr| {
@@ -76,6 +93,7 @@ impl RenderedTexture {
 
                     Ok(Self {
                         flavor,
+                        sampler_state: Some(sampler_state),
                         texture: Some(texture),
                         shader_res_view: Some(srv),
                         ..Self::default()
@@ -101,6 +119,7 @@ impl RenderedTexture {
                     Ok(Self {
                         flavor,
                         texture: Some(texture),
+                        sampler_state: Some(sampler_state),
                         shader_res_view: Some(srv),
                         render_target_view: Some(rtv),
                         ..Self::default()
@@ -117,6 +136,7 @@ impl RenderedTexture {
 
                     Ok(Self {
                         flavor,
+                        sampler_state: Some(sampler_state),
                         texture: Some(texture),
                         depth_stencil_view: Some(dsv),
                         ..Self::default()
@@ -124,6 +144,16 @@ impl RenderedTexture {
                 }
             }
         }
+    }
+}
+
+impl material::Texture for RenderedTexture {
+    fn sampler_state_ptr(&self) -> *mut d3d11::ID3D11SamplerState {
+        self.sampler_state.unwrap().as_ptr()
+    }
+
+    fn resource_view_ptr(&self) -> *mut d3d11::ID3D11ShaderResourceView {
+        self.shader_res_view.unwrap().as_ptr()
     }
 }
 

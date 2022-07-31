@@ -36,10 +36,10 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         let mut camera = Camera::default();
-        camera.move_forward(-2.0);
+        camera.move_forward(-5.0);
         camera.move_up(1.0);
-        //let light_source = Matrix4x4::rotation_x(-std::f32::consts::PI / 6.0);
-        let light_source = Matrix4x4::translation([100.0, 100.0, 100.0]);
+        let light_source = Matrix4x4::rotation_y(std::f32::consts::PI);
+        //let light_source = Matrix4x4::translation([100.0, 100.0, 100.0]);
 
         Self {
             scale_cube: 1.0,
