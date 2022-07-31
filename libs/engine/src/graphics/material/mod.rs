@@ -6,16 +6,16 @@ pub use texture::Texture;
 
 use crate::error::Result;
 use crate::graphics::render::{ConstantBuffer, Render};
-use crate::graphics::resource;
 use crate::graphics::resource::shader::{self, Shader};
 use crate::graphics::Graphics;
 use std::any::{Any, TypeId};
+use std::sync::Arc;
 
 pub struct Material {
     pub vs: Shader<shader::Vertex>,
     pub ps: Shader<shader::Pixel>,
     pub const_buffs: Vec<Option<(ConstantBuffer<dyn Any + Send + Sync>, TypeId)>>,
-    pub textures: Vec<Option<Box<resource::Texture>>>,
+    pub textures: Vec<Option<Arc<dyn Texture>>>,
     pub cull_mode: CullMode,
 }
 
@@ -44,8 +44,8 @@ impl Material {
         self
     }
 
-    pub fn add_texture(&mut self, texture: &resource::Texture) -> usize {
-        self.textures.push(Some(Box::new(texture.clone())));
+    pub fn add_texture(&mut self, texture: Arc<dyn Texture + Send + Sync>) -> usize {
+        self.textures.push(Some(texture.clone()));
         self.textures.len() - 1
     }
 

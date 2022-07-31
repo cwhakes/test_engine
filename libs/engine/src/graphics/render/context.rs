@@ -2,10 +2,11 @@ use super::shader::{self, Shader, ShaderType};
 use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
 
 use crate::error;
-use crate::graphics::resource::texture::Texture;
+use crate::graphics::material::Texture;
 use crate::graphics::vertex::{Color, Vertex};
 
 use std::ptr::NonNull;
+use std::sync::Arc;
 
 use winapi::shared::dxgiformat;
 use winapi::um::d3d11;
@@ -81,7 +82,7 @@ impl Context {
         S::set_shader(self, shader.as_ref());
     }
 
-    pub fn set_textures<S: ShaderType>(&self, textures: &mut [Option<Box<Texture>>]) {
+    pub fn set_textures<S: ShaderType>(&self, textures: &mut [Option<Arc<dyn Texture>>]) {
         S::set_textures(self, textures);
     }
 

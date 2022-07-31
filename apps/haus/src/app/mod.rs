@@ -55,18 +55,37 @@ impl Application for AppWindow {
         let plane = graphics.get_mesh_from_file("assets\\Meshes\\plane2.obj")?;
 
         let mut barrel = material.clone();
-        barrel.add_texture(&graphics.get_texture_from_file("assets\\Textures\\barrel.jpg")?);
+        barrel.add_texture(
+            graphics
+                .get_texture_from_file("assets\\Textures\\barrel.jpg")?
+                .0,
+        );
         let mut brick = material.clone();
-        brick.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_brick.jpg")?);
+        brick.add_texture(
+            graphics
+                .get_texture_from_file("assets\\Textures\\house_brick.jpg")?
+                .0,
+        );
         let mut windows = material.clone();
-        windows
-            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_windows.jpg")?);
+        windows.add_texture(
+            graphics
+                .get_texture_from_file("assets\\Textures\\house_windows.jpg")?
+                .0,
+        );
         let mut wood = material.clone();
-        wood.add_texture(&graphics.get_texture_from_file("assets\\Textures\\house_wood.jpg")?);
+        wood.add_texture(
+            graphics
+                .get_texture_from_file("assets\\Textures\\house_wood.jpg")?
+                .0,
+        );
         let house_textures = vec![barrel, brick, windows, wood];
 
         let mut sand = material;
-        sand.add_texture(&graphics.get_texture_from_file("assets\\Textures\\sand.jpg")?);
+        sand.add_texture(
+            graphics
+                .get_texture_from_file("assets\\Textures\\sand.jpg")?
+                .0,
+        );
 
         world.add_entity(Entity::new(
             house,
@@ -76,8 +95,11 @@ impl Application for AppWindow {
         world.add_entity(Entity::new(plane, Some(sand), Position::default()));
 
         let mut sky_material = graphics.new_material::<Skybox>()?.with_frontface_culling();
-        sky_material
-            .add_texture(&graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
+        sky_material.add_texture(
+            graphics
+                .get_texture_from_file("assets\\Textures\\stars_map.jpg")?
+                .0,
+        );
 
         let sky_mesh = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 

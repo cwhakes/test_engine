@@ -16,7 +16,7 @@ use winapi::um::d3d11;
 pub type TextureManager = ResourceManager<Texture>;
 
 #[derive(Clone)]
-pub struct Texture(Arc<TextureInner>);
+pub struct Texture(pub Arc<TextureInner>);
 
 impl Resource for Texture {
     fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
@@ -84,12 +84,12 @@ impl Resource for Texture {
 }
 
 impl material::Texture for Texture {
-    fn sampler_state_ptr(&mut self) -> *mut d3d11::ID3D11SamplerState {
+    fn sampler_state_ptr(&self) -> *mut d3d11::ID3D11SamplerState {
         //TODO Fix Shared Mutability
         self.0.as_ref().sampler_state.as_ptr()
     }
 
-    fn resource_view_ptr(&mut self) -> *mut d3d11::ID3D11ShaderResourceView {
+    fn resource_view_ptr(&self) -> *mut d3d11::ID3D11ShaderResourceView {
         //TODO Fix Shared Mutability
         self.0.as_ref().resource_view.as_ptr()
     }
@@ -101,10 +101,22 @@ impl AsRef<d3d11::ID3D11Texture2D> for Texture {
     }
 }
 
-struct TextureInner {
+pub struct TextureInner {
     texture: NonNull<d3d11::ID3D11Texture2D>,
     sampler_state: NonNull<d3d11::ID3D11SamplerState>,
     resource_view: NonNull<d3d11::ID3D11ShaderResourceView>,
+}
+
+impl material::Texture for TextureInner {
+    fn sampler_state_ptr(&self) -> *mut d3d11::ID3D11SamplerState {
+        //TODO Fix Shared Mutability
+        self.sampler_state.as_ptr()
+    }
+
+    fn resource_view_ptr(&self) -> *mut d3d11::ID3D11ShaderResourceView {
+        //TODO Fix Shared Mutability
+        self.resource_view.as_ptr()
+    }
 }
 
 //TODO Verify
