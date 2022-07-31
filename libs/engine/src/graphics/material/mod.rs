@@ -1,11 +1,13 @@
-pub mod template;
+mod template;
+mod texture;
 
 pub use template::Template;
+pub use texture::Texture;
 
 use crate::error::Result;
 use crate::graphics::render::{ConstantBuffer, Render};
+use crate::graphics::resource;
 use crate::graphics::resource::shader::{self, Shader};
-use crate::graphics::resource::Texture;
 use crate::graphics::Graphics;
 use std::any::{Any, TypeId};
 
@@ -13,7 +15,7 @@ pub struct Material {
     pub vs: Shader<shader::Vertex>,
     pub ps: Shader<shader::Pixel>,
     pub const_buffs: Vec<Option<(ConstantBuffer<dyn Any + Send + Sync>, TypeId)>>,
-    pub textures: Vec<Option<Box<Texture>>>,
+    pub textures: Vec<Option<Box<resource::Texture>>>,
     pub cull_mode: CullMode,
 }
 
@@ -42,7 +44,7 @@ impl Material {
         self
     }
 
-    pub fn add_texture(&mut self, texture: &Texture) -> usize {
+    pub fn add_texture(&mut self, texture: &resource::Texture) -> usize {
         self.textures.push(Some(Box::new(texture.clone())));
         self.textures.len() - 1
     }

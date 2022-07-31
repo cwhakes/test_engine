@@ -1,6 +1,7 @@
 use super::{Resource, ResourceManager};
 
 use crate::error;
+use crate::graphics::material;
 use crate::graphics::render::Device;
 use crate::util::get_output;
 
@@ -82,13 +83,13 @@ impl Resource for Texture {
     }
 }
 
-impl Texture {
-    pub fn sampler_state_ptr(&mut self) -> *mut d3d11::ID3D11SamplerState {
+impl material::Texture for Texture {
+    fn sampler_state_ptr(&mut self) -> *mut d3d11::ID3D11SamplerState {
         //TODO Fix Shared Mutability
         self.0.as_ref().sampler_state.as_ptr()
     }
 
-    pub fn resource_view_ptr(&mut self) -> *mut d3d11::ID3D11ShaderResourceView {
+    fn resource_view_ptr(&mut self) -> *mut d3d11::ID3D11ShaderResourceView {
         //TODO Fix Shared Mutability
         self.0.as_ref().resource_view.as_ptr()
     }
