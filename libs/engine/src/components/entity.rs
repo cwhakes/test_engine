@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::graphics::color;
 use crate::graphics::material::Material;
 use crate::graphics::render::Render;
@@ -13,7 +15,7 @@ pub struct MeshInfo {
 
 #[derive(Clone)]
 pub struct Entity {
-    pub mesh: Mesh,
+    pub mesh: Arc<Mesh>,
     pub materials: Vec<Material>,
 
     pub position: Position,
@@ -22,7 +24,7 @@ pub struct Entity {
 
 impl Entity {
     pub fn new(
-        mesh: Mesh,
+        mesh: Arc<Mesh>,
         materials: impl IntoIterator<Item = Material>,
         position: Position,
     ) -> Self {
@@ -42,7 +44,7 @@ impl Entity {
     pub fn get_mesh_and_materials<'a, 'b>(
         &'a mut self,
         render: &'b Render,
-    ) -> (&'a mut Mesh, &'a mut [Material]) {
+    ) -> (&'a mut Arc<Mesh>, &'a mut [Material]) {
         for material in &mut self.materials {
             //Datum 1 is position. How to label?
             material

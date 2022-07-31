@@ -15,11 +15,21 @@ use winapi::um::d3d11;
 
 pub type TextureManager = ResourceManager<Texture>;
 
-#[derive(Clone)]
-pub struct Texture(pub Arc<TextureInner>);
+//TODO Verify
+pub struct Texture {
+    texture: NonNull<d3d11::ID3D11Texture2D>,
+    sampler_state: NonNull<d3d11::ID3D11SamplerState>,
+    resource_view: NonNull<d3d11::ID3D11ShaderResourceView>,
+}
+
+unsafe impl Send for Texture {}
+unsafe impl Sync for Texture {}
 
 impl Resource for Texture {
-    fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
+    fn load_resource_from_file(
+        device: &Device,
+        path: impl AsRef<Path>,
+    ) -> error::Result<Arc<Self>> {
         unsafe {
             let image = Reader::open(path.as_ref())?.decode()?.to_rgba8();
             let sample_desc = dxgitype::DXGI_SAMPLE_DESC {
@@ -74,40 +84,16 @@ impl Resource for Texture {
                 )
             })?;
 
-            Ok(Self(Arc::new(TextureInner {
+            Ok(Arc::new(Self {
                 texture,
                 sampler_state,
                 resource_view,
-            })))
+            }))
         }
     }
 }
 
 impl material::Texture for Texture {
-    fn sampler_state_ptr(&self) -> *mut d3d11::ID3D11SamplerState {
-        //TODO Fix Shared Mutability
-        self.0.as_ref().sampler_state.as_ptr()
-    }
-
-    fn resource_view_ptr(&self) -> *mut d3d11::ID3D11ShaderResourceView {
-        //TODO Fix Shared Mutability
-        self.0.as_ref().resource_view.as_ptr()
-    }
-}
-
-impl AsRef<d3d11::ID3D11Texture2D> for Texture {
-    fn as_ref(&self) -> &d3d11::ID3D11Texture2D {
-        unsafe { self.0.as_ref().texture.as_ref() }
-    }
-}
-
-pub struct TextureInner {
-    texture: NonNull<d3d11::ID3D11Texture2D>,
-    sampler_state: NonNull<d3d11::ID3D11SamplerState>,
-    resource_view: NonNull<d3d11::ID3D11ShaderResourceView>,
-}
-
-impl material::Texture for TextureInner {
     fn sampler_state_ptr(&self) -> *mut d3d11::ID3D11SamplerState {
         //TODO Fix Shared Mutability
         self.sampler_state.as_ptr()
@@ -119,11 +105,13 @@ impl material::Texture for TextureInner {
     }
 }
 
-//TODO Verify
-unsafe impl Send for TextureInner {}
-unsafe impl Sync for TextureInner {}
+impl AsRef<d3d11::ID3D11Texture2D> for Texture {
+    fn as_ref(&self) -> &d3d11::ID3D11Texture2D {
+        unsafe { self.texture.as_ref() }
+    }
+}
 
-impl Drop for TextureInner {
+impl Drop for Texture {
     fn drop(&mut self) {
         unsafe {
             self.texture.as_ref().Release();

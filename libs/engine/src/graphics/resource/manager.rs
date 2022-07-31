@@ -5,9 +5,10 @@ use crate::graphics::render::Device;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 pub struct ResourceManager<R: Resource> {
-    map: HashMap<PathBuf, R>,
+    map: HashMap<PathBuf, Arc<R>>,
 }
 
 impl<R: Resource> ResourceManager<R> {
@@ -21,7 +22,7 @@ impl<R: Resource> ResourceManager<R> {
         &mut self,
         device: &Device,
         path: impl AsRef<Path>,
-    ) -> error::Result<R> {
+    ) -> error::Result<Arc<R>> {
         let path = path.as_ref().canonicalize()?;
         if let Some(resource) = self.map.get(&path) {
             Ok(resource.clone())

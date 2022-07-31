@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use engine::components::{Camera0, Entity, PlayState, Screen, SpaceShip};
 use engine::graphics::material::Material;
@@ -124,7 +125,7 @@ impl World {
     pub fn meshes_and_materials<'a, 'b>(
         &'a mut self,
         render: &'b Render,
-    ) -> impl Iterator<Item = (&'a mut Mesh, &'a mut [Material])> {
+    ) -> impl Iterator<Item = (&'a mut Arc<Mesh>, &'a mut [Material])> {
         let vec: Vec<_> = self
             .entities
             .values_mut()

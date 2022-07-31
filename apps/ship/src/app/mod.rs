@@ -56,11 +56,8 @@ impl Application for AppWindow {
 
         let spaceship = graphics.get_mesh_from_file("assets\\Meshes\\spaceship.obj")?;
         let mut spaceship_mat = material.clone();
-        spaceship_mat.add_texture(
-            graphics
-                .get_texture_from_file("assets\\Textures\\spaceship.jpg")?
-                .0,
-        );
+        spaceship_mat
+            .add_texture(graphics.get_texture_from_file("assets\\Textures\\spaceship.jpg")?);
 
         world.add_entity(
             "ship".into(),
@@ -72,11 +69,8 @@ impl Application for AppWindow {
         );
 
         let mut sky_material = graphics.new_material::<Skybox>()?.with_frontface_culling();
-        sky_material.add_texture(
-            graphics
-                .get_texture_from_file("assets\\Textures\\stars_map.jpg")?
-                .0,
-        );
+        sky_material
+            .add_texture(graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
 
         let sky_mesh = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 
@@ -90,11 +84,7 @@ impl Application for AppWindow {
 
         let asteroid = graphics.get_mesh_from_file("assets\\Meshes\\asteroid.obj")?;
         let mut asteroid_mat = material;
-        asteroid_mat.add_texture(
-            graphics
-                .get_texture_from_file("assets\\Textures\\asteroid.jpg")?
-                .0,
-        );
+        asteroid_mat.add_texture(graphics.get_texture_from_file("assets\\Textures\\asteroid.jpg")?);
 
         let mut rng = rand::thread_rng();
         let loc_range = Uniform::new(-2000.0, 2000.0);

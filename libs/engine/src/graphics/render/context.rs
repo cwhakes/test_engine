@@ -78,8 +78,8 @@ impl Context {
         }
     }
 
-    pub fn set_shader<S: ShaderType>(&self, shader: &mut Shader<S>) {
-        S::set_shader(self, shader.as_ref());
+    pub fn set_shader<S: ShaderType>(&self, shader: Arc<Shader<S>>) {
+        S::set_shader(self, shader.as_ref().as_ref());
     }
 
     pub fn set_textures<S: ShaderType>(&self, textures: &mut [Option<Arc<dyn Texture>>]) {

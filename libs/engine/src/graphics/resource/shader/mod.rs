@@ -46,25 +46,17 @@ pub trait ShaderType {
 }
 pub type ShaderManager<T> = ResourceManager<Shader<T>>;
 
-#[derive(Clone)]
-pub struct Shader<T: ShaderType>(Arc<ShaderInner<T>>);
-
-pub struct ShaderInner<T: ShaderType> {
+pub struct Shader<T: ShaderType> {
     pub shader: NonNull<T::ShaderInterface>,
 }
 
-impl<T: ShaderType + Clone> Resource for Shader<T> {
-    fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
-        let (inner, _) = ShaderInner::new(device, path)?;
-        Ok(Self(Arc::new(inner)))
-    }
-}
-
-impl<T: ShaderType> ops::Deref for Shader<T> {
-    type Target = ShaderInner<T>;
-
-    fn deref(&self) -> &Self::Target {
-        &*self.0
+impl<T: ShaderType> Resource for Shader<T> {
+    fn load_resource_from_file(
+        device: &Device,
+        path: impl AsRef<Path>,
+    ) -> error::Result<Arc<Self>> {
+        let (inner, _) = Self::new(device, path)?;
+        Ok(Arc::new(inner))
     }
 }
 
@@ -93,10 +85,10 @@ shader_generate!( unsafe {
 });
 
 //Should be safe, per here https://www.youtube.com/watch?v=kvuiADqIdck&t=1980
-unsafe impl<T> Send for ShaderInner<T> where T: ShaderType + Send {}
-unsafe impl<T> Sync for ShaderInner<T> where T: ShaderType + Sync {}
+unsafe impl<T> Send for Shader<T> where T: ShaderType + Send {}
+unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 
-impl<T: ShaderType> ShaderInner<T> {
+impl<T: ShaderType> Shader<T> {
     pub fn new(device: &Device, location: impl AsRef<Path>) -> error::Result<(Self, Blob)> {
         let bytecode = compile_shader_from_location(location, T::ENTRY_POINT, T::TARGET)?;
         let shader = T::create_shader(device, &*bytecode)?;
@@ -105,19 +97,19 @@ impl<T: ShaderType> ShaderInner<T> {
     }
 }
 
-impl<T: ShaderType> convert::AsRef<T::ShaderInterface> for ShaderInner<T> {
+impl<T: ShaderType> convert::AsRef<T::ShaderInterface> for Shader<T> {
     fn as_ref(&self) -> &T::ShaderInterface {
         unsafe { self.shader.as_ref() }
     }
 }
 
-impl<T: ShaderType> convert::AsMut<T::ShaderInterface> for ShaderInner<T> {
+impl<T: ShaderType> convert::AsMut<T::ShaderInterface> for Shader<T> {
     fn as_mut(&mut self) -> &mut T::ShaderInterface {
         unsafe { self.shader.as_mut() }
     }
 }
 
-impl<T: ShaderType> ops::Drop for ShaderInner<T> {
+impl<T: ShaderType> ops::Drop for Shader<T> {
     fn drop(&mut self) {
         unsafe {
             self.shader.as_ref().Release();

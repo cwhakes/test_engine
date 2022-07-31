@@ -17,11 +17,13 @@ use wavefront_obj::{mtl, obj};
 
 pub type MeshManager = ResourceManager<Mesh>;
 
-#[derive(Clone)]
-pub struct Mesh(Arc<Mutex<MeshInner>>);
+pub struct Mesh(Mutex<MeshInner>);
 
 impl Resource for Mesh {
-    fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self> {
+    fn load_resource_from_file(
+        device: &Device,
+        path: impl AsRef<Path>,
+    ) -> error::Result<Arc<Self>> {
         let mut file = File::open(path.as_ref())?;
         let mut string = String::new();
         file.read_to_string(&mut string)?;
@@ -170,7 +172,7 @@ impl Resource for Mesh {
         let vertex_buffer = device.new_vertex_buffer(&vertices, &vs)?;
         let index_buffer = device.new_index_buffer(&indices)?;
 
-        Ok(Self(Arc::new(Mutex::new(MeshInner {
+        Ok(Arc::new(Self(Mutex::new(MeshInner {
             vertices,
             vertex_buffer,
             indices,
@@ -227,13 +229,13 @@ impl Mesh {
     }
 }
 
-impl PartialEq for Mesh {
-    fn eq(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.0, &other.0)
-    }
-}
+// impl PartialEq for Mesh {
+//     fn eq(&self, other: &Self) -> bool {
+//         Arc::ptr_eq(&self.0, &other.0)
+//     }
+// }
 
-impl Eq for Mesh {}
+// impl Eq for Mesh {}
 
 /// Used to track duplicate verticies
 #[derive(Clone, Default)]

@@ -107,8 +107,8 @@ impl Render {
             CullMode::Back => self.set_back_face_culling(),
         };
 
-        self.context.set_shader(&mut material.vs);
-        self.context.set_shader(&mut material.ps);
+        self.context.set_shader(material.vs.clone());
+        self.context.set_shader(material.ps.clone());
         self.context
             .set_textures::<shader::Pixel>(&mut *material.textures);
     }

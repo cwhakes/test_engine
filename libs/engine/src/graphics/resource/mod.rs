@@ -11,7 +11,9 @@ use crate::error;
 use crate::graphics::render::Device;
 
 use std::path::Path;
+use std::sync::Arc;
 
-pub trait Resource: Clone {
-    fn load_resource_from_file(device: &Device, path: impl AsRef<Path>) -> error::Result<Self>;
+pub trait Resource {
+    fn load_resource_from_file(device: &Device, path: impl AsRef<Path>)
+        -> error::Result<Arc<Self>>;
 }

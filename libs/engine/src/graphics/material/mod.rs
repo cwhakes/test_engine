@@ -12,8 +12,8 @@ use std::any::{Any, TypeId};
 use std::sync::Arc;
 
 pub struct Material {
-    pub vs: Shader<shader::Vertex>,
-    pub ps: Shader<shader::Pixel>,
+    pub vs: Arc<Shader<shader::Vertex>>,
+    pub ps: Arc<Shader<shader::Pixel>>,
     pub const_buffs: Vec<Option<(ConstantBuffer<dyn Any + Send + Sync>, TypeId)>>,
     pub textures: Vec<Option<Arc<dyn Texture>>>,
     pub cull_mode: CullMode,

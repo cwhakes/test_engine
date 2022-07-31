@@ -54,25 +54,14 @@ impl Application for AppWindow {
         let sphere = graphics.get_mesh_from_file("assets\\Meshes\\sphere_hq.obj")?;
 
         let mut brick_d = material.clone();
-        brick_d.add_texture(
-            graphics
-                .get_texture_from_file("assets\\Textures\\brick_d.jpg")?
-                .0,
-        );
-        brick_d.add_texture(
-            graphics
-                .get_texture_from_file("assets\\Textures\\brick_n.jpg")?
-                .0,
-        );
+        brick_d.add_texture(graphics.get_texture_from_file("assets\\Textures\\brick_d.jpg")?);
+        brick_d.add_texture(graphics.get_texture_from_file("assets\\Textures\\brick_n.jpg")?);
 
         world.add_entity(Entity::new(sphere, Some(brick_d), Position::default()));
 
         let mut sky_material = graphics.new_material::<Skybox>()?.with_frontface_culling();
-        sky_material.add_texture(
-            graphics
-                .get_texture_from_file("assets\\Textures\\stars_map.jpg")?
-                .0,
-        );
+        sky_material
+            .add_texture(graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
 
         let sky_mesh = graphics.get_mesh_from_file("assets\\Meshes\\sphere.obj")?;
 

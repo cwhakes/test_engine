@@ -13,7 +13,7 @@ use resource::texture::{Texture, TextureManager};
 use crate::error;
 
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 lazy_static! {
     pub static ref GRAPHICS: Mutex<Graphics> = Mutex::new(Graphics::new().unwrap());
@@ -38,12 +38,12 @@ impl Graphics {
         })
     }
 
-    pub fn get_texture_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Texture> {
+    pub fn get_texture_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Arc<Texture>> {
         self.texture_manager
             .get_resource_from_file(self.render.device(), path)
     }
 
-    pub fn get_mesh_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Mesh> {
+    pub fn get_mesh_from_file(&mut self, path: impl AsRef<Path>) -> error::Result<Arc<Mesh>> {
         self.mesh_manager
             .get_resource_from_file(self.render.device(), path)
     }
@@ -51,7 +51,7 @@ impl Graphics {
     pub fn get_vertex_shader_from_file(
         &mut self,
         path: impl AsRef<Path>,
-    ) -> error::Result<Shader<Vertex>> {
+    ) -> error::Result<Arc<Shader<Vertex>>> {
         self.vs_manager
             .get_resource_from_file(self.render.device(), path)
     }
@@ -59,7 +59,7 @@ impl Graphics {
     pub fn get_pixel_shader_from_file(
         &mut self,
         path: impl AsRef<Path>,
-    ) -> error::Result<Shader<Pixel>> {
+    ) -> error::Result<Arc<Shader<Pixel>>> {
         self.ps_manager
             .get_resource_from_file(self.render.device(), path)
     }
