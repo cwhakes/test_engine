@@ -29,6 +29,13 @@ pub fn derive_listener(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
         })
         .unwrap_or_default();
 
+    let on_mouse_move_parent = parent
+        .get("on_mouse_move")
+        .map(|stream| {
+            quote! { self.#stream(pos); }
+        })
+        .unwrap_or_default();
+
     let expanded = quote! {
         impl engine::input::Listener for #name {
             fn name(&self) -> String {#name_string.to_string()}
@@ -37,8 +44,10 @@ pub fn derive_listener(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
                 #on_key_up_parent
                 #on_key_up
             }
-
-            fn on_mouse_move(&mut self, pos: Point) { #on_mouse_move }
+            fn on_mouse_move(&mut self, pos: Point) { 
+                #on_mouse_move_parent
+                #on_mouse_move
+            }
             fn on_left_mouse_down(&mut self) { #on_left_mouse_down }
             fn on_right_mouse_down(&mut self) { #on_right_mouse_down }
             fn on_left_mouse_up(&mut self) { #on_left_mouse_up }

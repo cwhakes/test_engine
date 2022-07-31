@@ -17,7 +17,7 @@ use shader::Environment;
 pub struct World {
     pub screen: Screen,
 
-    play_state: PlayState,
+    pub play_state: PlayState,
 
     delta_t: DeltaT,
     //pub camera: ThirdPersonCamera,
@@ -25,8 +25,8 @@ pub struct World {
     pub spaceship: SpaceShip,
     pub light_source: Matrix4x4,
 
-    delta_mouse_x: f32,
-    delta_mouse_y: f32,
+    pub delta_mouse_x: f32,
+    pub delta_mouse_y: f32,
 
     time: f32,
 
@@ -146,7 +146,7 @@ impl World {
         self.entities.insert("skybox".into(), sky_entity);
     }
 
-    pub fn is_playing(&self) -> bool {
+    pub fn _is_playing(&self) -> bool {
         self.play_state.is_playing()
     }
 }
@@ -208,18 +208,18 @@ impl Listener for World {
             _ => {}
         }
     }
-    fn on_mouse_move(&mut self, pos: Point) {
-        if self.play_state.is_playing() {
-            self.delta_mouse_x = (pos.x - self.screen.rect.center_x()) as f32;
-            self.delta_mouse_y = (pos.y - self.screen.rect.center_y()) as f32;
+    fn on_mouse_move(&mut self, _pos: Point) {
+        // if self.play_state.is_playing() {
+        //     self.delta_mouse_x = (pos.x - self.screen.rect.center_x()) as f32;
+        //     self.delta_mouse_y = (pos.y - self.screen.rect.center_y()) as f32;
 
-            self.screen.center_cursor();
-        }
+        //     self.screen.center_cursor();
+        // }
     }
     fn on_left_mouse_down(&mut self) {
         if self.play_state.is_not_playing() {
             self.play_state.set_playing();
-            self.screen.center_cursor();
+            //self.screen.center_cursor();
         }
     }
 }

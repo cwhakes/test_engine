@@ -1,6 +1,6 @@
 use crate::prelude::*;
 
-use super::Device;
+use super::{Device, Target as RenderTarget};
 use crate::error;
 use crate::util::get_output;
 use crate::window::Hwnd;
@@ -127,6 +127,16 @@ impl SwapChain {
         unsafe {
             self.inner().Present(vsync, 0);
         }
+    }
+}
+
+impl RenderTarget for SwapChain {
+    fn render_target_view(&self) -> error::Result<*mut d3d11::ID3D11RenderTargetView> {
+        self.back_buffer.as_ref().map(|bb| bb.0.as_ptr()).ok_or("No bac kbuffer".into())
+    }
+
+    fn depth_stencil_view(&self) -> error::Result<*mut d3d11::ID3D11DepthStencilView> {
+        self.depth_buffer.as_ref().map(|db| db.0.as_ptr()).ok_or("No depth buffer".into())
     }
 }
 

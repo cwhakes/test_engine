@@ -51,3 +51,12 @@ impl From<&Rect<i32>> for Rect<f32> {
         ])
     }
 }
+
+impl From<&Rect<i32>> for Rect<u32> {
+    fn from(other: &Rect<i32>) -> Self {
+        Self([
+            (other.0[0].start as u32)..(other.0[0].end as u32),
+            (other.0[1].start as u32)..(other.0[1].end as u32),
+        ])
+    }
+}

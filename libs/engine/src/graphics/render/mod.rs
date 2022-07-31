@@ -5,6 +5,7 @@ mod index_buffer;
 mod raster_state;
 pub mod rendered_texture;
 mod swapchain;
+mod target;
 mod vertex_buffer;
 
 pub use constant_buffer::ConstantBuffer;
@@ -14,6 +15,7 @@ pub use index_buffer::IndexBuffer;
 use raster_state::RasterState;
 pub use rendered_texture::RenderedTexture;
 pub use swapchain::{SwapChain, WindowState};
+pub use target::Target;
 pub use vertex_buffer::VertexBuffer;
 
 use crate::error;

@@ -105,6 +105,7 @@ impl Application for AppWindow {
         let mut g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
         context.clear_render_target_color(&mut self.swapchain, color::NICE_BLUE);
+        context.set_render_target(&mut self.swapchain);
         let (width, height) = self.hwnd.rect().dims();
         context.set_viewport_size(width as f32, height as f32);
 

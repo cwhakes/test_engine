@@ -1,5 +1,5 @@
 use super::shader::{self, Shader, ShaderType};
-use super::{ConstantBuffer, IndexBuffer, SwapChain, VertexBuffer};
+use super::{ConstantBuffer, IndexBuffer, VertexBuffer, Target};
 
 use crate::error;
 use crate::graphics::material::Texture;
@@ -28,26 +28,34 @@ impl Context {
         Ok(Self(context))
     }
 
-    pub fn clear_render_target_color(&self, swapchain: &mut SwapChain, color: impl Into<Color>) {
+    pub fn clear_render_target_color(&self, target: &mut impl Target, color: impl Into<Color>) {
         let color = color.into();
         unsafe {
-            if let Some(back_buffer) = swapchain.back_buffer_ptr() {
-                if let Some(depth_buffer) = swapchain.depth_buffer_mut() {
+            if let Some(back_buffer) = target.render_target_view().ok() {
+                if let Some(depth_buffer) = target.depth_stencil_view().ok() {
                     self.as_ref().ClearRenderTargetView(
                         back_buffer,
                         &[color.x(), color.y(), color.z(), 1.0],
                     );
                     self.as_ref().ClearDepthStencilView(
-                        depth_buffer.as_mut(),
+                        depth_buffer,
                         d3d11::D3D11_CLEAR_DEPTH | d3d11::D3D11_CLEAR_STENCIL,
                         1.0,
                         0,
                     );
-                    self.as_ref()
-                        .OMSetRenderTargets(1, &back_buffer, depth_buffer.as_mut());
                 }
             }
         }
+    }
+
+    pub fn set_render_target(&self, target: &mut impl Target) {
+        unsafe {
+            if let Some(back_buffer) = target.render_target_view().ok() {
+                if let Some(depth_buffer) = target.depth_stencil_view().ok() {
+                    self.as_ref().OMSetRenderTargets(1, &back_buffer, depth_buffer);
+                }
+            }
+        }   
     }
 
     pub fn set_constant_buffer<C: ?Sized>(&self, index: u32, buffer: &mut ConstantBuffer<C>) {

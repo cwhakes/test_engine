@@ -1,5 +1,6 @@
 mod world;
 
+use engine::graphics::render::rendered_texture::Flavor;
 use rand::{distributions::uniform::Uniform, prelude::*};
 use shader::{DirectionalLight, Skybox};
 use world::World;
@@ -7,48 +8,35 @@ use world::World;
 use engine::components::Entity;
 use engine::error::Result;
 use engine::graphics::color;
-use engine::graphics::render::{SwapChain, WindowState};
+use engine::graphics::render::{WindowState, RenderedTexture};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
-use engine::math::{Matrix4x4, Point, Vector3d};
+use engine::math::{Matrix4x4, Point, Vector3d, Rect};
 use engine::physics::Position;
-use engine::window::{Application, Hwnd, Window};
 
-use std::sync::Mutex;
-
-lazy_static! {
-    pub static ref WINDOW: Window<AppWindow> = Window::new();
-}
+use std::sync::{Mutex, Arc};
 
 #[derive(Listener)]
 #[listener(on_key_up)]
-pub struct AppWindow {
-    hwnd: Hwnd,
-    swapchain: SwapChain,
+pub struct MiniGame {
+    rect: Rect<i32>,
+    pub render_target: Arc<RenderedTexture>,
+    depth_stencil: Arc<RenderedTexture>,
+
     window_state: WindowState,
     #[listener]
-    variables: World,
+    pub variables: World,
 
     _asteroids_pos: Vec<(Vector3d, Vector3d, Vector3d)>,
 }
 
-impl Application for AppWindow {
-    fn me() -> &'static Window<Self> {
-        &WINDOW
-    }
-
-    fn hwnd(&self) -> &Hwnd {
-        &self.hwnd
-    }
-
-    fn hwnd_mut(&mut self) -> &mut Hwnd {
-        &mut self.hwnd
-    }
-
-    fn on_create(hwnd: Hwnd) -> Result<()> {
+impl MiniGame {
+    pub fn new(rect: Rect<i32>) -> Result<Self> {
         let mut graphics = GRAPHICS.lock().unwrap();
         let device = &mut graphics.render.device_mut();
-        let swapchain = device.new_swapchain(&hwnd).unwrap();
+
+        let render_target = RenderedTexture::new((&rect).into(), Flavor::RenderTarget, device).unwrap();
+        let depth_stencil = RenderedTexture::new((&rect).into(), Flavor::DepthStencil, device).unwrap();
 
         let mut world = World::new();
 
@@ -116,26 +104,27 @@ impl Application for AppWindow {
         }
 
         let mut app_window = Self {
-            hwnd,
-            swapchain,
+            rect,
+            render_target: Arc::new(render_target),
+            depth_stencil: Arc::new(depth_stencil),
             window_state: WindowState::default(),
             variables: world,
             _asteroids_pos: asteroids_pos,
         };
 
-        app_window.variables.set_screen_size(app_window.hwnd.rect());
+        app_window.variables.set_screen_size(app_window.rect.clone());
 
-        WINDOW.set_application(app_window);
         graphics.render.device().debug()?;
 
-        Ok(())
+        Ok(app_window)
     }
 
-    fn on_update(&mut self) {
+    pub fn update(&mut self) {
         let mut g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
-        context.clear_render_target_color(&mut self.swapchain, color::NICE_BLUE);
-        let (width, height) = self.hwnd.rect().dims();
+        context.clear_render_target_color(&mut (self.render_target.as_ref(), self.depth_stencil.as_ref()), color::NICE_BLUE);
+        context.set_render_target(&mut (self.render_target.as_ref(), self.depth_stencil.as_ref()));
+        let (width, height) = self.rect.dims();
         context.set_viewport_size(width as f32, height as f32);
 
         self.variables.update();
@@ -147,49 +136,49 @@ impl Application for AppWindow {
             g.render.draw_mesh_and_materials(mesh, materials);
         }
 
-        self.swapchain.present(0);
+        //self.swapchain.present(0);
     }
 
-    fn on_destroy(&mut self) {
+    pub fn _on_destroy(&mut self) {
         //GRAPHICS.lock().unwrap().destroy();
     }
 
-    fn on_focus(window: &'static Mutex<Option<Self>>) {
+    pub fn _on_focus(window: &'static Mutex<Option<Self>>) {
         INPUT.lock().unwrap().add_listener(window);
     }
 
-    fn on_kill_focus(window: &'static Mutex<Option<Self>>) {
+    pub fn _on_kill_focus(window: &'static Mutex<Option<Self>>) {
         INPUT.lock().unwrap().remove_listener(window);
     }
 
-    fn on_resize(&mut self) {
-        self.variables.set_screen_size(self.hwnd.rect());
-        if self.variables.is_playing() {
+    pub fn _on_resize(&mut self) {
+        self.variables.set_screen_size(self.rect.clone() as Rect<i32>);
+        if self.variables._is_playing() {
             self.variables.screen.center_cursor();
         }
-        let graphics = GRAPHICS.lock().unwrap();
-        self.swapchain.resize(graphics.render.device()).unwrap();
+        // let graphics = GRAPHICS.lock().unwrap();
+        // self.swapchain.resize(graphics.render.device()).unwrap();
     }
 
-    fn on_move(&mut self) {
-        self.variables.set_screen_size(self.hwnd.rect());
-        if self.variables.is_playing() {
+    pub fn _on_move(&mut self) {
+        self.variables.set_screen_size(self.rect.clone());
+        if self.variables._is_playing() {
             self.variables.screen.center_cursor();
         }
     }
 }
 
-impl AppWindow {
+impl MiniGame {
     fn on_key_up(&mut self, key: usize) {
         let key = key as u8;
         match key {
             b'F' => {
                 self.window_state.toggle();
-                let state = self.window_state;
-                self.swapchain
-                    .set_windowed_state(GRAPHICS.lock().unwrap().render.device(), state)
-                    .unwrap();
-                self.on_resize();
+                // let state = self.window_state;
+                // self.swapchain
+                //     .set_windowed_state(GRAPHICS.lock().unwrap().render.device(), state)
+                //     .unwrap();
+                //self.on_resize();
             }
             _ => {}
         }

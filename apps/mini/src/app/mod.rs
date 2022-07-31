@@ -9,24 +9,28 @@ use engine::graphics::color;
 use engine::graphics::render::{SwapChain, WindowState};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
-use engine::math::{Matrix4x4, Point};
+use engine::math::{Matrix4x4, Point, Rect};
 use engine::physics::Position;
 use engine::window::{Application, Hwnd, Window};
 
 use std::sync::Mutex;
+
+use crate::minigame::MiniGame;
 
 lazy_static! {
     pub static ref WINDOW: Window<AppWindow> = Window::new();
 }
 
 #[derive(Listener)]
-#[listener(on_key_up)]
+#[listener(on_key_up, on_mouse_move)]
 pub struct AppWindow {
     hwnd: Hwnd,
     swapchain: SwapChain,
     window_state: WindowState,
     #[listener]
     variables: World,
+    #[listener]
+    minigame: MiniGame,
 }
 
 impl Application for AppWindow {
@@ -43,6 +47,8 @@ impl Application for AppWindow {
     }
 
     fn on_create(hwnd: Hwnd) -> Result<()> {
+        let minigame = MiniGame::new(Rect([0..1280, 0..720]))?;
+
         let mut graphics = GRAPHICS.lock().unwrap();
         let device = &mut graphics.render.device_mut();
         let swapchain = device.new_swapchain(&hwnd).unwrap();
@@ -54,7 +60,7 @@ impl Application for AppWindow {
         let mut monitor_mat = graphics.new_material::<DirectionalLight>()?;
         monitor_mat.add_texture(graphics.get_texture_from_file("assets\\Textures\\brick_d.jpg")?);
         let mut screen_mat = graphics.new_material::<DirectionalLight>()?;
-        screen_mat.add_texture(graphics.get_texture_from_file("assets\\Textures\\stars_map.jpg")?);
+        screen_mat.add_texture(minigame.render_target.clone());
 
         world.add_entity(Entity::new(
             monitor_mesh,
@@ -79,6 +85,7 @@ impl Application for AppWindow {
             swapchain,
             window_state: WindowState::default(),
             variables: world,
+            minigame,
         };
 
         app_window.variables.screen.set_size(app_window.hwnd.rect());
@@ -90,9 +97,12 @@ impl Application for AppWindow {
     }
 
     fn on_update(&mut self) {
+        self.minigame.update();
+
         let mut g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
         context.clear_render_target_color(&mut self.swapchain, color::NICE_BLUE);
+        context.set_render_target(&mut self.swapchain);
         let (width, height) = self.hwnd.rect().dims();
         context.set_viewport_size(width as f32, height as f32);
 
@@ -151,5 +161,14 @@ impl AppWindow {
             _ => {}
         }
         self.on_resize();
+    }
+
+    fn on_mouse_move(&mut self, pos: Point) {
+        if self.minigame.variables.play_state.is_playing() {
+            self.minigame.variables.delta_mouse_x = (pos.x - self.variables.screen.rect.center_x()) as f32;
+            self.minigame.variables.delta_mouse_y = (pos.y - self.variables.screen.rect.center_y()) as f32;
+
+            self.variables.screen.center_cursor();
+        }
     }
 }

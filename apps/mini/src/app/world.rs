@@ -12,8 +12,6 @@ use engine::time::DeltaT;
 
 use shader::Environment;
 
-static SPEED: f32 = 5.0;
-
 #[derive(Default)]
 pub struct World {
     pub screen: Screen,
@@ -36,8 +34,8 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         let mut camera = Camera::default();
-        camera.move_forward(-5.0);
-        camera.move_up(1.0);
+        camera.move_forward(-4.0);
+        //camera.move_up(1.0);
         let light_source = Matrix4x4::rotation_y(std::f32::consts::PI);
         //let light_source = Matrix4x4::translation([100.0, 100.0, 100.0]);
 
@@ -135,29 +133,29 @@ impl Listener for World {
         "World".to_string()
     }
 
-    fn on_key_down(&mut self, key: usize) {
-        let key = key as u8;
-        match key {
-            b'W' => {
-                self.camera.moving_forward(SPEED);
-            }
-            b'S' => {
-                self.camera.moving_forward(-SPEED);
-            }
-            b'A' => {
-                self.camera.moving_rightward(-SPEED);
-            }
-            b'D' => {
-                self.camera.moving_rightward(SPEED);
-            }
-            b'O' => {
-                self.light_rad -= 5.0 * self.delta_t.get();
-            }
-            b'P' => {
-                self.light_rad += 5.0 * self.delta_t.get();
-            }
-            _ => {}
-        }
+    fn on_key_down(&mut self, _key: usize) {
+        // let key = key as u8;
+        // match key {
+        //     b'W' => {
+        //         self.camera.moving_forward(SPEED);
+        //     }
+        //     b'S' => {
+        //         self.camera.moving_forward(-SPEED);
+        //     }
+        //     b'A' => {
+        //         self.camera.moving_rightward(-SPEED);
+        //     }
+        //     b'D' => {
+        //         self.camera.moving_rightward(SPEED);
+        //     }
+        //     b'O' => {
+        //         self.light_rad -= 5.0 * self.delta_t.get();
+        //     }
+        //     b'P' => {
+        //         self.light_rad += 5.0 * self.delta_t.get();
+        //     }
+        //     _ => {}
+        // }
     }
     fn on_key_up(&mut self, key: usize) {
         self.camera.reset_velocity();
@@ -175,15 +173,15 @@ impl Listener for World {
             _ => {}
         }
     }
-    fn on_mouse_move(&mut self, pos: Point) {
-        if self.play_state == PlayState::Playing {
-            self.camera
-                .tilt((pos.y - self.screen.rect.center_y()) as f32 * 0.002);
-            self.camera
-                .pan((pos.x - self.screen.rect.center_x()) as f32 * 0.002);
+    fn on_mouse_move(&mut self, _pos: Point) {
+        // if self.play_state == PlayState::Playing {
+        //     self.camera
+        //         .tilt((pos.y - self.screen.rect.center_y()) as f32 * 0.002);
+        //     self.camera
+        //         .pan((pos.x - self.screen.rect.center_x()) as f32 * 0.002);
 
-            self.screen.center_cursor();
-        }
+        //     self.screen.center_cursor();
+        // }
     }
     fn on_left_mouse_down(&mut self) {
         if self.play_state.is_not_playing() {
