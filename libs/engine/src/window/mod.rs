@@ -8,6 +8,7 @@ use crate::util::os_vec;
 
 use log::debug;
 
+use std::any::TypeId;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 use std::{hint, mem, ptr};
@@ -76,8 +77,8 @@ impl<A: Application> Window<A> {
         A: 'static,
     {
         unsafe {
-            let class_name = os_vec("MyWindowClass");
-            let menu_name = os_vec("");
+            let class_name = os_vec(&format!("{:?}", TypeId::of::<Self>()));
+            //let menu_name = os_vec("");
             let window_name = os_vec("DirectX Application");
 
             let wc = WNDCLASSEXW {
@@ -90,7 +91,7 @@ impl<A: Application> Window<A> {
                 hIconSm: winuser::LoadIconW(ptr::null_mut(), IDI_APPLICATION),
                 hInstance: ptr::null_mut(),
                 lpszClassName: class_name.as_ptr(),
-                lpszMenuName: menu_name.as_ptr(),
+                lpszMenuName: ptr::null(),
                 style: 0,
                 lpfnWndProc: Some(Self::window_loop),
             };

@@ -18,8 +18,9 @@ fn main() {
     info!("Starting up..");
 
     Window::<app::AppWindow>::init();
+    Window::<minigame::AppWindow>::init();
 
-    while app::WINDOW.broadcast() {
+    while app::WINDOW.broadcast() | minigame::WINDOW.broadcast() {
         std::thread::sleep(std::time::Duration::from_millis(5));
     }
 }
