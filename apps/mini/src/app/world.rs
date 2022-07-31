@@ -12,11 +12,13 @@ use engine::time::DeltaT;
 
 use shader::Environment;
 
+pub const SPEED: f32 = 5.0;
+
 #[derive(Default)]
 pub struct World {
     pub screen: Screen,
 
-    play_state: PlayState,
+    pub play_state: PlayState,
 
     delta_t: DeltaT,
     pub scale_cube: f32,

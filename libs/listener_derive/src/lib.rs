@@ -22,24 +22,56 @@ pub fn derive_listener(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
     let on_right_mouse_up = make_method(&input.data, on_right_mouse_up);
 
     let parent = find_parent_fns(&input.attrs);
+    let on_key_down_parent = parent
+        .get("on_key_down")
+        .map(|stream| {
+            quote! { self.#stream(key); }
+        })
+        .unwrap_or_default();
     let on_key_up_parent = parent
         .get("on_key_up")
         .map(|stream| {
             quote! { self.#stream(key); }
         })
         .unwrap_or_default();
-
     let on_mouse_move_parent = parent
         .get("on_mouse_move")
         .map(|stream| {
             quote! { self.#stream(pos); }
         })
         .unwrap_or_default();
+    let on_left_mouse_down_parent = parent
+        .get("on_left_mouse_down")
+        .map(|stream| {
+            quote! { self.#stream(); }
+        })
+        .unwrap_or_default();
+    let on_right_mouse_down_parent = parent
+        .get("on_right_mouse_down")
+        .map(|stream| {
+            quote! { self.#stream(); }
+        })
+        .unwrap_or_default();
+    let on_left_mouse_up_parent = parent
+        .get("on_left_mouse_up")
+        .map(|stream| {
+            quote! { self.#stream(); }
+        })
+        .unwrap_or_default();
+    let on_right_mouse_up_parent = parent
+        .get("on_right_mouse_up")
+        .map(|stream| {
+            quote! { self.#stream(); }
+        })
+        .unwrap_or_default();
 
     let expanded = quote! {
         impl engine::input::Listener for #name {
             fn name(&self) -> String {#name_string.to_string()}
-            fn on_key_down(&mut self, key: usize) { #on_key_down }
+            fn on_key_down(&mut self, key: usize) {
+                #on_key_down_parent
+                #on_key_down
+            }
             fn on_key_up(&mut self, key: usize) {
                 #on_key_up_parent
                 #on_key_up
@@ -48,10 +80,22 @@ pub fn derive_listener(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
                 #on_mouse_move_parent
                 #on_mouse_move
             }
-            fn on_left_mouse_down(&mut self) { #on_left_mouse_down }
-            fn on_right_mouse_down(&mut self) { #on_right_mouse_down }
-            fn on_left_mouse_up(&mut self) { #on_left_mouse_up }
-            fn on_right_mouse_up(&mut self) { #on_right_mouse_up }
+            fn on_left_mouse_down(&mut self) {
+                #on_left_mouse_down_parent
+                #on_left_mouse_down
+            }
+            fn on_right_mouse_down(&mut self) {
+                #on_right_mouse_down_parent
+                #on_right_mouse_down
+            }
+            fn on_left_mouse_up(&mut self) {
+                #on_left_mouse_up_parent
+                #on_left_mouse_up
+            }
+            fn on_right_mouse_up(&mut self) {
+                #on_right_mouse_up_parent
+                #on_right_mouse_up
+            }
         }
     };
 

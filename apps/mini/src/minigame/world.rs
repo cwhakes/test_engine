@@ -157,36 +157,38 @@ impl Listener for World {
     }
 
     fn on_key_down(&mut self, key: usize) {
-        let key = key as u8;
-        match key {
-            b'W' => {
-                // if let Some(spaceship) = self.entities.get_mut("ship") {
-                //     spaceship.position.set_forward_velocity(SPEED);
-                // }
-                self.spaceship.forward = self.spaceship.speed;
+        if self.play_state.is_playing() {
+            let key = key as u8;
+            match key {
+                b'W' => {
+                    // if let Some(spaceship) = self.entities.get_mut("ship") {
+                    //     spaceship.position.set_forward_velocity(SPEED);
+                    // }
+                    self.spaceship.forward = self.spaceship.speed;
+                }
+                b'S' => {
+                    // if let Some(spaceship) = self.entities.get_mut("ship") {
+                    //     spaceship.position.set_forward_velocity(-SPEED);
+                    // }
+                    self.spaceship.forward = -self.spaceship.speed;
+                }
+                b'A' => {
+                    // self.camera.rightward = -SPEED;
+                }
+                b'D' => {
+                    // self.camera.rightward = SPEED;
+                }
+                b'O' => {
+                    self.light_rad -= 5.0 * self.delta_t.get();
+                }
+                b'P' => {
+                    self.light_rad += 5.0 * self.delta_t.get();
+                }
+                input::key::SHIFT => {
+                    self.spaceship.speed = SpaceShip::DEFAULT_SPEED * 5.0;
+                }
+                _ => {}
             }
-            b'S' => {
-                // if let Some(spaceship) = self.entities.get_mut("ship") {
-                //     spaceship.position.set_forward_velocity(-SPEED);
-                // }
-                self.spaceship.forward = -self.spaceship.speed;
-            }
-            b'A' => {
-                // self.camera.rightward = -SPEED;
-            }
-            b'D' => {
-                // self.camera.rightward = SPEED;
-            }
-            b'O' => {
-                self.light_rad -= 5.0 * self.delta_t.get();
-            }
-            b'P' => {
-                self.light_rad += 5.0 * self.delta_t.get();
-            }
-            input::key::SHIFT => {
-                self.spaceship.speed = SpaceShip::DEFAULT_SPEED * 5.0;
-            }
-            _ => {}
         }
     }
     fn on_key_up(&mut self, key: usize) {
@@ -197,11 +199,7 @@ impl Listener for World {
 
         let key = key as u8;
         match key {
-            input::key::ESCAPE => {
-                if self.play_state.is_playing() {
-                    self.play_state.set_not_playing();
-                }
-            }
+            b'X' => self.play_state.toggle(),
             input::key::SHIFT => {
                 self.spaceship.speed = SpaceShip::DEFAULT_SPEED;
             }
