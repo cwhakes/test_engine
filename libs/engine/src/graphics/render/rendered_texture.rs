@@ -159,11 +159,17 @@ impl material::Texture for RenderedTexture {
 
 impl<'a> render::Target for (&'a RenderedTexture, &'a RenderedTexture) {
     fn render_target_view(&self) -> error::Result<*mut d3d11::ID3D11RenderTargetView> {
-        self.0.render_target_view.map(NonNull::as_ptr).ok_or("No render target".into())
+        self.0
+            .render_target_view
+            .map(NonNull::as_ptr)
+            .ok_or("No render target".into())
     }
 
     fn depth_stencil_view(&self) -> error::Result<*mut d3d11::ID3D11DepthStencilView> {
-        self.1.depth_stencil_view.map(NonNull::as_ptr).ok_or("No depth buffer".into())
+        self.1
+            .depth_stencil_view
+            .map(NonNull::as_ptr)
+            .ok_or("No depth buffer".into())
     }
 }
 

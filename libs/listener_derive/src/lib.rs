@@ -44,7 +44,7 @@ pub fn derive_listener(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
                 #on_key_up_parent
                 #on_key_up
             }
-            fn on_mouse_move(&mut self, pos: Point) { 
+            fn on_mouse_move(&mut self, pos: Point) {
                 #on_mouse_move_parent
                 #on_mouse_move
             }

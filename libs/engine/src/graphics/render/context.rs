@@ -1,5 +1,5 @@
 use super::shader::{self, Shader, ShaderType};
-use super::{ConstantBuffer, IndexBuffer, VertexBuffer, Target};
+use super::{ConstantBuffer, IndexBuffer, Target, VertexBuffer};
 
 use crate::error;
 use crate::graphics::material::Texture;
@@ -52,10 +52,11 @@ impl Context {
         unsafe {
             if let Some(back_buffer) = target.render_target_view().ok() {
                 if let Some(depth_buffer) = target.depth_stencil_view().ok() {
-                    self.as_ref().OMSetRenderTargets(1, &back_buffer, depth_buffer);
+                    self.as_ref()
+                        .OMSetRenderTargets(1, &back_buffer, depth_buffer);
                 }
             }
-        }   
+        }
     }
 
     pub fn set_constant_buffer<C: ?Sized>(&self, index: u32, buffer: &mut ConstantBuffer<C>) {

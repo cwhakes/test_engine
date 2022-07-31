@@ -8,13 +8,13 @@ use world::World;
 use engine::components::Entity;
 use engine::error::Result;
 use engine::graphics::color;
-use engine::graphics::render::{WindowState, RenderedTexture};
+use engine::graphics::render::{RenderedTexture, WindowState};
 use engine::graphics::GRAPHICS;
 use engine::input::INPUT;
-use engine::math::{Matrix4x4, Point, Vector3d, Rect};
+use engine::math::{Matrix4x4, Point, Rect, Vector3d};
 use engine::physics::Position;
 
-use std::sync::{Mutex, Arc};
+use std::sync::{Arc, Mutex};
 
 #[derive(Listener)]
 #[listener(on_key_up)]
@@ -35,8 +35,10 @@ impl MiniGame {
         let mut graphics = GRAPHICS.lock().unwrap();
         let device = &mut graphics.render.device_mut();
 
-        let render_target = RenderedTexture::new((&rect).into(), Flavor::RenderTarget, device).unwrap();
-        let depth_stencil = RenderedTexture::new((&rect).into(), Flavor::DepthStencil, device).unwrap();
+        let render_target =
+            RenderedTexture::new((&rect).into(), Flavor::RenderTarget, device).unwrap();
+        let depth_stencil =
+            RenderedTexture::new((&rect).into(), Flavor::DepthStencil, device).unwrap();
 
         let mut world = World::new();
 
@@ -112,7 +114,9 @@ impl MiniGame {
             _asteroids_pos: asteroids_pos,
         };
 
-        app_window.variables.set_screen_size(app_window.rect.clone());
+        app_window
+            .variables
+            .set_screen_size(app_window.rect.clone());
 
         graphics.render.device().debug()?;
 
@@ -122,7 +126,10 @@ impl MiniGame {
     pub fn update(&mut self) {
         let mut g = GRAPHICS.lock().unwrap();
         let context = g.render.immediate_context();
-        context.clear_render_target_color(&mut (self.render_target.as_ref(), self.depth_stencil.as_ref()), color::NICE_BLUE);
+        context.clear_render_target_color(
+            &mut (self.render_target.as_ref(), self.depth_stencil.as_ref()),
+            color::NICE_BLUE,
+        );
         context.set_render_target(&mut (self.render_target.as_ref(), self.depth_stencil.as_ref()));
         let (width, height) = self.rect.dims();
         context.set_viewport_size(width as f32, height as f32);
@@ -152,7 +159,8 @@ impl MiniGame {
     }
 
     pub fn _on_resize(&mut self) {
-        self.variables.set_screen_size(self.rect.clone() as Rect<i32>);
+        self.variables
+            .set_screen_size(self.rect.clone() as Rect<i32>);
         if self.variables._is_playing() {
             self.variables.screen.center_cursor();
         }

@@ -165,8 +165,10 @@ impl AppWindow {
 
     fn on_mouse_move(&mut self, pos: Point) {
         if self.minigame.variables.play_state.is_playing() {
-            self.minigame.variables.delta_mouse_x = (pos.x - self.variables.screen.rect.center_x()) as f32;
-            self.minigame.variables.delta_mouse_y = (pos.y - self.variables.screen.rect.center_y()) as f32;
+            self.minigame.variables.delta_mouse_x =
+                (pos.x - self.variables.screen.rect.center_x()) as f32;
+            self.minigame.variables.delta_mouse_y =
+                (pos.y - self.variables.screen.rect.center_y()) as f32;
 
             self.variables.screen.center_cursor();
         }
