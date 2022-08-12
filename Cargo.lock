@@ -52,7 +52,6 @@ version = "0.1.0"
 dependencies = [
  "engine",
  "env_logger",
- "lazy_static",
  "listener_derive",
  "log",
  "shader",
@@ -155,7 +154,6 @@ version = "0.1.0"
 dependencies = [
  "engine",
  "env_logger",
- "lazy_static",
  "listener_derive",
  "log",
  "shader",
@@ -264,7 +262,6 @@ version = "0.1.0"
 dependencies = [
  "engine",
  "env_logger",
- "lazy_static",
  "listener_derive",
  "log",
  "rand",
@@ -424,7 +421,6 @@ version = "0.1.0"
 dependencies = [
  "engine",
  "env_logger",
- "lazy_static",
  "listener_derive",
  "log",
  "rand",

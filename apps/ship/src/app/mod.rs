@@ -16,9 +16,7 @@ use engine::window::{Application, Hwnd, Window};
 
 use std::sync::Mutex;
 
-lazy_static! {
-    pub static ref WINDOW: Window<AppWindow> = Window::new();
-}
+pub static WINDOW: Window<AppWindow> = Window::new();
 
 #[derive(Listener)]
 #[listener(on_key_up)]

@@ -63,7 +63,7 @@ pub struct Window<A: Application> {
 }
 
 impl<A: Application> Window<A> {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             running: AtomicBool::new(false),
             moving: AtomicBool::new(false),

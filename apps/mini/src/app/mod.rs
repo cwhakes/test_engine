@@ -17,9 +17,7 @@ use std::sync::Mutex;
 
 use crate::minigame::MiniGame;
 
-lazy_static! {
-    pub static ref WINDOW: Window<AppWindow> = Window::new();
-}
+pub static WINDOW: Window<AppWindow> = Window::new();
 
 pub struct AppWindow {
     hwnd: Hwnd,
