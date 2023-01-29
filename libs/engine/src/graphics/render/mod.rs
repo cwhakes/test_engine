@@ -112,7 +112,7 @@ impl Render {
         self.context.set_shader(material.vs.clone());
         self.context.set_shader(material.ps.clone());
         self.context
-            .set_textures::<shader::Pixel>(&mut *material.textures);
+            .set_textures::<shader::Pixel>(&mut material.textures);
     }
 
     pub fn draw_mesh_and_materials(&mut self, mesh: &Mesh, materials: &mut [Material]) {

@@ -7,10 +7,10 @@ pub trait CollisionEngine {
     type Collider: ?Sized;
     fn collision_between(&mut self, obj0: &Self::Collider, obj1: &Self::Collider) -> bool;
 
-    fn collisions<'a, 'b>(
+    fn collisions<'a>(
         &mut self,
-        objs: &'a [&'b Self::Collider],
-    ) -> Vec<(&'b Self::Collider, &'b Self::Collider)> {
+        objs: &[&'a Self::Collider],
+    ) -> Vec<(&'a Self::Collider, &'a Self::Collider)> {
         let mut collisions = Vec::new();
         for i in 0..objs.len() {
             for j in (i + 1)..objs.len() {

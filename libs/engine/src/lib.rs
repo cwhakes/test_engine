@@ -1,4 +1,8 @@
-#![allow(clippy::single_match)]
+#![allow(
+    clippy::missing_safety_doc,
+    clippy::single_match,
+    clippy::uninlined_format_args
+)]
 
 #[macro_use]
 extern crate lazy_static;

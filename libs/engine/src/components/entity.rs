@@ -41,9 +41,9 @@ impl Entity {
         self.position.update(delta_t);
     }
 
-    pub fn get_mesh_and_materials<'a, 'b>(
+    pub fn get_mesh_and_materials<'a>(
         &'a mut self,
-        render: &'b Render,
+        render: &Render,
     ) -> (&'a mut Arc<Mesh>, &'a mut [Material]) {
         for material in &mut self.materials {
             //Datum 1 is position. How to label?

@@ -78,16 +78,16 @@ impl MiniGame {
         let scale_range = Uniform::new(6.0, 30.0);
         for i in 0..200 {
             let loc = Vector3d::new(
-                rng.sample(&loc_range),
-                rng.sample(&loc_range),
-                rng.sample(&loc_range),
+                rng.sample(loc_range),
+                rng.sample(loc_range),
+                rng.sample(loc_range),
             );
             let rot = Vector3d::new(
-                rng.sample(&rot_range),
-                rng.sample(&rot_range),
-                rng.sample(&rot_range),
+                rng.sample(rot_range),
+                rng.sample(rot_range),
+                rng.sample(rot_range),
             );
-            let scale = rng.sample(&scale_range);
+            let scale = rng.sample(scale_range);
             let scale = Vector3d::new(scale, scale, scale);
 
             let mut pos = Position::default();

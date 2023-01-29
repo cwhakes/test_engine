@@ -91,7 +91,7 @@ unsafe impl<T> Sync for Shader<T> where T: ShaderType + Sync {}
 impl<T: ShaderType> Shader<T> {
     pub fn new(device: &Device, location: impl AsRef<Path>) -> error::Result<(Self, Blob)> {
         let bytecode = compile_shader_from_location(location, T::ENTRY_POINT, T::TARGET)?;
-        let shader = T::create_shader(device, &*bytecode)?;
+        let shader = T::create_shader(device, &bytecode)?;
 
         Ok((Self { shader }, bytecode))
     }

@@ -43,7 +43,7 @@ impl Application for AppWindow {
     fn on_create(hwnd: Hwnd) -> Result<()> {
         let mut graphics = GRAPHICS.lock().unwrap();
         let mut world = World::new();
-        let minigame = MiniGame::new(Rect([0..1280, 0..720]), &mut *graphics)?;
+        let minigame = MiniGame::new(Rect([0..1280, 0..720]), &mut graphics)?;
 
         let device = &mut graphics.render.device_mut();
         let swapchain = device.new_swapchain(&hwnd).unwrap();

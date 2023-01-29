@@ -31,8 +31,8 @@ impl Context {
     pub fn clear_render_target_color(&self, target: &mut impl Target, color: impl Into<Color>) {
         let color = color.into();
         unsafe {
-            if let Some(back_buffer) = target.render_target_view().ok() {
-                if let Some(depth_buffer) = target.depth_stencil_view().ok() {
+            if let Ok(back_buffer) = target.render_target_view() {
+                if let Ok(depth_buffer) = target.depth_stencil_view() {
                     self.as_ref().ClearRenderTargetView(
                         back_buffer,
                         &[color.x(), color.y(), color.z(), 1.0],
@@ -50,8 +50,8 @@ impl Context {
 
     pub fn set_render_target(&self, target: &mut impl Target) {
         unsafe {
-            if let Some(back_buffer) = target.render_target_view().ok() {
-                if let Some(depth_buffer) = target.depth_stencil_view().ok() {
+            if let Ok(back_buffer) = target.render_target_view() {
+                if let Ok(depth_buffer) = target.depth_stencil_view() {
                     self.as_ref()
                         .OMSetRenderTargets(1, &back_buffer, depth_buffer);
                 }

@@ -100,9 +100,9 @@ impl World {
         self.entities.push(entity);
     }
 
-    pub fn meshes_and_materials<'a, 'b>(
+    pub fn meshes_and_materials<'a>(
         &'a mut self,
-        render: &'b Render,
+        render: &Render,
     ) -> impl Iterator<Item = (&'a mut Arc<Mesh>, &'a mut [Material])> {
         let vec: Vec<_> = self
             .entities

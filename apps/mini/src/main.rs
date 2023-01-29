@@ -1,4 +1,4 @@
-#![allow(clippy::single_match)]
+#![allow(clippy::single_match, clippy::uninlined_format_args)]
 
 #[macro_use]
 extern crate listener_derive;
