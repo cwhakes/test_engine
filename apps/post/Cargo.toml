@@ -1,0 +1,15 @@
+[package]
+name = "post"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+engine = { path = "../../libs/engine" }
+env_logger = "0.8.2"
+log = "0.4"
+listener_derive = { path = "../../libs/listener_derive" }
+rand = "0.8"
+shader = { path = "../../libs/shader" }
+vertex_derive = { path = "../../libs/vertex_derive" }

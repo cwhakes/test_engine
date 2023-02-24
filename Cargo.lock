@@ -332,6 +332,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "post"
+version = "0.1.0"
+dependencies = [
+ "engine",
+ "env_logger",
+ "listener_derive",
+ "log",
+ "rand",
+ "shader",
+ "vertex_derive",
+]
+
+[[package]]
 name = "ppv-lite86"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
