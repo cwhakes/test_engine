@@ -1,5 +1,5 @@
 use crate::math::Vector3d;
-use crate::physics::simplex::Simplex;
+use crate::physics::simplex2::Simplex;
 
 use log::error;
 
