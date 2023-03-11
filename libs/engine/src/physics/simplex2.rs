@@ -38,16 +38,24 @@ impl<T, const N: usize> Simplex<T, N> {
     pub fn points(&self) -> impl Iterator<Item = &Vector<T, N>> {
         (0..self.count).map(|i| &self[i])
     }
+
+    pub fn subsimplexes(&self) -> impl Iterator<Item = Simplex<T, N>> + '_
+    where
+        T: Clone,
+    {
+        (0..self.count as usize).map(|i| {
+            // Create a simplex out of all the points with index != current index
+            // A 1-simplex generates a 0-simplex, but a 0-simplex makes nothing, so recursion will terminate
+            Simplex::new(
+                self.points()
+                    .enumerate()
+                    .filter_map(|(n, p)| (n != i).then(|| p.clone())),
+            )
+        })
+    }
 }
 
 impl Simplex<f32, 3> {
-    pub fn subsimplexes(&self) -> SubSimplexes {
-        SubSimplexes {
-            simplex: self.clone(),
-            index: 0,
-        }
-    }
-
     fn nearest_point_within_simplex(&self) -> Option<Vector3d> {
         match self.count {
             0 => None,
@@ -173,62 +181,6 @@ impl<T: PartialEq, const N: usize> PartialEq for Simplex<T, N> {
 impl<T: Into<Vector3d>> From<T> for Simplex<f32, 3> {
     fn from(point: T) -> Self {
         Self::new([point.into()])
-    }
-}
-
-pub struct SubSimplexes {
-    simplex: Simplex<f32, 3>,
-    index: usize,
-}
-
-impl Iterator for SubSimplexes {
-    type Item = Simplex<f32, 3>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let simplex = match self.simplex.count {
-            0 => None,
-            1 => match self.index {
-                0 => Some(Simplex::new([])),
-                _ => None,
-            },
-            2 => match self.index {
-                0 => Some(Simplex::new([self.simplex[0]])),
-                1 => Some(Simplex::new([self.simplex[1]])),
-                _ => None,
-            },
-            3 => match self.index {
-                0 => Some(Simplex::new([self.simplex[0], self.simplex[1]])),
-                1 => Some(Simplex::new([self.simplex[0], self.simplex[2]])),
-                2 => Some(Simplex::new([self.simplex[1], self.simplex[2]])),
-                _ => None,
-            },
-            4 => match self.index {
-                0 => Some(Simplex::new([
-                    self.simplex[0],
-                    self.simplex[1],
-                    self.simplex[2],
-                ])),
-                1 => Some(Simplex::new([
-                    self.simplex[0],
-                    self.simplex[1],
-                    self.simplex[3],
-                ])),
-                2 => Some(Simplex::new([
-                    self.simplex[0],
-                    self.simplex[2],
-                    self.simplex[3],
-                ])),
-                3 => Some(Simplex::new([
-                    self.simplex[1],
-                    self.simplex[2],
-                    self.simplex[3],
-                ])),
-                _ => None,
-            },
-            _ => unimplemented!(),
-        };
-        self.index += 1;
-        simplex
     }
 }
 
