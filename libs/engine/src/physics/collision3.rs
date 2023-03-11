@@ -31,7 +31,7 @@ impl CollisionEngine for GjkEngine {
     fn collision_between(&mut self, obj0: &Self::Collider, obj1: &Self::Collider) -> bool {
         let initial_dir = Vector3d::RIGHT;
         let mut point = obj0.support(initial_dir) - obj1.support(-initial_dir);
-        let mut simplex = Simplex::new();
+        let mut simplex = Simplex::default();
         simplex.add_point(point);
         let mut dir = Vector3d::ORIGIN - point;
 

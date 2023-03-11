@@ -1,52 +1,46 @@
 #![allow(clippy::many_single_char_names)]
 
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::mem::MaybeUninit;
 use std::ops::Index;
 
-use crate::math::Vector3d;
+use crate::math::{Vector, Vector3d};
 use crate::prelude::*;
 
-#[derive(Clone)]
-pub struct Simplex {
+pub struct Simplex<T, const N: usize> {
     count: u8,
-    origin: MaybeUninit<Vector3d>,
-    points: [MaybeUninit<Vector3d>; 3],
+    origin: MaybeUninit<Vector<T, N>>,
+    points: [MaybeUninit<Vector<T, N>>; N],
 }
 
-impl Simplex {
-    pub fn new() -> Self {
-        Self {
-            count: 0,
-            origin: MaybeUninit::uninit(),
-            points: [
-                MaybeUninit::uninit(),
-                MaybeUninit::uninit(),
-                MaybeUninit::uninit(),
-            ]
-        }
-    }
-
-    pub fn from_iter(iter: impl IntoIterator<Item = Vector3d>) -> Self {
-        let mut simplex = Self::new();
+impl<T, const N: usize> Simplex<T, N> {
+    pub fn new(iter: impl IntoIterator<Item = Vector<T, N>>) -> Self {
+        let mut simplex = Self::default();
         for point in iter.into_iter() {
             simplex.add_point(point);
         }
         simplex
-
     }
 
-    pub fn add_point(&mut self, new_point: impl Into<Vector3d>) -> &mut Self {
+    pub fn add_point(&mut self, new_point: impl Into<Vector<T, N>>) -> &mut Self {
         let new_point = new_point.into();
-        match self.count {
-            0 => {self.origin.write(new_point);},
-            i @ 1..=3 => {self.points[i as usize - 1].write(new_point);},
-            4.. => unimplemented!(),
+        if self.count == 0 {
+            self.origin.write(new_point);
+        } else if (1..=N).contains(&(self.count as usize)) {
+            self.points[self.count as usize - 1].write(new_point);
+        } else {
+            panic!("Too many points")
         }
         self.count += 1;
         self
     }
 
+    pub fn points(&self) -> impl Iterator<Item = &Vector<T, N>> {
+        (0..self.count).map(|i| &self[i])
+    }
+}
+
+impl Simplex<f32, 3> {
     pub fn subsimplexes(&self) -> SubSimplexes {
         SubSimplexes {
             simplex: self.clone(),
@@ -66,7 +60,7 @@ impl Simplex {
                 } else {
                     None
                 }
-            },
+            }
             3 => {
                 let [a, b, c] = [self[0], self[1], self[2]];
                 let (u, v) = Vector3d::ORIGIN.projection_along_2d([a, b, c]);
@@ -75,7 +69,7 @@ impl Simplex {
                 } else {
                     None
                 }
-            },
+            }
             4 => {
                 let volume = [self[0], self[1], self[2], self[3]];
                 if Vector3d::ORIGIN.contained_by_3d(volume) {
@@ -83,7 +77,7 @@ impl Simplex {
                 } else {
                     None
                 }
-            },
+            }
             _ => unimplemented!(),
         }
     }
@@ -111,8 +105,39 @@ impl Simplex {
     }
 }
 
-impl Index<u8> for Simplex {
-    type Output = Vector3d;
+impl<T: Clone, const N: usize> Clone for Simplex<T, N> {
+    fn clone(&self) -> Self {
+        let mut new = Self::default();
+        for index in 0..self.count {
+            new.add_point(self[index].clone());
+        }
+        new
+    }
+}
+
+impl<T, const N: usize> Default for Simplex<T, N> {
+    fn default() -> Self {
+        Self {
+            count: 0,
+            origin: MaybeUninit::uninit(),
+            // SAFETY: An uninitialized `[MaybeUninit<_>; LEN]` is valid.
+            points: unsafe {
+                MaybeUninit::<[MaybeUninit<Vector<T, N>>; N]>::uninit().assume_init()
+            },
+        }
+    }
+}
+
+impl<T: Debug, const N: usize> fmt::Debug for Simplex<T, N> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list()
+            .entries((0..self.count).map(|i| &self[i]))
+            .finish()
+    }
+}
+
+impl<T, const N: usize> Index<u8> for Simplex<T, N> {
+    type Output = Vector<T, N>;
 
     fn index(&self, index: u8) -> &Self::Output {
         if index >= self.count {
@@ -120,19 +145,21 @@ impl Index<u8> for Simplex {
         }
 
         if index == 0 {
+            // SAFETY: if index < count, origin is valid.
             unsafe { self.origin.assume_init_ref() }
         } else {
+            // SAFETY: if index < count, points[index - 1] is valid.
             unsafe { self.points[index as usize - 1].assume_init_ref() }
         }
     }
 }
 
-impl PartialEq for Simplex {
+impl<T: PartialEq, const N: usize> PartialEq for Simplex<T, N> {
     fn eq(&self, other: &Self) -> bool {
         if self.count != other.count {
             return false;
         }
-        
+
         for i in 0..self.count {
             if self[i] != other[i] {
                 return false;
@@ -143,43 +170,59 @@ impl PartialEq for Simplex {
     }
 }
 
-impl fmt::Debug for Simplex {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries((0..self.count).map(|i| self[i])).finish()
+impl<T: Into<Vector3d>> From<T> for Simplex<f32, 3> {
+    fn from(point: T) -> Self {
+        Self::new([point.into()])
     }
 }
 
 pub struct SubSimplexes {
-    simplex: Simplex,
+    simplex: Simplex<f32, 3>,
     index: usize,
 }
 
 impl Iterator for SubSimplexes {
-    type Item = Simplex;
+    type Item = Simplex<f32, 3>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let simplex = match self.simplex.count {
             0 => None,
             1 => match self.index {
-                0 => Some(Simplex::new()),
+                0 => Some(Simplex::new([])),
                 _ => None,
             },
             2 => match self.index {
-                0 => Some(Simplex::from_iter([self.simplex[0]])),
-                1 => Some(Simplex::from_iter([self.simplex[1]])),
+                0 => Some(Simplex::new([self.simplex[0]])),
+                1 => Some(Simplex::new([self.simplex[1]])),
                 _ => None,
             },
             3 => match self.index {
-                0 => Some(Simplex::from_iter([self.simplex[0], self.simplex[1]])),
-                1 => Some(Simplex::from_iter([self.simplex[0], self.simplex[2]])),
-                2 => Some(Simplex::from_iter([self.simplex[1], self.simplex[2]])),
+                0 => Some(Simplex::new([self.simplex[0], self.simplex[1]])),
+                1 => Some(Simplex::new([self.simplex[0], self.simplex[2]])),
+                2 => Some(Simplex::new([self.simplex[1], self.simplex[2]])),
                 _ => None,
             },
             4 => match self.index {
-                0 => Some(Simplex::from_iter([self.simplex[0], self.simplex[1], self.simplex[2]])),
-                1 => Some(Simplex::from_iter([self.simplex[0], self.simplex[1], self.simplex[3]])),
-                2 => Some(Simplex::from_iter([self.simplex[0], self.simplex[2], self.simplex[3]])),
-                3 => Some(Simplex::from_iter([self.simplex[1], self.simplex[2], self.simplex[3]])),
+                0 => Some(Simplex::new([
+                    self.simplex[0],
+                    self.simplex[1],
+                    self.simplex[2],
+                ])),
+                1 => Some(Simplex::new([
+                    self.simplex[0],
+                    self.simplex[1],
+                    self.simplex[3],
+                ])),
+                2 => Some(Simplex::new([
+                    self.simplex[0],
+                    self.simplex[2],
+                    self.simplex[3],
+                ])),
+                3 => Some(Simplex::new([
+                    self.simplex[1],
+                    self.simplex[2],
+                    self.simplex[3],
+                ])),
                 _ => None,
             },
             _ => unimplemented!(),
@@ -189,25 +232,13 @@ impl Iterator for SubSimplexes {
     }
 }
 
-impl Default for Simplex {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<T: Into<Vector3d>> From<T> for Simplex {
-    fn from(point: T) -> Self {
-        Self::from_iter([point.into()])
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn line_closest() {
-        let mut simplex = Simplex::new();
+        let mut simplex = Simplex::default();
         simplex.add_point([1.0, 1.0, 0.0]);
         simplex.add_point([-1.0, 1.0, 0.0]);
 
@@ -218,7 +249,7 @@ mod test {
 
     #[test]
     fn line_closest_point() {
-        let mut simplex = Simplex::new();
+        let mut simplex = Simplex::default();
         simplex.add_point([1.0, 1.0, 0.0]);
         simplex.add_point([0.5, 1.0, 0.0]);
 
@@ -229,7 +260,7 @@ mod test {
 
     #[test]
     fn line_closest_point2() {
-        let mut simplex = Simplex::new();
+        let mut simplex = Simplex::default();
         simplex.add_point([0.5, 1.0, 0.0]);
         simplex.add_point([1.0, 1.0, 0.0]);
 

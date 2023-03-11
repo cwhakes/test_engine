@@ -7,7 +7,7 @@ pub trait ConvexCollision: ConvexCollider {
     fn collides_with<T: ConvexCollider>(&self, other: &T) -> bool {
         let initial_dir = Vector3d::RIGHT;
         let mut point = self.support(initial_dir) - other.support(-initial_dir);
-        let mut simplex = Simplex::new();
+        let mut simplex = Simplex::default();
         simplex.add_point(point);
         let mut dir = Vector3d::ORIGIN - point;
 
