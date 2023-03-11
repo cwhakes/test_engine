@@ -41,19 +41,29 @@ impl<T, const N: usize> Vector<T, N> {
     {
         self.0.into_iter().map(|f| f * f).sum()
     }
+
+    pub fn lerp<Rhs>(
+        self,
+        rhs: impl Into<Vector<Rhs, N>>,
+        delta: f32,
+    ) -> Vector<<<T as ops::Mul<f32>>::Output as ops::Add<<Rhs as ops::Mul<f32>>::Output>>::Output, N>
+    where
+        T: ops::Mul<f32>,
+        Rhs: ops::Mul<f32>,
+        <T as ops::Mul<f32>>::Output: ops::Add<<Rhs as ops::Mul<f32>>::Output>,
+    {
+        let rhs = rhs.into();
+        self.0
+            .into_iter()
+            .zip(rhs.0)
+            .map(|(s, rhs)| s * (1.0 - delta) + rhs * delta)
+            .collect()
+    }
 }
 
 impl<const N: usize> Vector<f32, N> {
     pub fn zero() -> Self {
         Self([0.0; N])
-    }
-
-    pub fn lerp(mut self, rhs: impl Into<Self>, delta: f32) -> Self {
-        let rhs = rhs.into();
-        for (s, r) in self.0.iter_mut().zip(rhs.0) {
-            *s = *s * (1.0 - delta) + r * delta;
-        }
-        self
     }
 
     pub fn magnitude(self) -> f32 {
@@ -108,6 +118,27 @@ impl<T, const N: usize> convert::From<Vector<T, N>> for [T; N] {
     }
 }
 
+impl<T, const N: usize> FromIterator<T> for Vector<T, N> {
+    fn from_iter<II: IntoIterator<Item = T>>(iter: II) -> Self {
+        let mut iter = iter.into_iter();
+        // SAFETY: All elements must be written to
+        unsafe {
+            let mut new = Self::uninit();
+            for ele in &mut new.0 {
+                if let Some(value) = iter.next() {
+                    ele.write(value);
+                } else {
+                    panic!("Not enough items");
+                }
+            }
+            if iter.next().is_some() {
+                panic!("Too many items");
+            }
+            new.assume_init()
+        }
+    }
+}
+
 impl<T, Rhs, const N: usize> ops::Add<Vector<Rhs, N>> for Vector<T, N>
 where
     T: ops::Add<Rhs>,
@@ -115,13 +146,11 @@ where
     type Output = Vector<<T as ops::Add<Rhs>>::Output, N>;
 
     fn add(self, rhs: Vector<Rhs, N>) -> Self::Output {
-        unsafe {
-            let mut new = Self::Output::uninit();
-            for (i, (s, rhs)) in self.0.into_iter().zip(rhs.0).enumerate() {
-                new.0[i].write(s + rhs);
-            }
-            new.assume_init()
-        }
+        self.0
+            .into_iter()
+            .zip(rhs.0)
+            .map(|(s, rhs)| s + rhs)
+            .collect()
     }
 }
 
@@ -143,13 +172,11 @@ where
     type Output = Vector<<T as ops::Sub<Rhs>>::Output, N>;
 
     fn sub(self, rhs: Vector<Rhs, N>) -> Self::Output {
-        unsafe {
-            let mut new = Self::Output::uninit();
-            for (i, (s, rhs)) in self.0.into_iter().zip(rhs.0).enumerate() {
-                new.0[i].write(s - rhs);
-            }
-            new.assume_init()
-        }
+        self.0
+            .into_iter()
+            .zip(rhs.0)
+            .map(|(s, rhs)| s - rhs)
+            .collect()
     }
 }
 
@@ -172,13 +199,7 @@ where
     type Output = Vector<<T as ops::Mul<Rhs>>::Output, N>;
 
     fn mul(self, rhs: Rhs) -> Self::Output {
-        unsafe {
-            let mut new = Self::Output::uninit();
-            for (i, s) in self.0.into_iter().enumerate() {
-                new.0[i].write(s * rhs);
-            }
-            new.assume_init()
-        }
+        self.0.into_iter().map(|s| s * rhs).collect()
     }
 }
 
@@ -202,13 +223,7 @@ where
     type Output = Vector<<T as ops::Div<Rhs>>::Output, N>;
 
     fn div(self, rhs: Rhs) -> Self::Output {
-        unsafe {
-            let mut new = Self::Output::uninit();
-            for (i, s) in self.0.into_iter().enumerate() {
-                new.0[i].write(s / rhs);
-            }
-            new.assume_init()
-        }
+        self.0.into_iter().map(|s| s / rhs).collect()
     }
 }
 
@@ -228,13 +243,7 @@ impl<T: ops::Neg, const N: usize> ops::Neg for Vector<T, N> {
     type Output = Vector<<T as ops::Neg>::Output, N>;
 
     fn neg(self) -> Self::Output {
-        unsafe {
-            let mut new = Self::Output::uninit();
-            for (i, s) in self.0.into_iter().enumerate() {
-                new.0[i].write(-s);
-            }
-            new.assume_init()
-        }
+        self.0.into_iter().map(|s| -s).collect()
     }
 }
 
