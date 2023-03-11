@@ -1,8 +1,8 @@
 use std::mem::{self, MaybeUninit};
-use std::{convert, ops};
+use std::{convert, iter, ops};
 
 #[repr(C)]
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Vector<T, const N: usize>(pub [T; N]);
 
 impl<T, const N: usize> Vector<T, N> {
@@ -21,6 +21,28 @@ impl<T, const N: usize> Vector<MaybeUninit<T>, N> {
     }
 }
 
+impl<T, const N: usize> Vector<T, N> {
+    pub fn dot<Rhs>(self, rhs: impl Into<Vector<Rhs, N>>) -> <T as ops::Mul<Rhs>>::Output
+    where
+        T: ops::Mul<Rhs>,
+        <T as ops::Mul<Rhs>>::Output: iter::Sum,
+    {
+        self.0
+            .into_iter()
+            .zip(rhs.into().0)
+            .map(|(t, r)| t * r)
+            .sum()
+    }
+
+    pub fn magnitude_squared(self) -> <T as ops::Mul<T>>::Output
+    where
+        T: Copy + ops::Mul<T>,
+        <T as ops::Mul<T>>::Output: iter::Sum,
+    {
+        self.0.into_iter().map(|f| f * f).sum()
+    }
+}
+
 impl<const N: usize> Vector<f32, N> {
     pub fn zero() -> Self {
         Self([0.0; N])
@@ -34,10 +56,6 @@ impl<const N: usize> Vector<f32, N> {
         self
     }
 
-    pub fn magnitude_squared(self) -> f32 {
-        self.0.into_iter().map(|f| f * f).sum()
-    }
-
     pub fn magnitude(self) -> f32 {
         self.magnitude_squared().sqrt()
     }
@@ -45,14 +63,6 @@ impl<const N: usize> Vector<f32, N> {
     pub fn normalize(self) -> Self {
         let mag = self.magnitude();
         self / mag
-    }
-
-    pub fn dot(self, rhs: impl Into<Self>) -> f32 {
-        self.0
-            .into_iter()
-            .zip(rhs.into().0)
-            .map(|(s, r)| s * r)
-            .sum()
     }
 
     pub fn set_component(&mut self, direction: impl Into<Self>, magnitude: f32) {
@@ -98,50 +108,56 @@ impl<T, const N: usize> convert::From<Vector<T, N>> for [T; N] {
     }
 }
 
-impl<T, Rhs: Into<Self>, const N: usize> ops::Add<Rhs> for Vector<T, N>
+impl<T, Rhs, const N: usize> ops::Add<Vector<Rhs, N>> for Vector<T, N>
 where
-    T: ops::AddAssign, // TODO: Use `ops::Add`
+    T: ops::Add<Rhs>,
 {
-    type Output = Self;
+    type Output = Vector<<T as ops::Add<Rhs>>::Output, N>;
 
-    fn add(mut self, rhs: Rhs) -> Self::Output {
-        self += rhs;
-        self
+    fn add(self, rhs: Vector<Rhs, N>) -> Self::Output {
+        unsafe {
+            let mut new = Self::Output::uninit();
+            for (i, (s, rhs)) in self.0.into_iter().zip(rhs.0).enumerate() {
+                new.0[i].write(s + rhs);
+            }
+            new.assume_init()
+        }
     }
 }
 
-impl<T, Rhs: Into<Self>, const N: usize> ops::AddAssign<Rhs> for Vector<T, N>
+impl<T, Rhs, const N: usize> ops::AddAssign<Vector<Rhs, N>> for Vector<T, N>
 where
-    T: ops::AddAssign,
+    T: ops::AddAssign<Rhs>,
 {
-    fn add_assign(&mut self, rhs: Rhs) {
-        let rhs = rhs.into();
-
+    fn add_assign(&mut self, rhs: Vector<Rhs, N>) {
         for (s, r) in self.0.iter_mut().zip(rhs.0) {
             *s += r;
         }
     }
 }
 
-impl<T, Rhs: Into<Self>, const N: usize> ops::Sub<Rhs> for Vector<T, N>
+impl<T, Rhs, const N: usize> ops::Sub<Vector<Rhs, N>> for Vector<T, N>
 where
-    T: ops::SubAssign, // TODO: Use `ops::Sub`
+    T: ops::Sub<Rhs>,
 {
-    type Output = Self;
+    type Output = Vector<<T as ops::Sub<Rhs>>::Output, N>;
 
-    fn sub(mut self, rhs: Rhs) -> Self::Output {
-        self -= rhs;
-        self
+    fn sub(self, rhs: Vector<Rhs, N>) -> Self::Output {
+        unsafe {
+            let mut new = Self::Output::uninit();
+            for (i, (s, rhs)) in self.0.into_iter().zip(rhs.0).enumerate() {
+                new.0[i].write(s - rhs);
+            }
+            new.assume_init()
+        }
     }
 }
 
-impl<T, Rhs: Into<Self>, const N: usize> ops::SubAssign<Rhs> for Vector<T, N>
+impl<T, Rhs, const N: usize> ops::SubAssign<Vector<Rhs, N>> for Vector<T, N>
 where
-    T: ops::SubAssign,
+    T: ops::SubAssign<Rhs>,
 {
-    fn sub_assign(&mut self, rhs: Rhs) {
-        let rhs = rhs.into();
-
+    fn sub_assign(&mut self, rhs: Vector<Rhs, N>) {
         for (s, r) in self.0.iter_mut().zip(rhs.0) {
             *s -= r;
         }
@@ -150,63 +166,75 @@ where
 
 impl<T, Rhs, const N: usize> ops::Mul<Rhs> for Vector<T, N>
 where
-    T: ops::MulAssign<Rhs>, // TODO: use `ops::Mul`
-    Rhs: Clone,
+    T: ops::Mul<Rhs>,
+    Rhs: Copy,
 {
-    type Output = Self;
+    type Output = Vector<<T as ops::Mul<Rhs>>::Output, N>;
 
-    fn mul(mut self, rhs: Rhs) -> Self::Output {
-        self *= rhs;
-        self
+    fn mul(self, rhs: Rhs) -> Self::Output {
+        unsafe {
+            let mut new = Self::Output::uninit();
+            for (i, s) in self.0.into_iter().enumerate() {
+                new.0[i].write(s * rhs);
+            }
+            new.assume_init()
+        }
     }
 }
 
 impl<T, Rhs, const N: usize> ops::MulAssign<Rhs> for Vector<T, N>
 where
     T: ops::MulAssign<Rhs>,
-    Rhs: Clone,
+    Rhs: Copy,
 {
     fn mul_assign(&mut self, rhs: Rhs) {
         for element in &mut self.0 {
-            *element *= rhs.clone();
+            *element *= rhs;
         }
     }
 }
 
 impl<T, Rhs, const N: usize> ops::Div<Rhs> for Vector<T, N>
 where
-    T: ops::DivAssign<Rhs>, // TODO: use `ops::Div`
-    Rhs: Clone,
+    T: ops::Div<Rhs>,
+    Rhs: Copy,
 {
-    type Output = Self;
+    type Output = Vector<<T as ops::Div<Rhs>>::Output, N>;
 
-    fn div(mut self, rhs: Rhs) -> Self::Output {
-        self /= rhs;
-        self
+    fn div(self, rhs: Rhs) -> Self::Output {
+        unsafe {
+            let mut new = Self::Output::uninit();
+            for (i, s) in self.0.into_iter().enumerate() {
+                new.0[i].write(s / rhs);
+            }
+            new.assume_init()
+        }
     }
 }
 
 impl<T, Rhs, const N: usize> ops::DivAssign<Rhs> for Vector<T, N>
 where
     T: ops::DivAssign<Rhs>,
-    Rhs: Clone,
+    Rhs: Copy,
 {
     fn div_assign(&mut self, rhs: Rhs) {
         for element in &mut self.0 {
-            *element /= rhs.clone();
+            *element /= rhs;
         }
     }
 }
 
-impl<T: ops::Neg<Output = T> + Clone, const N: usize> ops::Neg for Vector<T, N> {
-    type Output = Self;
+impl<T: ops::Neg, const N: usize> ops::Neg for Vector<T, N> {
+    type Output = Vector<<T as ops::Neg>::Output, N>;
 
-    fn neg(mut self) -> Self {
-        for element in &mut self.0 {
-            *element = -element.clone();
+    fn neg(self) -> Self::Output {
+        unsafe {
+            let mut new = Self::Output::uninit();
+            for (i, s) in self.0.into_iter().enumerate() {
+                new.0[i].write(-s);
+            }
+            new.assume_init()
         }
-
-        self
     }
 }
 

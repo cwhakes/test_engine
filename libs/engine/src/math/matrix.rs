@@ -1,7 +1,7 @@
 use super::Vector;
 
 use std::mem::{self, MaybeUninit};
-use std::ops;
+use std::{iter, ops};
 
 #[repr(C)]
 #[derive(Clone, Debug, PartialEq)]
@@ -31,6 +31,7 @@ impl<const M: usize, const N: usize> Matrix<f32, M, N> {
 
 impl<const M: usize> Matrix<f32, M, M> {
     pub fn identity() -> Self {
+        // SAFETY: All values are written to
         unsafe {
             let mut identity = Self::uninit();
             for i in 0..M {
@@ -63,14 +64,20 @@ impl<T, const M: usize, const N: usize> ops::IndexMut<(usize, usize)> for Matrix
     }
 }
 
-impl<const M: usize, const N: usize> ops::Mul<Vector<f32, N>> for Matrix<f32, M, N> {
-    type Output = Vector<f32, M>;
+impl<T, Rhs, const M: usize, const N: usize> ops::Mul<Vector<Rhs, N>> for Matrix<T, M, N>
+where
+    T: ops::Mul<Rhs>,
+    Rhs: Copy,
+    <T as ops::Mul<Rhs>>::Output: iter::Sum,
+{
+    type Output = Vector<<T as ops::Mul<Rhs>>::Output, M>;
 
-    fn mul(self, rhs: Vector<f32, N>) -> Self::Output {
+    fn mul(self, rhs: Vector<Rhs, N>) -> Self::Output {
+        // SAFETY: All values are written to
         unsafe {
             let mut new = Self::Output::uninit();
-            for i in 0..M {
-                new.0[i].write((0..N).map(|k| self.0[i][k] * rhs.0[k]).sum());
+            for (i, row) in self.0.into_iter().enumerate() {
+                new.0[i].write(Vector::<T, N>::from(row).dot(rhs));
             }
             new.assume_init()
         }
@@ -80,9 +87,9 @@ impl<const M: usize, const N: usize> ops::Mul<Vector<f32, N>> for Matrix<f32, M,
 impl<T, Rhs, const M: usize, const N: usize, const O: usize> ops::Mul<Matrix<Rhs, N, O>>
     for Matrix<T, M, N>
 where
-    T: ops::Mul<Rhs> + Copy,
+    T: Copy + ops::Mul<Rhs>,
     Rhs: Copy,
-    <T as ops::Mul<Rhs>>::Output: std::iter::Sum,
+    <T as ops::Mul<Rhs>>::Output: iter::Sum,
 {
     type Output = Matrix<<T as ops::Mul<Rhs>>::Output, M, O>;
 
@@ -102,31 +109,31 @@ where
 
 impl<T, Rhs, const M: usize> ops::MulAssign<Matrix<Rhs, M, M>> for Matrix<T, M, M>
 where
-    T: ops::Mul<Rhs, Output = T> + Copy + std::iter::Sum,
+    T: Copy + ops::Mul<Rhs, Output = T> + std::iter::Sum,
     Rhs: Copy,
 {
     fn mul_assign(&mut self, rhs: Matrix<Rhs, M, M>) {
-        unsafe {
-            let mut new = Self::uninit();
-            for i in 0..M {
-                for j in 0..M {
-                    new[(i, j)].write((0..M).map(|k| self[(i, k)] * rhs[(k, j)]).sum());
-                }
-            }
-            *self = new.assume_init();
-        }
+        *self = self.clone() * rhs;
     }
 }
 
-impl<const M: usize, const N: usize> ops::Div<f32> for Matrix<f32, M, N> {
-    type Output = Matrix<f32, M, N>;
+impl<T, Rhs, const M: usize, const N: usize> ops::Div<Rhs> for Matrix<T, M, N>
+where
+    T: ops::Div<Rhs>,
+    Rhs: Copy,
+{
+    type Output = Matrix<<T as ops::Div<Rhs>>::Output, M, N>;
 
-    fn div(mut self, rhs: f32) -> Self::Output {
-        for i in 0..M {
-            for j in 0..N {
-                self[(i, j)] /= rhs;
+    fn div(self, rhs: Rhs) -> Self::Output {
+        // SAFETY: All values are written to
+        unsafe {
+            let mut new = Self::Output::uninit();
+            for (i, row) in self.0.into_iter().enumerate() {
+                for (j, ele) in row.into_iter().enumerate() {
+                    new[(i, j)].write(ele / rhs);
+                }
             }
+            new.assume_init()
         }
-        self
     }
 }
