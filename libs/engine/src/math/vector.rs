@@ -1,6 +1,8 @@
 use std::mem::{self, MaybeUninit};
 use std::{convert, iter, ops};
 
+use super::Matrix;
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Vector<T, const N: usize>(pub [T; N]);
@@ -91,18 +93,16 @@ impl<const N: usize> Vector<f32, N> {
         (self - line[0]).dot(line[1] - line[0]) / len2
     }
 
-    pub fn projection_along_2d(self, plane: [Self; 3]) -> (f32, f32) {
-        // Get location of right triangle base along 0>1 vector
-        let base_u = (plane[2]).projection_along_1d([plane[0], plane[1]]);
-        let base = plane[0].lerp(plane[1], base_u);
-        // Projection along a line perependicular to 0>1 vector and equal to the height of the triangle.
-        // This is equal to the independent projection along 0>2
-        let v = self.projection_along_1d([base, plane[2]]);
-        // Remove the independent projection
-        let adjusted_point = self - ((plane[2] - plane[0]) * v);
-        // Find the second projection
-        let u = adjusted_point.projection_along_1d([plane[0], plane[1]]);
-        (u, v)
+    pub fn projection_along_2d(self, plane: [Self; 3]) -> Vector<f32, 2> {
+        let vec_0 = plane[1] - plane[0];
+        let vec_1 = plane[2] - plane[0];
+        let mat: Matrix<f32, N, 2> = [vec_0, vec_1].into();
+        // Left inverse
+        // (A^T * A)^-1 * A^T (* A = I)
+        let inverse = (mat.clone().transpose() * mat.clone()).inverse() * mat.transpose();
+
+        let vec_2 = self - plane[0];
+        inverse * vec_2
     }
 }
 
@@ -115,6 +115,19 @@ impl<T, const N: usize> convert::From<[T; N]> for Vector<T, N> {
 impl<T, const N: usize> convert::From<Vector<T, N>> for [T; N] {
     fn from(vector: Vector<T, N>) -> Self {
         vector.0
+    }
+}
+
+impl<T, const N: usize> convert::From<Matrix<T, N, 1>> for Vector<T, N> {
+    fn from(value: Matrix<T, N, 1>) -> Self {
+        value
+            .0
+            .into_iter()
+            .map(|row| {
+                let [ele] = row;
+                ele
+            })
+            .collect()
     }
 }
 

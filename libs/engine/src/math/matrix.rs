@@ -26,7 +26,7 @@ impl<T, const M: usize, const N: usize> Matrix<MaybeUninit<T>, M, N> {
 }
 
 impl<T, const M: usize, const N: usize> Matrix<T, M, N> {
-    pub fn transverse(self) -> Matrix<T, N, M> {
+    pub fn transpose(self) -> Matrix<T, N, M> {
         // SAFETY: All elements are written to
         unsafe {
             let mut new = Matrix::uninit();
@@ -53,7 +53,7 @@ impl<const M: usize, const N: usize> Matrix<f32, M, N> {
                 for i_p in (i + 1)..M {
                     if !approx_eq!(f32, 0.0, self[(i_p, j)]) {
                         self.0.swap(i, i_p);
-                        break;
+                        continue 'outer;
                     }
                 }
                 // If we can't find a non-zero element in this column, advance pivot column
@@ -121,6 +121,21 @@ impl<T, const M: usize, const N: usize> ops::IndexMut<(usize, usize)> for Matrix
         assert!(index.1 < N);
 
         &mut self.0[index.0][index.1]
+    }
+}
+
+impl<T, const M: usize, const N: usize> From<[Vector<T, M>; N]> for Matrix<T, M, N> {
+    fn from(value: [Vector<T, M>; N]) -> Self {
+        // SAFETY: All values are written to
+        unsafe {
+            let mut matrix = Self::uninit();
+            for (j, Vector(col)) in value.into_iter().enumerate() {
+                for (i, ele) in col.into_iter().enumerate() {
+                    matrix[(i, j)].write(ele);
+                }
+            }
+            matrix.assume_init()
+        }
     }
 }
 

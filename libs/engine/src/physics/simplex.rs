@@ -1,6 +1,6 @@
 #![allow(clippy::many_single_char_names)]
 
-use crate::math::Vector3d;
+use crate::math::{Vector, Vector3d};
 use crate::prelude::*;
 
 use Simplex::*;
@@ -51,7 +51,7 @@ impl Simplex {
                 }
             }
             Triangle([a, b, c]) => {
-                let (u, v) = Vector3d::ORIGIN.projection_along_2d([a, b, c]);
+                let Vector([u, v]) = Vector3d::ORIGIN.projection_along_2d([a, b, c]);
                 if 0.0 < u && u < 1.0 && 0.0 < v && v < 1.0 && u + v < 1.0 {
                     Some(a.lerp(b, u).lerp(c, v))
                 } else {

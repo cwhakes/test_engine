@@ -71,7 +71,7 @@ impl Simplex<f32, 3> {
             }
             3 => {
                 let [a, b, c] = [self[0], self[1], self[2]];
-                let (u, v) = Vector3d::ORIGIN.projection_along_2d([a, b, c]);
+                let Vector([u, v]) = Vector3d::ORIGIN.projection_along_2d([a, b, c]);
                 if 0.0 < u && u < 1.0 && 0.0 < v && v < 1.0 && u + v < 1.0 {
                     Some(a.lerp(b, u).lerp(c, v))
                 } else {

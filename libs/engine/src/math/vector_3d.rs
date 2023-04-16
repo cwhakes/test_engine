@@ -84,7 +84,7 @@ impl Vector3d {
             .cross(plane[1] - plane[0])
             .dot(*self - plane[0])
             .abs();
-        let (u, v) = self.projection_along_2d(plane);
+        let Vector([u, v]) = self.projection_along_2d(plane);
 
         (0.0..=1.0).contains(&u)
             && (0.0..=1.0).contains(&v)
@@ -145,8 +145,8 @@ mod test {
         let p2 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
         let p3 = Vector3d::new(rng.gen(), rng.gen(), rng.gen());
 
-        let (u0, v0) = origin.projection_along_2d([p1, p2, p3]);
-        let (v1, u1) = origin.projection_along_2d([p1, p3, p2]);
+        let Vector([u0, v0]) = origin.projection_along_2d([p1, p2, p3]);
+        let Vector([v1, u1]) = origin.projection_along_2d([p1, p3, p2]);
 
         assert!((u1 - u0).abs() < 0.001);
         assert!((v1 - v0).abs() < 0.001);
