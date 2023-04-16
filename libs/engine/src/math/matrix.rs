@@ -102,6 +102,40 @@ impl<const M: usize> Matrix<f32, M, M> {
             identity.assume_init()
         }
     }
+
+    // pub fn determinant(&self) -> f32 {
+    //     let mut mat = self.clone();
+    //     let mut i = 0;
+    //     let mut d = 1.0;
+
+    //     'outer: while i < M {
+    //         if approx_eq!(f32, 0.0, mat[(i, i)]) {
+    //             // Search for non-zero row
+    //             for i_p in (i + 1)..M {
+    //                 if !approx_eq!(f32, 0.0, mat[(i_p, i)]) {
+    //                     mat.0.swap(i, i_p);
+    //                     d *= -1.0;
+    //                     continue 'outer;
+    //                 }
+    //             }
+    //             // If we can't find a non-zero element in this column, return zero
+    //             return 0.0;
+    //         }
+
+    //         // reduce other rows
+    //         for i_p in (i + 1)..M {
+    //             let f = mat[(i_p, i)] / mat[(i, i)];
+    //             for j_p in 0..M {
+    //                 mat[(i_p, j_p)] -= f * mat[(i, j_p)];
+    //             }
+    //         }
+
+    //         // advance pivot
+    //         i += 1;
+    //     }
+
+    //     (0..M).map(|i| mat[(i, i)]).product::<f32>() / d
+    // }
 }
 
 impl<T, const M: usize, const N: usize> ops::Index<(usize, usize)> for Matrix<T, M, N> {
@@ -250,5 +284,11 @@ mod test {
 
         assert!(mat.no_nonzero_rows());
         assert!(!rref.no_nonzero_rows());
+    }
+
+    #[test]
+    fn det_3x3() {
+        let a = Matrix([[1.0, 5.0, 3.0], [2.0, 4.0, 7.0], [4.0, 6.0, 2.0]]);
+        assert_eq!(a.determinant(), 74.0);
     }
 }
