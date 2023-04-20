@@ -217,7 +217,7 @@ fn calc_tangents(
     let e = Matrix([e0.into(), e1.into()]);
     let delta_t = Matrix([delta_t0.into(), delta_t1.into()]);
 
-    let Matrix([tangent, binormal]) = delta_t.inverse() * e;
+    let Matrix([tangent, binormal]) = delta_t.inverse()? * e;
     let tangent = Vector3d::from(tangent).normalize();
     let binormal = Vector3d::from(binormal).normalize();
     Some((tangent.into(), binormal.into()))

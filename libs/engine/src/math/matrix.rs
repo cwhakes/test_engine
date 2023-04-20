@@ -103,39 +103,144 @@ impl<const M: usize> Matrix<f32, M, M> {
         }
     }
 
-    // pub fn determinant(&self) -> f32 {
-    //     let mut mat = self.clone();
-    //     let mut i = 0;
-    //     let mut d = 1.0;
+    #[inline(always)]
+    pub fn determinant(&self) -> f32 {
+        match M {
+            0 => 1.0,
+            1 => self[(0, 0)],
+            2 => self[(0, 0)] * self[(1, 1)] - self[(0, 1)] * self[(1, 0)],
+            3 => {
+                self[(0, 0)] * self.minor((0, 0)) - self[(0, 1)] * self.minor((0, 1))
+                    + self[(0, 2)] * self.minor((0, 2))
+            }
+            4 => {
+                self[(0, 0)] * self.minor((0, 0)) - self[(0, 1)] * self.minor((0, 1))
+                    + self[(0, 2)] * self.minor((0, 2))
+                    - self[(0, 3)] * self.minor((0, 3))
+            }
+            _ => self.determinant_slow(),
+        }
+    }
 
-    //     'outer: while i < M {
-    //         if approx_eq!(f32, 0.0, mat[(i, i)]) {
-    //             // Search for non-zero row
-    //             for i_p in (i + 1)..M {
-    //                 if !approx_eq!(f32, 0.0, mat[(i_p, i)]) {
-    //                     mat.0.swap(i, i_p);
-    //                     d *= -1.0;
-    //                     continue 'outer;
-    //                 }
-    //             }
-    //             // If we can't find a non-zero element in this column, return zero
-    //             return 0.0;
-    //         }
+    fn determinant_slow(&self) -> f32 {
+        let mut mat = self.clone();
+        let mut i = 0;
+        let mut d = 1.0;
 
-    //         // reduce other rows
-    //         for i_p in (i + 1)..M {
-    //             let f = mat[(i_p, i)] / mat[(i, i)];
-    //             for j_p in 0..M {
-    //                 mat[(i_p, j_p)] -= f * mat[(i, j_p)];
-    //             }
-    //         }
+        'outer: while i < M {
+            if approx_eq!(f32, 0.0, mat[(i, i)]) {
+                // Search for non-zero row
+                for i_p in (i + 1)..M {
+                    if !approx_eq!(f32, 0.0, mat[(i_p, i)]) {
+                        mat.0.swap(i, i_p);
+                        d *= -1.0;
+                        continue 'outer;
+                    }
+                }
+                // If we can't find a non-zero element in this column, return zero
+                return 0.0;
+            }
 
-    //         // advance pivot
-    //         i += 1;
-    //     }
+            // reduce other rows
+            for i_p in (i + 1)..M {
+                let f = mat[(i_p, i)] / mat[(i, i)];
+                for j_p in 0..M {
+                    mat[(i_p, j_p)] -= f * mat[(i, j_p)];
+                }
+            }
 
-    //     (0..M).map(|i| mat[(i, i)]).product::<f32>() / d
-    // }
+            // advance pivot
+            i += 1;
+        }
+        (0..M).map(|i| mat[(i, i)]).product::<f32>() / d
+    }
+
+    #[inline(always)]
+    pub fn minor(&self, (i, j): (usize, usize)) -> f32 {
+        assert!(i < M);
+        assert!(j < M);
+
+        match M {
+            0 => unreachable!(),
+            1 => 1.0,
+            2 => self[(1 - i, 1 - j)],
+            3 => {
+                let [i0, i1] = [0, 1].map(|ix| ix + (ix >= i) as usize);
+                let [j0, j1] = [0, 1].map(|jx| jx + (jx >= j) as usize);
+                self[(i0, j0)] * self[(i1, j1)] - self[(i0, j1)] * self[(i1, j0)]
+            }
+            4 => {
+                let [i0, i1, i2] = [0, 1, 2].map(|ix| ix + (ix >= i) as usize);
+                let [j0, j1, j2] = [0, 1, 2].map(|jx| jx + (jx >= j) as usize);
+                let a = self; // Make things shorter
+                (a[(i0, j0)] * (a[(i1, j1)] * a[(i2, j2)] - a[(i1, j2)] * a[(i2, j1)]))
+                    - (a[(i0, j1)] * (a[(i1, j0)] * a[(i2, j2)] - a[(i1, j2)] * a[(i2, j0)]))
+                    + (a[(i0, j2)] * (a[(i1, j0)] * a[(i2, j1)] - a[(i1, j1)] * a[(i2, j0)]))
+            }
+            _ => self.minor_slow((i, j)),
+        }
+    }
+
+    fn minor_slow(&self, (i, j): (usize, usize)) -> f32 {
+        let mut mat = self.clone();
+        let mut ii = 0;
+        let mut d = 1.0;
+
+        'outer: while ii < M - 1 {
+            let iii = ii + (ii >= i) as usize;
+            let jjj = ii + (ii >= j) as usize;
+
+            if approx_eq!(f32, 0.0, mat[(iii, jjj)]) {
+                // Search for non-zero row
+                for i_p in ((iii + 1)..M).filter(|&i_p| i_p != i) {
+                    if !approx_eq!(f32, 0.0, mat[(i_p, jjj)]) {
+                        mat.0.swap(iii, i_p);
+                        d *= -1.0;
+                        continue 'outer;
+                    }
+                }
+                // If we can't find a non-zero element in this column, return zero
+                return 0.0;
+            }
+
+            // reduce other rows
+            for i_p in ((iii + 1)..M).filter(|&i_p| i_p != i) {
+                let f = mat[(i_p, jjj)] / mat[(iii, jjj)];
+                for j_p in (0..M).filter(|&j_p| j_p != j) {
+                    mat[(i_p, j_p)] -= f * mat[(iii, j_p)];
+                }
+            }
+
+            // advance pivot
+            ii += 1;
+        }
+        (0..(M - 1))
+            .map(|ii| mat[(ii + (ii >= i) as usize, ii + (ii >= j) as usize)])
+            .product::<f32>()
+            / d
+    }
+
+    pub fn adjugate(&self) -> Self {
+        // SAFETY: All values are written to
+        unsafe {
+            let mut adjugate = Self::uninit();
+            for i in 0..M {
+                for j in 0..M {
+                    let sign = (-1.0f32).powi((i + j) as i32);
+                    adjugate[(j, i)].write(sign * self.minor((i, j)));
+                }
+            }
+            adjugate.assume_init()
+        }
+    }
+
+    pub fn inverse(&self) -> Option<Self> {
+        let det = self.determinant();
+        if det.is_nan() || approx_eq!(f32, 0.0, det) {
+            return None;
+        }
+        Some(self.adjugate() / det)
+    }
 }
 
 impl<T, const M: usize, const N: usize> ops::Index<(usize, usize)> for Matrix<T, M, N> {

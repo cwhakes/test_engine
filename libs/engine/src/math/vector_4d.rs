@@ -44,22 +44,22 @@ impl Vector4d {
         Vector3d::new(x, y, z)
     }
 
-    pub fn cross(v1: &Self, v2: &Self, v3: &Self) -> Self {
-        Self([
-            v1.y() * (v2.z() * v3.w() - v3.z() * v2.w())
-                - v1.z() * (v2.y() * v3.w() - v3.y() * v2.w())
-                + v1.w() * (v2.y() * v3.z() - v2.z() * v3.y()),
-            -(v1.x() * (v2.z() * v3.w() - v3.z() * v2.w())
-                - v1.z() * (v2.x() * v3.w() - v3.x() * v2.w())
-                + v1.w() * (v2.x() * v3.z() - v3.x() * v2.z())),
-            v1.x() * (v2.y() * v3.w() - v3.y() * v2.w())
-                - v1.y() * (v2.x() * v3.w() - v3.x() * v2.w())
-                + v1.w() * (v2.x() * v3.y() - v3.x() * v2.y()),
-            -(v1.x() * (v2.y() * v3.z() - v3.y() * v2.z())
-                - v1.y() * (v2.x() * v3.z() - v3.x() * v2.z())
-                + v1.z() * (v2.x() * v3.y() - v3.x() * v2.y())),
-        ])
-    }
+    // pub fn cross(v1: &Self, v2: &Self, v3: &Self) -> Self {
+    //     Self([
+    //         v1.y() * (v2.z() * v3.w() - v3.z() * v2.w())
+    //             - v1.z() * (v2.y() * v3.w() - v3.y() * v2.w())
+    //             + v1.w() * (v2.y() * v3.z() - v2.z() * v3.y()),
+    //         -(v1.x() * (v2.z() * v3.w() - v3.z() * v2.w())
+    //             - v1.z() * (v2.x() * v3.w() - v3.x() * v2.w())
+    //             + v1.w() * (v2.x() * v3.z() - v3.x() * v2.z())),
+    //         v1.x() * (v2.y() * v3.w() - v3.y() * v2.w())
+    //             - v1.y() * (v2.x() * v3.w() - v3.x() * v2.w())
+    //             + v1.w() * (v2.x() * v3.y() - v3.x() * v2.y()),
+    //         -(v1.x() * (v2.y() * v3.z() - v3.y() * v2.z())
+    //             - v1.y() * (v2.x() * v3.z() - v3.x() * v2.z())
+    //             + v1.z() * (v2.x() * v3.y() - v3.x() * v2.y())),
+    //     ])
+    // }
 
     /// <https://en.wikipedia.org/wiki/Cross_product#Conversion_to_matrix_multiplication/>
     pub fn cross_matrix(&self) -> Matrix4x4 {

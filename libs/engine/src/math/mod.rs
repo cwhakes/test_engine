@@ -11,6 +11,7 @@ mod vector_4d;
 
 pub use matrix::Matrix;
 pub use matrix_2x2::Matrix2x2;
+pub use matrix_3x3::Matrix3x3;
 pub use matrix_4x4::Matrix4x4;
 pub use point::Point;
 pub use rect::Rect;

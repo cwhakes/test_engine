@@ -99,7 +99,7 @@ impl<const N: usize> Vector<f32, N> {
         let mat: Matrix<f32, N, 2> = [vec_0, vec_1].into();
         // Left inverse
         // (A^T * A)^-1 * A^T (* A = I)
-        let inverse = (mat.clone().transpose() * mat.clone()).inverse() * mat.transpose();
+        let inverse = (mat.clone().transpose() * mat.clone()).inverse().unwrap() * mat.transpose();
 
         let vec_2 = self - plane[0];
         inverse * vec_2
