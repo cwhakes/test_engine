@@ -9,6 +9,9 @@ use float_cmp::approx_eq;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Matrix<T, const M: usize, const N: usize>(pub [[T; N]; M]);
 
+pub type Matrix2x2 = Matrix<f32, 2, 2>;
+pub type Matrix3x3 = Matrix<f32, 3, 3>;
+
 impl<T, const M: usize, const N: usize> Matrix<T, M, N> {
     pub fn uninit() -> Matrix<MaybeUninit<T>, M, N> {
         // SAFETY: An uninitialized `[MaybeUninit<_>; LEN]` is valid.
@@ -85,7 +88,7 @@ impl<const M: usize, const N: usize> Matrix<f32, M, N> {
         !self
             .0
             .iter()
-            .any(|row| row.into_iter().all(|ele| approx_eq!(f32, 0.0, *ele)))
+            .any(|row| row.iter().all(|ele| approx_eq!(f32, 0.0, *ele)))
     }
 }
 
@@ -355,6 +358,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use float_cmp::assert_approx_eq;
 
     #[test]
     fn rref() {
@@ -392,8 +396,40 @@ mod test {
     }
 
     #[test]
+    fn invert_2x2() {
+        let a = Matrix([[5.0, 2.0], [-7.0, -3.0]]);
+        let b = Matrix([[3.0, 2.0], [-7.0, -5.0]]);
+
+        let a_inv = a.inverse().unwrap();
+        let b_inv = b.inverse().unwrap();
+
+        for i in 0..2 {
+            for j in 0..2 {
+                assert_approx_eq!(f32, a[(i, j)], b_inv[(i, j)], epsilon = 0.00001);
+                assert_approx_eq!(f32, a_inv[(i, j)], b[(i, j)], epsilon = 0.00001);
+            }
+        }
+    }
+
+    #[test]
     fn det_3x3() {
         let a = Matrix([[1.0, 5.0, 3.0], [2.0, 4.0, 7.0], [4.0, 6.0, 2.0]]);
         assert_eq!(a.determinant(), 74.0);
+    }
+
+    #[test]
+    fn invert_3x3() {
+        let a = Matrix([[1.0, 2.0, 3.0], [0.0, 1.0, 4.0], [5.0, 6.0, 0.0]]);
+        let b = Matrix([[-24.0, 18.0, 5.0], [20.0, -15.0, -4.0], [-5.0, 4.0, 1.0]]);
+
+        let a_inv = a.inverse().unwrap();
+        let b_inv = b.inverse().unwrap();
+
+        for i in 0..3 {
+            for j in 0..3 {
+                assert_approx_eq!(f32, a[(i, j)], b_inv[(i, j)], epsilon = 0.00001);
+                assert_approx_eq!(f32, a_inv[(i, j)], b[(i, j)], epsilon = 0.00001);
+            }
+        }
     }
 }
